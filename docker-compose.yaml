@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:15
+    container_name: shopery_postgres
+    environment:
+      POSTGRES_USER: shopery_user
+      POSTGRES_PASSWORD: shopery_pass
+      POSTGRES_DB: shopery_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
