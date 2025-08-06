@@ -1,5 +1,7 @@
 package az.shopery.configuration;
 
+import static org.springframework.security.config.Customizer.withDefaults;
+
 import az.shopery.utils.security.JwtAuthFilter;
 import az.shopery.utils.security.JwtService;
 import java.util.Arrays;
@@ -59,10 +61,11 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .cors(withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers(SWAGGER_WHITELIST).hasAuthority("ADMIN")
+                        .requestMatchers(SWAGGER_WHITELIST).permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session ->
