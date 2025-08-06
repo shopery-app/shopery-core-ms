@@ -11,3 +11,12 @@ spring:
 
 server:
   port: 8888
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+  api-docs:
+    path: /v3/api-docs
+  group-configs:
+    - display-name: LOCAL API Documentation

@@ -2,7 +2,7 @@ spring:
   application:
     name: shopery
   profiles:
-    active: prod
+    active: local
   jpa:
     hibernate:
       ddl-auto: none
