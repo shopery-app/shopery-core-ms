@@ -4,8 +4,8 @@ services:
     image: postgres:15
     container_name: shopery_postgres
     environment:
-      POSTGRES_USER: shopery_user
-      POSTGRES_PASSWORD: shopery_pass
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: shopery_db
     ports:
       - "5432:5432"
