@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 08082025_add_phone_constraints
+      author: Jahangir Alisoy
+      changes:
+        - addUniqueConstraint:
+            tableName: users
+            columnNames: phone
+            constraintName: uk_users_phone
+
+        - addNotNullConstraint:
+            tableName: users
+            columnName: phone
+            columnDataType: varchar(50)

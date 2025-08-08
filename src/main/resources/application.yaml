@@ -14,6 +14,20 @@ spring:
     enabled: true
     change-log: classpath:db/changelog/master.yaml
 
+  mail:
+    host: smtp.gmail.com
+    port: 465
+    username: ${NO_REPLY_USERNAME}
+    password: ${NO_REPLY_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+        transport:
+          protocol: smtps
+
 application:
   security:
     jwt:

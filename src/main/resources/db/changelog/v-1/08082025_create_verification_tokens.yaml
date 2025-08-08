@@ -1,0 +1,51 @@
+databaseChangeLog:
+  - changeSet:
+      id: 08082025_create_verification_tokens_table
+      author: Jahangir Alisoy
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: verification_tokens
+      changes:
+        - createTable:
+            tableName: verification_tokens
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: token
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: expiry_date
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_name
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_email
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: user_password
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_phone
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+                    unique: true

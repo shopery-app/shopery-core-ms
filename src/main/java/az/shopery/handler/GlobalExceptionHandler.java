@@ -3,6 +3,7 @@ package az.shopery.handler;
 import az.shopery.handler.exception.EmailAlreadyExistsException;
 import az.shopery.handler.exception.InvalidCredentialsException;
 import az.shopery.handler.exception.JwtAuthenticationException;
+import az.shopery.handler.exception.PhoneAlreadyExistsException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
@@ -14,6 +15,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.util.HtmlUtils;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -27,6 +29,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ResponseEntity<ErrorResponse> handleEmailAlreadyExistsException(
             EmailAlreadyExistsException ex, HttpServletRequest request) {
+        return buildErrorResponse(ex, HttpStatus.CONFLICT, request);
+    }
+
+    @ExceptionHandler(PhoneAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handlePhoneAlreadyExistsException(
+            PhoneAlreadyExistsException ex, HttpServletRequest request) {
         return buildErrorResponse(ex, HttpStatus.CONFLICT, request);
     }
 
@@ -45,11 +53,16 @@ public class GlobalExceptionHandler {
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now());
         body.put("status", HttpStatus.BAD_REQUEST.value());
-        body.put("path", request.getRequestURI());
+        String sanitizedPath = HtmlUtils.htmlEscape(request.getRequestURI());
+        body.put("path", sanitizedPath);
 
         Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getFieldErrors().forEach(
-                error -> errors.put(error.getField(), error.getDefaultMessage()));
+        ex.getBindingResult().getFieldErrors().forEach(error -> {
+            String message = error.getDefaultMessage();
+            String messageToSanitize = (message != null) ? message : "Invalid value.";
+            String sanitizedMessage = HtmlUtils.htmlEscape(messageToSanitize);
+            errors.put(error.getField(), sanitizedMessage);
+        });
         body.put("errors", errors);
 
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
@@ -62,11 +75,12 @@ public class GlobalExceptionHandler {
 
     private ResponseEntity<ErrorResponse> buildErrorResponse(
             Exception ex, HttpStatus status, HttpServletRequest request) {
+        String sanitizedMessage = HtmlUtils.htmlEscape(ex.getMessage());
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .status(status)
                 .statusCode(status.value())
                 .timestamp(LocalDateTime.now())
-                .message(ex.getMessage())
+                .message(sanitizedMessage)
                 .path(request.getRequestURI())
                 .build();
         return new ResponseEntity<>(errorResponse, status);

@@ -46,7 +46,7 @@ public class UserEntity {
     String password;
     @Column(name = "email", nullable = false, unique = true)
     String email;
-    @Column(name = "phone")
+    @Column(name = "phone", nullable = false, unique = true)
     String phone;
     @Enumerated(EnumType.STRING)
     @Builder.Default
