@@ -4,23 +4,28 @@ import az.shopery.handler.exception.EmailAlreadyExistsException;
 import az.shopery.handler.exception.InvalidCredentialsException;
 import az.shopery.handler.exception.PhoneAlreadyExistsException;
 import az.shopery.handler.exception.ResourceNotFoundException;
+import az.shopery.model.dto.request.ForgotPasswordRequestDto;
 import az.shopery.model.dto.request.ResendCodeRequestDto;
+import az.shopery.model.dto.request.ResetPasswordRequestDto;
+import az.shopery.model.dto.request.UserLoginRequestDto;
+import az.shopery.model.dto.request.UserRegisterRequestDto;
 import az.shopery.model.dto.request.UserVerificationRequestDto;
 import az.shopery.model.dto.response.SuccessResponseDto;
 import az.shopery.model.dto.response.UserAuthResponseDto;
-import az.shopery.model.dto.request.UserLoginRequestDto;
-import az.shopery.model.dto.request.UserRegisterRequestDto;
+import az.shopery.model.entity.PasswordResetTokenEntity;
 import az.shopery.model.entity.UserEntity;
 import az.shopery.model.entity.VerificationTokenEntity;
+import az.shopery.repository.PasswordResetTokenRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.repository.VerificationTokenRepository;
 import az.shopery.service.AuthService;
 import az.shopery.service.EmailService;
 import az.shopery.utils.security.JwtService;
-import lombok.RequiredArgsConstructor;
 import java.time.LocalDateTime;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -39,6 +44,7 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final EmailService emailService;
     private final VerificationTokenRepository verificationTokenRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
 
     @Override
     @Transactional
@@ -150,6 +156,58 @@ public class AuthServiceImpl implements AuthService {
                 verificationTokenEntity.getUserEmail(), verificationTokenEntity.getUserName(), newCode);
 
         return SuccessResponseDto.of("Verification code sent to your email.");
+    }
+
+    @Override
+    @Transactional
+    public SuccessResponseDto<Void> forgotPassword(ForgotPasswordRequestDto forgotPasswordRequestDto) {
+        var user = userRepository.findByEmail(forgotPasswordRequestDto.getEmail())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "User not found with email: " + forgotPasswordRequestDto.getEmail()));
+
+        Optional<PasswordResetTokenEntity> existingTokenOpt = passwordResetTokenRepository.findByUserEmail(user.getEmail());
+
+        PasswordResetTokenEntity passwordResetToken;
+
+        if (existingTokenOpt.isPresent()) {
+            passwordResetToken = existingTokenOpt.get();
+            passwordResetToken.setToken(UUID.randomUUID().toString());
+            passwordResetToken.setExpiryDate(LocalDateTime.now().plusMinutes(15));
+        } else {
+            passwordResetToken = PasswordResetTokenEntity.builder()
+                    .token(UUID.randomUUID().toString())
+                    .userEmail(user.getEmail())
+                    .expiryDate(LocalDateTime.now().plusMinutes(15))
+                    .build();
+        }
+
+        passwordResetTokenRepository.save(passwordResetToken);
+
+        emailService.sendPasswordResetLink(user.getEmail(), user.getName(), passwordResetToken.getToken());
+
+        return SuccessResponseDto.of("A new password reset link has been sent to your email.");
+    }
+
+    @Override
+    @Transactional
+    public SuccessResponseDto<Void> resetPassword(ResetPasswordRequestDto resetPasswordRequestDto) {
+        var resetToken = passwordResetTokenRepository.findByToken(resetPasswordRequestDto.getToken())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Invalid or expired password reset token."));
+        if (resetToken.getExpiryDate().isBefore(LocalDateTime.now())) {
+            passwordResetTokenRepository.delete(resetToken);
+            throw new InvalidCredentialsException("Password reset token expired. Please request a new one.");
+        }
+
+        var user = userRepository.findByEmail(resetToken.getUserEmail())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "User not found for the given token."));
+
+        user.setPassword(passwordEncoder.encode(resetPasswordRequestDto.getPassword()));
+        userRepository.save(user);
+        passwordResetTokenRepository.delete(resetToken);
+
+        return SuccessResponseDto.of("Password reset successful.");
     }
 
     @Override

@@ -1,11 +1,8 @@
 package az.shopery.controller;
 
-import az.shopery.model.dto.request.ResendCodeRequestDto;
-import az.shopery.model.dto.request.UserVerificationRequestDto;
+import az.shopery.model.dto.request.*;
 import az.shopery.model.dto.response.SuccessResponseDto;
 import az.shopery.model.dto.response.UserAuthResponseDto;
-import az.shopery.model.dto.request.UserLoginRequestDto;
-import az.shopery.model.dto.request.UserRegisterRequestDto;
 import az.shopery.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -44,5 +41,17 @@ public class AuthController {
     public ResponseEntity<SuccessResponseDto<Void>> resendCode(
             @Valid @RequestBody ResendCodeRequestDto resendCodeRequestDto) {
         return ResponseEntity.ok(authService.resendVerificationCode(resendCodeRequestDto));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<SuccessResponseDto<Void>> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequestDto forgotPasswordRequestDto) {
+        return ResponseEntity.ok(authService.forgotPassword(forgotPasswordRequestDto));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<SuccessResponseDto<Void>> resetPassword(
+            @Valid @RequestBody ResetPasswordRequestDto resetPasswordRequestDto) {
+        return ResponseEntity.ok(authService.resetPassword(resetPasswordRequestDto));
     }
 }

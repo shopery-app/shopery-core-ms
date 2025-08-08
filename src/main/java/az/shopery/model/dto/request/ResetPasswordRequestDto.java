@@ -1,6 +1,5 @@
 package az.shopery.model.dto.request;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.AccessLevel;
@@ -15,10 +14,9 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class UserLoginRequestDto {
-    @Email(message = "Email is not valid!")
-    @NotBlank(message = "Email cannot be empty!")
-    String email;
+public class ResetPasswordRequestDto {
+    @NotBlank(message = "Token cannot be empty")
+    String token;
     @Pattern(
             regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!])(?=\\S+$).*$",
             message = "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character."

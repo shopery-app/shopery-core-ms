@@ -36,6 +36,8 @@ application:
         expiration: 3600000
       refresh-token:
         expiration: 604800000
+  frontend:
+    base-url: ${FRONTEND_BASE_URL}
 
 server:
   port: 8080

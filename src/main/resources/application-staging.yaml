@@ -4,5 +4,3 @@ springdoc:
     enabled: true
   api-docs:
     path: /v3/api-docs
-  group-configs:
-    - display-name: STAGING API Documentation
