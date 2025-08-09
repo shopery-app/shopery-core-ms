@@ -2,6 +2,7 @@ package az.shopery.utils.scheduler;
 
 import az.shopery.repository.PasswordResetTokenRepository;
 import az.shopery.repository.VerificationTokenRepository;
+import az.shopery.utils.enums.VerificationProgress;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
@@ -17,21 +18,21 @@ public class TokenCleanupService {
     private final VerificationTokenRepository verificationTokenRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
 
-    @Scheduled(cron = "0 */5 * * * *")
+    @Scheduled(cron = "0 0 * * * *")
     @Transactional
     public void purgeExpiredTokens() {
         LocalDateTime now = LocalDateTime.now();
-        log.info("Running job to clean up expired verification tokens older than {}", now);
-        verificationTokenRepository.deleteByExpiryDateBefore(now);
-        log.info("Expired token cleanup job finished at {}", now);
+        log.info("Running job to clean up expired or abandoned verification tokens older than {}", now);
+        verificationTokenRepository.deleteByProgressOrExpiryDateBefore(VerificationProgress.REJECTED, now);
+        log.info("Expired and abandoned token cleanup job finished at {}", now);
     }
 
-    @Scheduled(cron = "0 */15 * * * *")
+    @Scheduled(cron = "0 0 * * * *")
     @Transactional
     public void purgeExpiredPasswordResetTokens() {
         LocalDateTime now = LocalDateTime.now();
         log.info("Running job to clean up expired password reset tokens older than {}", now);
         passwordResetTokenRepository.deleteByExpiryDateBefore(now);
-        log.info("Expired password reset token cleanup job finished.");
+        log.info("Expired and abandoned password reset token cleanup job finished.");
     }
 }

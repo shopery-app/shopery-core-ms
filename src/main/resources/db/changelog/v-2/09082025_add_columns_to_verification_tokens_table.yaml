@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: 09082025_add_columns_to_verification_tokens_table
+      author: Jahangir Alisoy
+      preConditions:
+        - onFail: MARK_RAN
+        - tableExists:
+            tableName: verification_tokens
+        - not:
+            columnExists:
+              tableName: verification_tokens
+              columnName: progress
+        - not:
+            columnExists:
+              tableName: verification_tokens
+              columnName: attempt_count
+      changes:
+        - addColumn:
+            tableName: verification_tokens
+            columns:
+              - column:
+                  name: progress
+                  type: VARCHAR(255)
+                  defaultValue: "PENDING"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: attempt_count
+                  type: INT
+                  defaultValue: "0"
+                  constraints:
+                    nullable: false

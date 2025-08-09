@@ -1,9 +1,6 @@
 package az.shopery.handler;
 
-import az.shopery.handler.exception.EmailAlreadyExistsException;
-import az.shopery.handler.exception.InvalidCredentialsException;
-import az.shopery.handler.exception.JwtAuthenticationException;
-import az.shopery.handler.exception.ResourceNotFoundException;
+import az.shopery.handler.exception.*;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -14,7 +11,6 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.util.HtmlUtils;
 
@@ -66,15 +62,9 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleHttpMessageNotReadableException(HttpServletRequest request) {
-        return ErrorResponse.builder()
-                .status(HttpStatus.BAD_REQUEST)
-                .statusCode(HttpStatus.BAD_REQUEST.value())
-                .timestamp(LocalDateTime.now())
-                .message("Required request body is missing or is malformed.")
-                .path(request.getRequestURI())
-                .build();
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(
+            HttpMessageNotReadableException ex, HttpServletRequest request) {
+        return buildErrorResponse(ex, HttpStatus.BAD_REQUEST, request);
     }
 
     @ExceptionHandler(Exception.class)

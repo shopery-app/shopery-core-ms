@@ -1,0 +1,31 @@
+databaseChangeLog:
+  - changeSet:
+      id: 09082025_add_lockout_to_users_table
+      author: Jahangir Alisoy
+      preConditions:
+        - onFail: MARK_RAN
+        - tableExists:
+            tableName: users
+        - not:
+            columnExists:
+              tableName: users
+              columnName: failed_login_attempts
+        - not:
+            columnExists:
+              tableName: users
+              columnName: account_locked_until
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: failed_login_attempts
+                  type: INT
+                  defaultValue: "0"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: account_locked_until
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: true
