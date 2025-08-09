@@ -18,6 +18,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserRegisterRequestDto {
     @NotBlank(message = "Name cannot be empty!")
+    @Size(min = 3, max = 100, message = "Name must be between 3 and 100 characters long.")
     String name;
     @Email(message = "Email is not valid!")
     @NotBlank(message = "Email cannot be empty!")
