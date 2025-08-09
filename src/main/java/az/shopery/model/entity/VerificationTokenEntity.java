@@ -1,7 +1,10 @@
 package az.shopery.model.entity;
 
+import az.shopery.utils.enums.VerificationProgress;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -40,4 +43,11 @@ public class VerificationTokenEntity {
     String userEmail;
     @Column(name = "user_password", nullable = false)
     String userPassword;
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    @Column(name = "progress", nullable = false)
+    VerificationProgress progress = VerificationProgress.PENDING;
+    @Builder.Default
+    @Column(name = "attempt_count", nullable = false)
+    int attemptCount = 0;
 }

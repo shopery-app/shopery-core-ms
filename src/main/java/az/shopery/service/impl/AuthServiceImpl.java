@@ -19,13 +19,13 @@ import az.shopery.repository.UserRepository;
 import az.shopery.repository.VerificationTokenRepository;
 import az.shopery.service.AuthService;
 import az.shopery.service.EmailService;
+import az.shopery.utils.enums.VerificationProgress;
 import az.shopery.utils.security.JwtService;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.User;
@@ -36,6 +36,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
+
+    private static final int MAX_FAILED_ATTEMPTS = 3;
+    private static final int LOCK_DURATION_MINUTES = 10;
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -53,30 +56,21 @@ public class AuthServiceImpl implements AuthService {
                     "Email '" + userRegisterRequestDto.getEmail() + "' is already in use.");
         }
 
-        verificationTokenRepository.findByUserEmail(userRegisterRequestDto
-                .getEmail()).ifPresent(verificationTokenRepository::delete);
+        VerificationTokenEntity verificationTokenEntity =
+                verificationTokenRepository.findByUserEmail(userRegisterRequestDto
+                .getEmail())
+                .orElse(new VerificationTokenEntity());
 
         String code = String.valueOf(ThreadLocalRandom.current().nextInt(100000, 1000000));
 
-        var verificationToken = VerificationTokenEntity.builder()
-                .userName(userRegisterRequestDto.getName())
-                .userEmail(userRegisterRequestDto.getEmail())
-                .userPassword(passwordEncoder.encode(userRegisterRequestDto.getPassword()))
-                .token(passwordEncoder.encode(code))
-                .expiryDate(LocalDateTime.now().plusMinutes(5))
-                .build();
-
-        try {
-            verificationTokenRepository.saveAndFlush(verificationToken);
-        } catch (DataIntegrityViolationException e) {
-            String message = e.getMostSpecificCause().getMessage();
-            if (message.contains("user_email")) {
-                throw new EmailAlreadyExistsException(
-                        "This email address is currently being registered. Please try again later.");
-            } else {
-                throw new InvalidCredentialsException("Could not complete registration due to a data conflict.");
-            }
-        }
+        verificationTokenEntity.setToken(passwordEncoder.encode(code));
+        verificationTokenEntity.setExpiryDate(LocalDateTime.now().plusMinutes(5));
+        verificationTokenEntity.setUserName(userRegisterRequestDto.getName());
+        verificationTokenEntity.setUserEmail(userRegisterRequestDto.getEmail());
+        verificationTokenEntity.setUserPassword(passwordEncoder.encode(userRegisterRequestDto.getPassword()));
+        verificationTokenEntity.setAttemptCount(0);
+        verificationTokenEntity.setProgress(VerificationProgress.PENDING);
+        verificationTokenRepository.save(verificationTokenEntity);
 
         emailService.sendVerificationCode(userRegisterRequestDto.getEmail(), userRegisterRequestDto.getName(), code);
 
@@ -85,19 +79,25 @@ public class AuthServiceImpl implements AuthService {
 
 
     @Override
-    @Transactional
+    @Transactional(noRollbackFor = InvalidCredentialsException.class)
     public SuccessResponseDto<UserAuthResponseDto> verifyAccount(UserVerificationRequestDto verificationRequestDto) {
         VerificationTokenEntity verificationTokenEntity = verificationTokenRepository
-                .findByUserEmail(verificationRequestDto.getEmail())
+                .findByUserEmailAndProgress(verificationRequestDto.getEmail(), VerificationProgress.PENDING)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Verification token not found or already used. Please register again."));
+                        "No pending verification found. It may have expired or been verified already."));
 
         if (verificationTokenEntity.getExpiryDate().isBefore(LocalDateTime.now())) {
-            verificationTokenRepository.delete(verificationTokenEntity);
-            throw new InvalidCredentialsException("Verification token expired. Please register again.");
+            verificationTokenEntity.setProgress(VerificationProgress.REJECTED);
+            throw new InvalidCredentialsException("Verification token expired. Please request a new one.");
         }
 
         if (!passwordEncoder.matches(verificationRequestDto.getCode(), verificationTokenEntity.getToken())) {
+            verificationTokenEntity.setAttemptCount(verificationTokenEntity.getAttemptCount() + 1);
+            if (verificationTokenEntity.getAttemptCount() >= MAX_FAILED_ATTEMPTS) {
+                verificationTokenEntity.setProgress(VerificationProgress.REJECTED);
+                throw new InvalidCredentialsException(
+                        "Invalid verification code. You have exceeded the maximum number of attempts.");
+            }
             throw new InvalidCredentialsException("Invalid verification code.");
         }
 
@@ -133,18 +133,26 @@ public class AuthServiceImpl implements AuthService {
         VerificationTokenEntity verificationTokenEntity = verificationTokenRepository
                 .findByUserEmail(resendCodeRequestDto.getEmail())
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "No pending verification code found for this email. Please register first."));
+                        "No registration process found for this email. Please register first."));
+
+        if (userRepository.findByEmail(resendCodeRequestDto.getEmail()).isPresent()) {
+            throw new EmailAlreadyExistsException("This account has already been verified.");
+        }
 
         String newCode = String.valueOf(ThreadLocalRandom.current().nextInt(100000, 1000000));
         verificationTokenEntity.setToken(passwordEncoder.encode(newCode));
         verificationTokenEntity.setExpiryDate(LocalDateTime.now().plusMinutes(5));
-
+        verificationTokenEntity.setProgress(VerificationProgress.PENDING);
+        verificationTokenEntity.setAttemptCount(0);
+        verificationTokenEntity.setUserName(verificationTokenEntity.getUserName());
+        verificationTokenEntity.setUserEmail(verificationTokenEntity.getUserEmail());
+        verificationTokenEntity.setUserPassword(verificationTokenEntity.getUserPassword());
         verificationTokenRepository.save(verificationTokenEntity);
 
         emailService.sendVerificationCode(
                 verificationTokenEntity.getUserEmail(), verificationTokenEntity.getUserName(), newCode);
 
-        return SuccessResponseDto.of("Verification code sent to your email.");
+        return SuccessResponseDto.of("A new verification code has been sent to your email.");
     }
 
     @Override
@@ -154,7 +162,8 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "User not found with email: " + forgotPasswordRequestDto.getEmail()));
 
-        Optional<PasswordResetTokenEntity> existingTokenOpt = passwordResetTokenRepository.findByUserEmail(user.getEmail());
+        Optional<PasswordResetTokenEntity> existingTokenOpt = passwordResetTokenRepository
+                .findByUserEmail(user.getEmail());
 
         PasswordResetTokenEntity passwordResetToken;
 
@@ -200,7 +209,16 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional(noRollbackFor = InvalidCredentialsException.class)
     public SuccessResponseDto<UserAuthResponseDto> login(UserLoginRequestDto userLoginRequestDto) {
+        UserEntity user = userRepository.findByEmail(userLoginRequestDto.getEmail())
+                .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password."));
+
+        if (user.getAccountLockedUntil() != null && user.getAccountLockedUntil().isAfter(LocalDateTime.now())) {
+            throw new InvalidCredentialsException("Your account has been locked due to too many " +
+                    "failed login attempts. Please try again later.");
+        }
+
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -208,13 +226,20 @@ public class AuthServiceImpl implements AuthService {
                             userLoginRequestDto.getPassword()
                     )
             );
+            if (user.getFailedLoginAttempts() > 0 || user.getAccountLockedUntil() != null) {
+                user.setFailedLoginAttempts(0);
+                user.setAccountLockedUntil(null);
+            }
         } catch (Exception exception) {
-            throw new InvalidCredentialsException("Invalid email or password.");
+            user.setFailedLoginAttempts(user.getFailedLoginAttempts() + 1);
+            if (user.getFailedLoginAttempts() >= MAX_FAILED_ATTEMPTS) {
+                user.setAccountLockedUntil(LocalDateTime.now().plusMinutes(LOCK_DURATION_MINUTES));
+                throw new InvalidCredentialsException("Too many failed login attempts. " +
+                        "Your account has been locked for " + LOCK_DURATION_MINUTES + " minutes.");
+            } else {
+                throw new InvalidCredentialsException("Invalid email or password.");
+            }
         }
-
-        var user = userRepository.findByEmail(userLoginRequestDto.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "User not found with email: " + userLoginRequestDto.getEmail()));
 
         var userDetails = org.springframework.security.core.userdetails.User
                 .withUsername(user.getEmail())

@@ -10,6 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -50,6 +51,11 @@ public class UserEntity {
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     Instant updatedAt;
+    @Builder.Default
+    @Column(name = "failed_login_attempts", nullable = false)
+    int failedLoginAttempts = 0;
+    @Column(name = "account_locked_until")
+    LocalDateTime accountLockedUntil;
     @Enumerated(EnumType.STRING)
     @Builder.Default
     @Column(name = "user_role", nullable = false)
