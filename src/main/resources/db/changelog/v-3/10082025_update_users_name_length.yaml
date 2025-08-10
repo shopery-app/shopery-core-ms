@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: 10082025_update_users_name_length
+      author: Jahangir Alisoy
+      changes:
+        - modifyDataType:
+            tableName: users
+            columnName: name
+            newDataType: VARCHAR(30)

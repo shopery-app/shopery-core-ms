@@ -1,0 +1,61 @@
+databaseChangeLog:
+  - changeSet:
+      id: 10082025_add_customers_table
+      author: Jahangir Alisoy
+      changes:
+        - createTable:
+            tableName: customers
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: first_name
+                  type: VARCHAR(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_name
+                  type: VARCHAR(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: profile_photo_url
+                  type: VARCHAR(2048)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: phone
+                  type: VARCHAR(30)
+              - column:
+                  name: date_of_birth
+                  type: DATE
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: customers
+            columnNames: user_id
+            constraintName: uq_customers_user_id
+        - addForeignKeyConstraint:
+            baseTableName: customers
+            baseColumnNames: user_id
+            constraintName: fk_customers_on_user
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE

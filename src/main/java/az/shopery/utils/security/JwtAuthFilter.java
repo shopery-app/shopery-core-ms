@@ -1,6 +1,6 @@
 package az.shopery.utils.security;
 
-import az.shopery.handler.exception.JwtAuthenticationException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -39,8 +39,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         try {
             jwt = authHeader.substring(7);
             userEmail = jwtService.extractUsername(jwt);
-        } catch (Exception exception) {
-            throw new JwtAuthenticationException("Invalid or expired JWT token.");
+        } catch (JwtException | IllegalArgumentException e) {
+            logger.warn("JWT processing failed: {}");
+            filterChain.doFilter(request, response);
+            return;
         }
 
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {

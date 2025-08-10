@@ -1,16 +1,19 @@
 package az.shopery.model.entity;
 
-import az.shopery.utils.enums.UserRole;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
-import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -23,41 +26,40 @@ import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import jakarta.persistence.EntityListeners;
 
 @Entity
-@Table(name = "users")
+@Table(name = "customers")
 @EntityListeners(AuditingEntityListener.class)
+@Builder
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class UserEntity {
+public class CustomerEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @UuidGenerator
     UUID id;
-    @Column(name = "name", nullable = false, length = 30)
-    String name;
-    @Column(name = "password", nullable = false)
-    String password;
-    @Column(name = "email", nullable = false, unique = true)
-    String email;
+    @OneToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
+    UserEntity userEntity;
+    @Column(name = "first_name", nullable = false)
+    String firstName;
+    @Column(name = "last_name", nullable = false)
+    String lastName;
+    @Column(name = "profile_photo_url")
+    String profilePhotoUrl;
+    @Column(name = "phone")
+    String phone;
+    @Column(name = "date_of_birth")
+    Date dateOfBirth;
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     Instant createdAt;
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     Instant updatedAt;
-    @Builder.Default
-    @Column(name = "failed_login_attempts", nullable = false)
-    int failedLoginAttempts = 0;
-    @Column(name = "account_locked_until")
-    LocalDateTime accountLockedUntil;
-    @Enumerated(EnumType.STRING)
-    @Builder.Default
-    @Column(name = "user_role", nullable = false)
-    UserRole userRole = UserRole.CUSTOMER;
+    @OneToMany(mappedBy = "customerEntity", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<AddressEntity> addresses;
 }
