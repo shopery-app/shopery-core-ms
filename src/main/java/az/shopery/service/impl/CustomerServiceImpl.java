@@ -23,7 +23,7 @@ public class CustomerServiceImpl implements CustomerService {
     @Transactional
     public void createCustomerProfile(UserEntity userEntity) {
         String fullName = userEntity.getName();
-        String[] names = fullName.split(" ");
+        String[] names = fullName.trim().split("\\s+");
         CustomerEntity customerEntity = CustomerEntity.builder()
                 .userEntity(userEntity)
                 .firstName(names[0].trim())
@@ -35,7 +35,10 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     @Transactional(readOnly = true)
     public SuccessResponseDto<CustomerProfileResponseDto> getCustomerProfile(String userEmail) {
-        CustomerEntity customerEntity = getCustomerByUserEmail(userEmail);
+        CustomerEntity customerEntity = customerRepository.findByUserEntityEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Customer profile not found for email: " + userEmail));
+
         var customerResponse = CustomerProfileResponseDto.builder()
                 .firstName(customerEntity.getFirstName())
                 .lastName(customerEntity.getLastName())
@@ -45,11 +48,7 @@ public class CustomerServiceImpl implements CustomerService {
                 .profilePhotoUrl(customerEntity.getProfilePhotoUrl())
                 .createdAt(customerEntity.getCreatedAt())
                 .build();
-        return SuccessResponseDto.of(customerResponse, "Customer profile retrieved successfully.");
-    }
 
-    private CustomerEntity getCustomerByUserEmail(String userEmail) {
-        return customerRepository.findByUserEntityEmail(userEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("Customer profile not found for email: " + userEmail));
+        return SuccessResponseDto.of(customerResponse, "Customer profile retrieved successfully.");
     }
 }

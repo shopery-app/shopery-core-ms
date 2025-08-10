@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/customers")
+@RequestMapping("/api/v1/customers/me")
 @RequiredArgsConstructor
 @PreAuthorize("hasAuthority('CUSTOMER')")
 public class CustomerController {
@@ -20,7 +20,7 @@ public class CustomerController {
     private final CustomerService customerService;
 
     @GetMapping("/profile")
-    public ResponseEntity<SuccessResponseDto<CustomerProfileResponseDto>> getCustomerProfile(
+    public ResponseEntity<SuccessResponseDto<CustomerProfileResponseDto>> getMyProfile(
             Principal principal) {
         return ResponseEntity.ok(customerService.getCustomerProfile(principal.getName()));
     }

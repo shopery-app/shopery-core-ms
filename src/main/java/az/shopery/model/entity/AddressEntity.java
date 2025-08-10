@@ -42,6 +42,7 @@ public class AddressEntity {
     String country;
     @Column(name = "postal_code", nullable = false)
     String postalCode;
+    @Builder.Default
     @Column(name = "is_default")
     boolean isDefault = false;
     @ManyToOne(fetch = FetchType.LAZY)
