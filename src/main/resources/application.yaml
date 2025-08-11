@@ -37,9 +37,9 @@ application:
     jwt:
       secret-key: ${JWT_SECRET_KEY}
       access-token:
-        expiration: 3600000
+        expiration: ${ACCESS_TOKEN_EXPIRATION}
       refresh-token:
-        expiration: 604800000
+        expiration: ${REFRESH_TOKEN_EXPIRATION}
   frontend:
     base-url: ${FRONTEND_BASE_URL}
 
