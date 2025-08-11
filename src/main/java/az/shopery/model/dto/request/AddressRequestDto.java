@@ -29,5 +29,4 @@ public class AddressRequestDto {
     @NotBlank(message = "Postal code cannot be empty!")
     @Size(max = 20, message = "Postal code is too long.")
     String postalCode;
-    boolean isDefault;
 }

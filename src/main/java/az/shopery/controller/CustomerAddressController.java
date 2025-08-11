@@ -52,7 +52,7 @@ public class CustomerAddressController {
         return ResponseEntity.ok(customerAddressService.removeAddress(principal.getName(), addressId));
     }
 
-    @PostMapping("/{addressId}/default")
+    @PutMapping("/{addressId}/default")
     public ResponseEntity<SuccessResponseDto<Void>> setMyDefaultAddress(
             Principal principal, @PathVariable UUID addressId) {
         return ResponseEntity.ok(customerAddressService.setDefaultAddress(principal.getName(), addressId));

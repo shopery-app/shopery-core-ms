@@ -29,14 +29,7 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
         log.info("Adding address to customer profile for user: {}", userEmail);
         CustomerEntity customerEntity = getCustomerByUserEmail(userEmail);
 
-        if (customerEntity.getAddresses().isEmpty()) {
-            addressRequestDto.setDefault(true);
-        } else if (addressRequestDto.isDefault()) {
-            customerEntity.getAddresses().stream()
-                    .filter(AddressEntity::isDefault)
-                    .findFirst()
-                    .ifPresent(oldDefault -> oldDefault.setDefault(false));
-        }
+        boolean isDefault = customerEntity.getAddresses().isEmpty();
 
         AddressEntity addressEntity = AddressEntity.builder()
                 .addressLine1(addressRequestDto.getAddressLine1())
@@ -44,16 +37,15 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
                 .city(addressRequestDto.getCity())
                 .country(addressRequestDto.getCountry())
                 .postalCode(addressRequestDto.getPostalCode())
-                .isDefault(addressRequestDto.isDefault())
+                .isDefault(isDefault)
                 .customerEntity(customerEntity)
                 .build();
 
         customerEntity.getAddresses().add(addressEntity);
-        CustomerEntity savedCustomer = customerRepository.save(customerEntity);
-        AddressEntity persistedAddress = savedCustomer.getAddresses().getLast();
+        customerRepository.save(customerEntity);
         log.info("Successfully added new address with ID {} for user {}", addressEntity.getId(), userEmail);
 
-        return SuccessResponseDto.of(mapToAddressResponseDto(persistedAddress), "Address added successfully.");
+        return SuccessResponseDto.of(mapToAddressResponseDto(addressEntity), "Address added successfully.");
     }
 
     @Override
