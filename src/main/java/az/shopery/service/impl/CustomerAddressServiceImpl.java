@@ -1,5 +1,7 @@
 package az.shopery.service.impl;
 
+import az.shopery.handler.exception.AddressLimitExceededException;
+import az.shopery.handler.exception.InvalidUuidFormatException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.model.dto.request.AddressRequestDto;
 import az.shopery.model.dto.response.AddressResponseDto;
@@ -15,14 +17,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
-
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class CustomerAddressServiceImpl implements CustomerAddressService {
+
+    private static final int MAX_ADDRESSES_PER_CUSTOMER = 6;
 
     private final CustomerRepository customerRepository;
 
@@ -31,6 +32,10 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
     public SuccessResponseDto<AddressResponseDto> addAddress(String userEmail, AddressRequestDto addressRequestDto) {
         log.info("Adding address to customer profile for user: {}", userEmail);
         CustomerEntity customerEntity = getCustomerByUserEmail(userEmail);
+
+        if (customerEntity.getAddresses().size() >= MAX_ADDRESSES_PER_CUSTOMER) {
+            throw new AddressLimitExceededException("You already have the maximum number of addresses.");
+        }
 
         boolean isDefault = customerEntity.getAddresses().isEmpty();
 
@@ -45,10 +50,12 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
                 .build();
 
         customerEntity.getAddresses().add(addressEntity);
-        customerRepository.save(customerEntity);
-        log.info("Successfully added new address with ID {} for user {}", addressEntity.getId(), userEmail);
 
-        return SuccessResponseDto.of(mapToAddressResponseDto(addressEntity), "Address added successfully.");
+        CustomerEntity savedCustomerEntity = customerRepository.save(customerEntity);
+        AddressEntity persistedAddress = savedCustomerEntity.getAddresses().getLast();
+        log.info("Successfully added new address with ID {} for user {}", persistedAddress.getId(), userEmail);
+
+        return SuccessResponseDto.of(mapToAddressResponseDto(persistedAddress), "Address added successfully.");
     }
 
     @Override
@@ -59,13 +66,10 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
         try {
             parsedAddressId = UUID.fromString(addressId);
         } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Invalid UUID format for address ID: " + addressId
-            );
+            throw new InvalidUuidFormatException("It is not a valid UUID format!");
         }
-        log.info("Updating address {} for user {}", addressId, userEmail);
 
+        log.info("Updating address {} for user {}", parsedAddressId, userEmail);
 
         CustomerEntity customerEntity = getCustomerByUserEmail(userEmail);
         AddressEntity addressEntity = customerEntity.getAddresses().stream()
@@ -79,10 +83,16 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
         addressEntity.setCountry(addressRequestDto.getCountry());
         addressEntity.setPostalCode(addressRequestDto.getPostalCode());
 
-        customerRepository.save(customerEntity);
-        log.info("Successfully updated address with ID {} for user {}", parsedAddressId, userEmail);
+        CustomerEntity savedCustomer = customerRepository.save(customerEntity);
+        AddressEntity persistedAddress = savedCustomer.getAddresses().stream()
+                        .filter(a -> a.getId().equals(parsedAddressId))
+                        .findFirst()
+                        .orElseThrow(() -> new IllegalStateException(
+                                "Updated address not found after save. This should not happen."));
 
-        return SuccessResponseDto.of(mapToAddressResponseDto(addressEntity), "Address updated successfully.");
+        log.info("Successfully updated address with ID {} for user {}", persistedAddress.getId(), userEmail);
+
+        return SuccessResponseDto.of(mapToAddressResponseDto(persistedAddress), "Address updated successfully.");
     }
 
     @Override
@@ -92,18 +102,16 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
         try {
             parsedAddressId = UUID.fromString(addressId);
         } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Invalid UUID format for address ID: " + addressId
-            );
+            throw new InvalidUuidFormatException("It is not a valid UUID format!");
         }
-        log.info("Removing address {} for user {}", addressId, userEmail);
+
+        log.info("Removing address {} for user {}", parsedAddressId, userEmail);
         CustomerEntity customerEntity = getCustomerByUserEmail(userEmail);
 
-        boolean removed = customerEntity.getAddresses().removeIf(a -> a.getId().equals(addressId));
+        boolean removed = customerEntity.getAddresses().removeIf(a -> a.getId().equals(parsedAddressId));
 
         if (!removed) {
-            throw new ResourceNotFoundException("Address not found for ID: " + addressId);
+            throw new ResourceNotFoundException("Address not found for ID: " + parsedAddressId);
         }
 
         if (customerEntity.getAddresses().stream().noneMatch(AddressEntity::isDefault) &&
@@ -112,7 +120,7 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
         }
 
         customerRepository.save(customerEntity);
-        log.info("Successfully removed address with ID {} for user {}", addressId, userEmail);
+        log.info("Successfully removed address with ID {} for user {}", parsedAddressId, userEmail);
 
         return SuccessResponseDto.of(null, "Address removed successfully.");
     }
@@ -124,18 +132,16 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
         try {
             parsedAddressId = UUID.fromString(addressId);
         } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Invalid UUID format for address ID: " + addressId
-            );
+            throw new InvalidUuidFormatException("It is not a valid UUID format!");
         }
-        log.info("Setting default address to {} for user {}", addressId, userEmail);
+
+        log.info("Setting default address to {} for user {}", parsedAddressId, userEmail);
         CustomerEntity customerEntity = getCustomerByUserEmail(userEmail);
 
         AddressEntity newDefault = customerEntity.getAddresses().stream()
-                .filter(a -> a.getId().equals(addressId))
+                .filter(a -> a.getId().equals(parsedAddressId))
                 .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("Address not found for ID: " + addressId));
+                .orElseThrow(() -> new ResourceNotFoundException("Address not found for ID: " + parsedAddressId));
 
         customerEntity.getAddresses().stream()
                 .filter(AddressEntity::isDefault)
@@ -145,7 +151,7 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
         newDefault.setDefault(true);
 
         customerRepository.save(customerEntity);
-        log.info("Successfully set default address to {} for user {}", addressId, userEmail);
+        log.info("Successfully set default address to {} for user {}", parsedAddressId, userEmail);
 
         return SuccessResponseDto.of(null, "Default address has been updated successfully.");
     }

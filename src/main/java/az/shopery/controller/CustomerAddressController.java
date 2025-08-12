@@ -7,7 +7,6 @@ import az.shopery.service.CustomerAddressService;
 import jakarta.validation.Valid;
 import java.security.Principal;
 import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

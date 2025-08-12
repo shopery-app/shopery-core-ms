@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: 12082025_add_column_to_verification_tokens_table
+      author: Jahangir Alisoy
+      changes:
+        - addColumn:
+            tableName: verification_tokens
+            columns:
+              - column:
+                  name: code_last_sent_at
+                  type: TIMESTAMP WITHOUT TIME ZONE

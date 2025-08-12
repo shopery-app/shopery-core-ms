@@ -50,4 +50,6 @@ public class VerificationTokenEntity {
     @Builder.Default
     @Column(name = "attempt_count", nullable = false)
     int attemptCount = 0;
+    @Column(name = "code_last_sent_at")
+    LocalDateTime codeLastSentAt;
 }

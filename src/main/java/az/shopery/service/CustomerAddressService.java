@@ -4,7 +4,6 @@ import az.shopery.model.dto.request.AddressRequestDto;
 import az.shopery.model.dto.response.AddressResponseDto;
 import az.shopery.model.dto.response.SuccessResponseDto;
 import java.util.List;
-import java.util.UUID;
 
 public interface CustomerAddressService {
     SuccessResponseDto<AddressResponseDto> addAddress(String userEmail, AddressRequestDto addressRequestDto);
