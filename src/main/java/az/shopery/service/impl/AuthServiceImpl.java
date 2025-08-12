@@ -1,5 +1,6 @@
 package az.shopery.service.impl;
 
+import az.shopery.handler.exception.CooldownNotMetException;
 import az.shopery.handler.exception.EmailAlreadyExistsException;
 import az.shopery.handler.exception.InvalidCredentialsException;
 import az.shopery.handler.exception.ResourceNotFoundException;
@@ -22,6 +23,7 @@ import az.shopery.service.CustomerService;
 import az.shopery.service.EmailService;
 import az.shopery.utils.enums.VerificationProgress;
 import az.shopery.utils.security.JwtService;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -40,6 +42,7 @@ public class AuthServiceImpl implements AuthService {
 
     private static final int MAX_FAILED_ATTEMPTS = 3;
     private static final int LOCK_DURATION_MINUTES = 10;
+    private static final int COOLDOWN_SECONDS = 60;
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -59,9 +62,8 @@ public class AuthServiceImpl implements AuthService {
         }
 
         VerificationTokenEntity verificationTokenEntity =
-                verificationTokenRepository.findByUserEmail(userRegisterRequestDto
-                .getEmail())
-                .orElse(new VerificationTokenEntity());
+                verificationTokenRepository.findByUserEmail(userRegisterRequestDto.getEmail())
+                        .orElse(new VerificationTokenEntity());
 
         String code = String.valueOf(ThreadLocalRandom.current().nextInt(100000, 1000000));
 
@@ -72,6 +74,7 @@ public class AuthServiceImpl implements AuthService {
         verificationTokenEntity.setUserPassword(passwordEncoder.encode(userRegisterRequestDto.getPassword()));
         verificationTokenEntity.setAttemptCount(0);
         verificationTokenEntity.setProgress(VerificationProgress.PENDING);
+        verificationTokenEntity.setCodeLastSentAt(LocalDateTime.now());
         verificationTokenRepository.save(verificationTokenEntity);
 
         emailService.sendVerificationCode(userRegisterRequestDto.getEmail(), userRegisterRequestDto.getName(), code);
@@ -143,14 +146,21 @@ public class AuthServiceImpl implements AuthService {
             throw new EmailAlreadyExistsException("This account has already been verified.");
         }
 
+        LocalDateTime lastSent = verificationTokenEntity.getCodeLastSentAt();
+        if (lastSent != null) {
+            LocalDateTime cooldownEndTime = lastSent.plusSeconds(COOLDOWN_SECONDS);
+            if (LocalDateTime.now().isBefore(cooldownEndTime)) {
+                long secondsRemaining = Duration.between(LocalDateTime.now(), cooldownEndTime).getSeconds();
+                throw new CooldownNotMetException("Please wait " + secondsRemaining + " seconds before resending the code.");
+            }
+        }
+
         String newCode = String.valueOf(ThreadLocalRandom.current().nextInt(100000, 1000000));
         verificationTokenEntity.setToken(passwordEncoder.encode(newCode));
         verificationTokenEntity.setExpiryDate(LocalDateTime.now().plusMinutes(5));
         verificationTokenEntity.setProgress(VerificationProgress.PENDING);
         verificationTokenEntity.setAttemptCount(0);
-        verificationTokenEntity.setUserName(verificationTokenEntity.getUserName());
-        verificationTokenEntity.setUserEmail(verificationTokenEntity.getUserEmail());
-        verificationTokenEntity.setUserPassword(verificationTokenEntity.getUserPassword());
+        verificationTokenEntity.setCodeLastSentAt(LocalDateTime.now());
         verificationTokenRepository.save(verificationTokenEntity);
 
         emailService.sendVerificationCode(

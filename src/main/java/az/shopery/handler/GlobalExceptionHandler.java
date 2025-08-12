@@ -1,10 +1,6 @@
 package az.shopery.handler;
 
-import az.shopery.handler.exception.EmailAlreadyExistsException;
-import az.shopery.handler.exception.FileStorageException;
-import az.shopery.handler.exception.InvalidCredentialsException;
-import az.shopery.handler.exception.JwtAuthenticationException;
-import az.shopery.handler.exception.ResourceNotFoundException;
+import az.shopery.handler.exception.*;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -44,6 +40,30 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(ex, HttpStatus.FORBIDDEN, request);
     }
 
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(
+            HttpMessageNotReadableException ex, HttpServletRequest request) {
+        return buildErrorResponse(ex, HttpStatus.BAD_REQUEST, request);
+    }
+
+    @ExceptionHandler(InvalidUuidFormatException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidUuidFormatException(
+            InvalidUuidFormatException ex, HttpServletRequest request) {
+        return buildErrorResponse(ex, HttpStatus.BAD_REQUEST, request);
+    }
+
+    @ExceptionHandler(CooldownNotMetException.class)
+    public ResponseEntity<ErrorResponse> handleCooldownNotMetException(
+            CooldownNotMetException ex, HttpServletRequest request) {
+        return buildErrorResponse(ex, HttpStatus.TOO_MANY_REQUESTS, request);
+    }
+
+    @ExceptionHandler(AddressLimitExceededException.class)
+    public ResponseEntity<ErrorResponse> handleAddressLimitExceededException(
+            AddressLimitExceededException ex, HttpServletRequest request) {
+        return buildErrorResponse(ex, HttpStatus.BAD_REQUEST, request);
+    }
+
     @ExceptionHandler(FileStorageException.class)
     public ResponseEntity<ErrorResponse> handleFileStorageException(FileStorageException ex, HttpServletRequest request) {
         if (ex.getMessage().contains("empty file")) {
@@ -71,12 +91,6 @@ public class GlobalExceptionHandler {
         body.put("errors", errors);
 
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(
-            HttpMessageNotReadableException ex, HttpServletRequest request) {
-        return buildErrorResponse(ex, HttpStatus.BAD_REQUEST, request);
     }
 
     @ExceptionHandler(Exception.class)
