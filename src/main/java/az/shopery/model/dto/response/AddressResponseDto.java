@@ -1,13 +1,13 @@
 package az.shopery.model.dto.response;
 
+import az.shopery.utils.enums.AddressType;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
-
-import java.util.UUID;
 
 @Data
 @Builder
@@ -22,4 +22,5 @@ public class AddressResponseDto {
     String country;
     String postalCode;
     boolean isDefault;
+    AddressType addressType;
 }

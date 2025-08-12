@@ -45,6 +45,7 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
                 .city(addressRequestDto.getCity())
                 .country(addressRequestDto.getCountry())
                 .postalCode(addressRequestDto.getPostalCode())
+                .addressType(addressRequestDto.getAddressType())
                 .isDefault(isDefault)
                 .customerEntity(customerEntity)
                 .build();
@@ -82,6 +83,7 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
         addressEntity.setCity(addressRequestDto.getCity());
         addressEntity.setCountry(addressRequestDto.getCountry());
         addressEntity.setPostalCode(addressRequestDto.getPostalCode());
+        addressEntity.setAddressType(addressRequestDto.getAddressType());
 
         CustomerEntity savedCustomer = customerRepository.save(customerEntity);
         AddressEntity persistedAddress = savedCustomer.getAddresses().stream()
@@ -174,6 +176,7 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
                 .city(entity.getCity())
                 .country(entity.getCountry())
                 .postalCode(entity.getPostalCode())
+                .addressType(entity.getAddressType())
                 .isDefault(entity.isDefault())
                 .build();
     }

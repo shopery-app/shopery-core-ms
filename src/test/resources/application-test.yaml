@@ -16,7 +16,11 @@ spring:
 application:
   security:
     jwt:
-      secret-key: dummy-test-secret
+      secret-key: my-secret-key-test
+      access-token:
+        expiration: 10000
+      refresh-token:
+        expiration: 100000
   frontend:
     base-url: http://localhost:4200/
 
