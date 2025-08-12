@@ -1,6 +1,11 @@
 package az.shopery.service;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.eq;
@@ -8,6 +13,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import az.shopery.handler.exception.CooldownNotMetException;
 import az.shopery.handler.exception.EmailAlreadyExistsException;
 import az.shopery.handler.exception.InvalidCredentialsException;
 import az.shopery.handler.exception.ResourceNotFoundException;
@@ -159,6 +165,8 @@ class AuthServiceImplTest {
                     .thenReturn(Optional.of(verificationToken));
             when(passwordEncoder.matches(verificationRequestDto.getCode(), verificationToken.getToken())).thenReturn(true);
             when(userRepository.save(any(UserEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+            when(jwtService.generateToken(any())).thenReturn("accessToken");
+            when(jwtService.generateRefreshToken(any())).thenReturn("refreshToken");
 
             var response = authService.verifyAccount(verificationRequestDto);
 
@@ -240,6 +248,7 @@ class AuthServiceImplTest {
         @Test
         @DisplayName("should resend verification code successfully")
         void resendVerificationCode_success() {
+            verificationToken.setCodeLastSentAt(LocalDateTime.now().minusMinutes(2));
             when(verificationTokenRepository.findByUserEmail(resendCodeRequestDto.getEmail()))
                     .thenReturn(Optional.of(verificationToken));
             when(userRepository.findByEmail(resendCodeRequestDto.getEmail())).thenReturn(Optional.empty());
@@ -254,6 +263,36 @@ class AuthServiceImplTest {
             assertEquals(VerificationProgress.PENDING, tokenCaptor.getValue().getProgress());
 
             verify(emailService).sendVerificationCode(anyString(), anyString(), anyString());
+        }
+
+        @Test
+        @DisplayName("should resend verification code successfully when last sent is null")
+        void resendVerificationCode_success_whenLastSentIsNull() {
+            verificationToken.setCodeLastSentAt(null);
+            when(verificationTokenRepository.findByUserEmail(resendCodeRequestDto.getEmail()))
+                    .thenReturn(Optional.of(verificationToken));
+            when(userRepository.findByEmail(resendCodeRequestDto.getEmail())).thenReturn(Optional.empty());
+            when(passwordEncoder.encode(anyString())).thenReturn("newEncodedCode");
+
+            authService.resendVerificationCode(resendCodeRequestDto);
+
+            ArgumentCaptor<VerificationTokenEntity> tokenCaptor = ArgumentCaptor.forClass(VerificationTokenEntity.class);
+            verify(verificationTokenRepository).save(tokenCaptor.capture());
+            assertEquals("newEncodedCode", tokenCaptor.getValue().getToken());
+            assertNotNull(tokenCaptor.getValue().getCodeLastSentAt());
+
+            verify(emailService).sendVerificationCode(anyString(), anyString(), anyString());
+        }
+
+        @Test
+        @DisplayName("should throw CooldownNotMetException if cooldown is not met")
+        void resendVerificationCode_fail_cooldownNotMet() {
+            verificationToken.setCodeLastSentAt(LocalDateTime.now().minusSeconds(30));
+            when(verificationTokenRepository.findByUserEmail(resendCodeRequestDto.getEmail()))
+                    .thenReturn(Optional.of(verificationToken));
+            when(userRepository.findByEmail(resendCodeRequestDto.getEmail())).thenReturn(Optional.empty());
+
+            assertThrows(CooldownNotMetException.class, () -> authService.resendVerificationCode(resendCodeRequestDto));
         }
 
         @Test
@@ -287,6 +326,7 @@ class AuthServiceImplTest {
             userEntity = new UserEntity();
             userEntity.setEmail("test@example.com");
             userEntity.setPassword("encodedPassword");
+            userEntity.setUserRole(UserRole.CUSTOMER);
             userEntity.setFailedLoginAttempts(0);
             userEntity.setAccountLockedUntil(null);
         }
@@ -297,11 +337,13 @@ class AuthServiceImplTest {
             when(userRepository.findByEmail(loginRequestDto.getEmail())).thenReturn(Optional.of(userEntity));
             when(jwtService.generateToken(any())).thenReturn("accessToken");
             when(jwtService.generateRefreshToken(any())).thenReturn("refreshToken");
+
             var response = authService.login(loginRequestDto);
 
             verify(authenticationManager).authenticate(any());
             verify(jwtService).generateToken(any());
             verify(jwtService).generateRefreshToken(any());
+            verify(userRepository, never()).save(any());
 
             assertEquals("accessToken", response.getData().getAccessToken());
         }
@@ -314,6 +356,7 @@ class AuthServiceImplTest {
 
             assertThrows(InvalidCredentialsException.class, () -> authService.login(loginRequestDto));
             assertEquals(1, userEntity.getFailedLoginAttempts());
+            verify(userRepository).save(userEntity);
         }
 
         @Test
@@ -330,6 +373,7 @@ class AuthServiceImplTest {
             assertNotNull(userEntity.getAccountLockedUntil());
             assertTrue(userEntity.getAccountLockedUntil().isAfter(LocalDateTime.now()));
             assertTrue(exception.getMessage().contains("account has been locked"));
+            verify(userRepository).save(userEntity);
         }
 
         @Test
@@ -359,7 +403,6 @@ class AuthServiceImplTest {
         void login_success_resetsFailedAttempts() {
             userEntity.setFailedLoginAttempts(2);
             userEntity.setAccountLockedUntil(LocalDateTime.now().minusDays(1));
-            userEntity.setUserRole(UserRole.CUSTOMER);
 
             when(userRepository.findByEmail(loginRequestDto.getEmail())).thenReturn(Optional.of(userEntity));
             when(jwtService.generateToken(any())).thenReturn("accessToken");
@@ -378,7 +421,6 @@ class AuthServiceImplTest {
         void login_success_resetsExpiredLock() {
             userEntity.setFailedLoginAttempts(0);
             userEntity.setAccountLockedUntil(LocalDateTime.now().minusDays(1));
-            userEntity.setUserRole(UserRole.CUSTOMER);
 
             when(userRepository.findByEmail(loginRequestDto.getEmail())).thenReturn(Optional.of(userEntity));
             when(jwtService.generateToken(any())).thenReturn("accessToken");
