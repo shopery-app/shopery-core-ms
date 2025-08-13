@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: 15082025_add_date_of_birth_to_users_table
+      author: Jahangir Alisoy
+      preConditions:
+        - onFail: MARK_RAN
+        - tableExists:
+            tableName: users
+        - not:
+            columnExists:
+              tableName: users
+              columnName: date_of_birth
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: date_of_birth
+                  type: DATE
+                  constraints:
+                    nullable: true
