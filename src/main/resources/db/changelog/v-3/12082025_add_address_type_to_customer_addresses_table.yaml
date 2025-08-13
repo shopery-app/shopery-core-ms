@@ -1,13 +1,13 @@
 databaseChangeLog:
   - changeSet:
-      id: 12082025_add_address_type_to_addresses_table
+      id: 12082025_add_address_type_to_customer_addresses_table
       author: Jahangir Alisoy
       changes:
         - addColumn:
-            tableName: addresses
+            tableName: customer_addresses
             columns:
               - column:
                   name: address_type
-                  type: VARCHAR(255)
+                  type: VARCHAR(50)
                   constraints:
                     nullable: false

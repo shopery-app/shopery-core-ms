@@ -1,0 +1,60 @@
+databaseChangeLog:
+  - changeSet:
+      id: 13082025_create_merchant_addresses_table
+      author: Jahangir Alisoy
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            tableExists:
+              tableName: merchant_addresses
+        - tableExists:
+            tableName: merchants
+      changes:
+        - createTable:
+            tableName: merchant_addresses
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: merchant_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_merchant_addresses_merchant
+                    references: merchants(id)
+
+              - column:
+                  name: address_line1
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: address_line2
+                  type: varchar(100)
+              - column:
+                  name: city
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: country
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: postal_code
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: address_type
+                  type: varchar(50)
+              - column:
+                  name: is_default
+                  type: boolean
+                  defaultValueBoolean: false

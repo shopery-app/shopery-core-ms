@@ -1,0 +1,58 @@
+databaseChangeLog:
+  - changeSet:
+      id: 13082025_create_merchants_table
+      author: Jahangir Alisoy
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            tableExists:
+              tableName: merchants
+        - tableExists:
+            tableName: users
+      changes:
+        - createTable:
+            tableName: merchants
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    unique: true
+                    foreignKeyName: fk_merchants_user
+                    references: users(id)
+              - column:
+                  name: first_name
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_name
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: profile_photo_url
+                  type: varchar(2048)
+              - column:
+                  name: phone
+                  type: varchar(30)
+              - column:
+                  name: date_of_birth
+                  type: date
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false

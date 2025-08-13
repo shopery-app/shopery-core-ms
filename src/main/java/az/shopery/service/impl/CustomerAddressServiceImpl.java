@@ -6,7 +6,7 @@ import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.model.dto.request.AddressRequestDto;
 import az.shopery.model.dto.response.AddressResponseDto;
 import az.shopery.model.dto.response.SuccessResponseDto;
-import az.shopery.model.entity.AddressEntity;
+import az.shopery.model.entity.CustomerAddressEntity;
 import az.shopery.model.entity.CustomerEntity;
 import az.shopery.repository.CustomerRepository;
 import az.shopery.service.CustomerAddressService;
@@ -33,13 +33,13 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
         log.info("Adding address to customer profile for user: {}", userEmail);
         CustomerEntity customerEntity = getCustomerByUserEmail(userEmail);
 
-        if (customerEntity.getAddresses().size() >= MAX_ADDRESSES_PER_CUSTOMER) {
+        if (customerEntity.getCustomerAddresses().size() >= MAX_ADDRESSES_PER_CUSTOMER) {
             throw new AddressLimitExceededException("You already have the maximum number of addresses.");
         }
 
-        boolean isDefault = customerEntity.getAddresses().isEmpty();
+        boolean isDefault = customerEntity.getCustomerAddresses().isEmpty();
 
-        AddressEntity addressEntity = AddressEntity.builder()
+        CustomerAddressEntity addressEntity = CustomerAddressEntity.builder()
                 .addressLine1(addressRequestDto.getAddressLine1())
                 .addressLine2(addressRequestDto.getAddressLine2())
                 .city(addressRequestDto.getCity())
@@ -50,10 +50,10 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
                 .customerEntity(customerEntity)
                 .build();
 
-        customerEntity.getAddresses().add(addressEntity);
+        customerEntity.getCustomerAddresses().add(addressEntity);
 
         CustomerEntity savedCustomerEntity = customerRepository.save(customerEntity);
-        AddressEntity persistedAddress = savedCustomerEntity.getAddresses().getLast();
+        CustomerAddressEntity persistedAddress = savedCustomerEntity.getCustomerAddresses().getLast();
         log.info("Successfully added new address with ID {} for user {}", persistedAddress.getId(), userEmail);
 
         return SuccessResponseDto.of(mapToAddressResponseDto(persistedAddress), "Address added successfully.");
@@ -73,7 +73,7 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
         log.info("Updating address {} for user {}", parsedAddressId, userEmail);
 
         CustomerEntity customerEntity = getCustomerByUserEmail(userEmail);
-        AddressEntity addressEntity = customerEntity.getAddresses().stream()
+        CustomerAddressEntity addressEntity = customerEntity.getCustomerAddresses().stream()
                 .filter(a -> a.getId().equals(parsedAddressId))
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("Address not found for ID: " + parsedAddressId));
@@ -86,7 +86,7 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
         addressEntity.setAddressType(addressRequestDto.getAddressType());
 
         CustomerEntity savedCustomer = customerRepository.save(customerEntity);
-        AddressEntity persistedAddress = savedCustomer.getAddresses().stream()
+        CustomerAddressEntity persistedAddress = savedCustomer.getCustomerAddresses().stream()
                         .filter(a -> a.getId().equals(parsedAddressId))
                         .findFirst()
                         .orElseThrow(() -> new IllegalStateException(
@@ -110,15 +110,15 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
         log.info("Removing address {} for user {}", parsedAddressId, userEmail);
         CustomerEntity customerEntity = getCustomerByUserEmail(userEmail);
 
-        boolean removed = customerEntity.getAddresses().removeIf(a -> a.getId().equals(parsedAddressId));
+        boolean removed = customerEntity.getCustomerAddresses().removeIf(a -> a.getId().equals(parsedAddressId));
 
         if (!removed) {
             throw new ResourceNotFoundException("Address not found for ID: " + parsedAddressId);
         }
 
-        if (customerEntity.getAddresses().stream().noneMatch(AddressEntity::isDefault) &&
-                !customerEntity.getAddresses().isEmpty()) {
-            customerEntity.getAddresses().getFirst().setDefault(true);
+        if (customerEntity.getCustomerAddresses().stream().noneMatch(CustomerAddressEntity::isDefault) &&
+                !customerEntity.getCustomerAddresses().isEmpty()) {
+            customerEntity.getCustomerAddresses().getFirst().setDefault(true);
         }
 
         customerRepository.save(customerEntity);
@@ -140,13 +140,13 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
         log.info("Setting default address to {} for user {}", parsedAddressId, userEmail);
         CustomerEntity customerEntity = getCustomerByUserEmail(userEmail);
 
-        AddressEntity newDefault = customerEntity.getAddresses().stream()
+        CustomerAddressEntity newDefault = customerEntity.getCustomerAddresses().stream()
                 .filter(a -> a.getId().equals(parsedAddressId))
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("Address not found for ID: " + parsedAddressId));
 
-        customerEntity.getAddresses().stream()
-                .filter(AddressEntity::isDefault)
+        customerEntity.getCustomerAddresses().stream()
+                .filter(CustomerAddressEntity::isDefault)
                 .findFirst()
                 .ifPresent(oldDefault -> oldDefault.setDefault(false));
 
@@ -162,13 +162,13 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
     @Transactional(readOnly = true)
     public SuccessResponseDto<List<AddressResponseDto>> getAllAddresses(String userEmail) {
         CustomerEntity customerEntity = getCustomerByUserEmail(userEmail);
-        List<AddressResponseDto> addresses = customerEntity.getAddresses().stream()
+        List<AddressResponseDto> addresses = customerEntity.getCustomerAddresses().stream()
                 .map(this::mapToAddressResponseDto)
                 .collect(Collectors.toList());
         return SuccessResponseDto.of(addresses, "All addresses retrieved successfully.");
     }
 
-    private AddressResponseDto mapToAddressResponseDto(AddressEntity entity) {
+    private AddressResponseDto mapToAddressResponseDto(CustomerAddressEntity entity) {
         return AddressResponseDto.builder()
                 .id(entity.getId())
                 .addressLine1(entity.getAddressLine1())

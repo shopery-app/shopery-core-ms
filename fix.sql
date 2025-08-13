@@ -1,6 +1,8 @@
-DROP TABLE IF EXISTS public.addresses;
-
+DROP TABLE IF EXISTS public.customer_addresses;
 DROP TABLE IF EXISTS public.customers;
+
+DROP TABLE IF EXISTS public.merchant_addresses;
+DROP TABLE IF EXISTS public.merchants;
 
 DROP TABLE IF EXISTS public.users;
 DROP TABLE IF EXISTS public.password_reset_tokens;

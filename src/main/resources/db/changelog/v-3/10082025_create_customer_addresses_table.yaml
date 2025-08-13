@@ -1,10 +1,10 @@
 databaseChangeLog:
   - changeSet:
-      id: 10082025_create_addresses_table
+      id: 10082025_create_customer_addresses_table
       author: Jahangir Alisoy
       changes:
         - createTable:
-            tableName: addresses
+            tableName: customer_addresses
             columns:
               - column:
                   name: id
@@ -47,9 +47,9 @@ databaseChangeLog:
                   constraints:
                     nullable: false
         - addForeignKeyConstraint:
-            baseTableName: addresses
+            baseTableName: customer_addresses
             baseColumnNames: customer_id
-            constraintName: fk_addresses_on_customer
+            constraintName: fk_customer_addresses_on_customer
             referencedTableName: customers
             referencedColumnNames: id
             onDelete: CASCADE

@@ -28,15 +28,15 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
-@Table(name = "customers")
+@Table(name = "merchants")
 @EntityListeners(AuditingEntityListener.class)
-@Builder
 @Getter
 @Setter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class CustomerEntity {
+public class MerchantEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @UuidGenerator
@@ -60,6 +60,6 @@ public class CustomerEntity {
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     Instant updatedAt;
-    @OneToMany(mappedBy = "customerEntity", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<CustomerAddressEntity> customerAddresses;
+    @OneToMany(mappedBy = "merchantEntity", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<MerchantAddressEntity> merchantAddresses;
 }
