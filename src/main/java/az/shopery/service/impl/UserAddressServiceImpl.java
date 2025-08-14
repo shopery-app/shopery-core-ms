@@ -1,5 +1,6 @@
 package az.shopery.service.impl;
 
+import az.shopery.handler.exception.AddressLimitExceededException;
 import az.shopery.handler.exception.InvalidUuidFormatException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.model.dto.request.AddressRequestDto;
@@ -30,10 +31,12 @@ public class UserAddressServiceImpl implements UserAddressService {
     @Override
     @Transactional
     public SuccessResponseDto<AddressResponseDto> add(String userEmail, AddressRequestDto addressRequestDto) {
-        UserEntity userEntity = getUserByEmail(userEmail);
+        UserEntity userEntity = userRepository.findAndLockByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + userEmail));
+
         List<UserAddressEntity> existing = userAddressRepository.findAllByUserId(userEntity.getId());
         if (existing.size() >= MAX_ADDRESSES_PER_USER) {
-            throw new InvalidUuidFormatException("You can not add more than " + MAX_ADDRESSES_PER_USER + " addresses.");
+            throw new AddressLimitExceededException("You can not add more than " + MAX_ADDRESSES_PER_USER + " addresses.");
         }
 
         boolean isDefault = existing.isEmpty();
