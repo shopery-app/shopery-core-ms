@@ -1,6 +1,12 @@
 package az.shopery.controller;
 
-import az.shopery.model.dto.request.*;
+import az.shopery.model.dto.request.ForgotPasswordRequestDto;
+import az.shopery.model.dto.request.RefreshTokenRequestDto;
+import az.shopery.model.dto.request.ResendCodeRequestDto;
+import az.shopery.model.dto.request.ResetPasswordRequestDto;
+import az.shopery.model.dto.request.UserLoginRequestDto;
+import az.shopery.model.dto.request.UserRegisterRequestDto;
+import az.shopery.model.dto.request.UserVerificationRequestDto;
 import az.shopery.model.dto.response.SuccessResponseDto;
 import az.shopery.model.dto.response.UserAuthResponseDto;
 import az.shopery.service.AuthService;
@@ -53,5 +59,11 @@ public class AuthController {
     public ResponseEntity<SuccessResponseDto<Void>> resetPassword(
             @Valid @RequestBody ResetPasswordRequestDto resetPasswordRequestDto) {
         return ResponseEntity.ok(authService.resetPassword(resetPasswordRequestDto));
+    }
+
+    @PostMapping("/refresh-token")
+    public ResponseEntity<SuccessResponseDto<UserAuthResponseDto>> refreshToken(
+            @Valid @RequestBody RefreshTokenRequestDto refreshTokenRequestDto) {
+        return ResponseEntity.ok(authService.refreshToken(refreshTokenRequestDto));
     }
 }

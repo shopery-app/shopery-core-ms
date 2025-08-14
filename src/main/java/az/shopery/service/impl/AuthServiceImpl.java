@@ -5,6 +5,7 @@ import az.shopery.handler.exception.EmailAlreadyExistsException;
 import az.shopery.handler.exception.InvalidCredentialsException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.model.dto.request.ForgotPasswordRequestDto;
+import az.shopery.model.dto.request.RefreshTokenRequestDto;
 import az.shopery.model.dto.request.ResendCodeRequestDto;
 import az.shopery.model.dto.request.ResetPasswordRequestDto;
 import az.shopery.model.dto.request.UserLoginRequestDto;
@@ -271,5 +272,42 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         return SuccessResponseDto.of(authResponse, "Login successful.");
+    }
+
+    @Override
+    @Transactional
+    public SuccessResponseDto<UserAuthResponseDto> refreshToken(RefreshTokenRequestDto refreshTokenRequestDto) {
+        String refreshToken = refreshTokenRequestDto.getRefreshToken();
+        String userEmail;
+        try {
+            userEmail = jwtService.extractUsername(refreshToken);
+        } catch (Exception exception) {
+            throw new InvalidCredentialsException("Invalid or expired refresh token.");
+        }
+
+        if (userEmail == null) {
+            throw new InvalidCredentialsException("Invalid or expired refresh token.");
+        }
+
+        var userEntity = this.userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User associated with token not found."));
+
+        var userDetails = User.withUsername(userEntity.getEmail())
+                .password(userEntity.getPassword())
+                .authorities(userEntity.getUserRole().name())
+                .build();
+
+        if (!jwtService.isTokenValid(refreshToken, userDetails)) {
+            throw new InvalidCredentialsException("Refresh token validation failed.");
+        }
+
+        var newAccessToken = jwtService.generateToken(userDetails);
+
+        var userAuthResponseDto = UserAuthResponseDto.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(refreshToken)
+                .build();
+
+        return SuccessResponseDto.of(userAuthResponseDto, "Refresh token refreshed successfully.");
     }
 }

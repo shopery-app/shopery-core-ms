@@ -1,6 +1,7 @@
 package az.shopery.service;
 
 import az.shopery.model.dto.request.ForgotPasswordRequestDto;
+import az.shopery.model.dto.request.RefreshTokenRequestDto;
 import az.shopery.model.dto.request.ResendCodeRequestDto;
 import az.shopery.model.dto.request.ResetPasswordRequestDto;
 import az.shopery.model.dto.request.UserLoginRequestDto;
@@ -16,4 +17,5 @@ public interface AuthService {
     SuccessResponseDto<Void> resendVerificationCode(ResendCodeRequestDto resendCodeRequestDto);
     SuccessResponseDto<Void> forgotPassword(ForgotPasswordRequestDto forgotPasswordRequestDto);
     SuccessResponseDto<Void> resetPassword(ResetPasswordRequestDto resetPasswordRequestDto);
+    SuccessResponseDto<UserAuthResponseDto> refreshToken(RefreshTokenRequestDto refreshTokenRequestDto);
 }
