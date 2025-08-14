@@ -36,4 +36,6 @@ public class PasswordResetTokenEntity {
     LocalDateTime expiryDate;
     @Column(name = "user_email", nullable = false, unique = true)
     String userEmail;
+    @Column(name = "link_last_sent_at")
+    LocalDateTime linkLastSentAt;
 }

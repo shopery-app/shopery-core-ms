@@ -25,7 +25,6 @@ import az.shopery.utils.enums.VerificationProgress;
 import az.shopery.utils.security.JwtService;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
@@ -169,32 +168,31 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public SuccessResponseDto<Void> forgotPassword(ForgotPasswordRequestDto forgotPasswordRequestDto) {
-        var user = userRepository.findByEmail(forgotPasswordRequestDto.getEmail())
+        var userEntity = userRepository.findByEmail(forgotPasswordRequestDto.getEmail())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "User not found with email: " + forgotPasswordRequestDto.getEmail()));
 
-        Optional<PasswordResetTokenEntity> existingTokenOpt = passwordResetTokenRepository
-                .findByUserEmail(user.getEmail());
+        PasswordResetTokenEntity passwordResetTokenEntity = passwordResetTokenRepository
+                .findByUserEmail(userEntity.getEmail()).orElse(new PasswordResetTokenEntity());
 
-        PasswordResetTokenEntity passwordResetToken;
-
-        if (existingTokenOpt.isPresent()) {
-            passwordResetToken = existingTokenOpt.get();
-            passwordResetToken.setToken(UUID.randomUUID().toString());
-            passwordResetToken.setExpiryDate(LocalDateTime.now().plusMinutes(15));
-        } else {
-            passwordResetToken = PasswordResetTokenEntity.builder()
-                    .token(UUID.randomUUID().toString())
-                    .userEmail(user.getEmail())
-                    .expiryDate(LocalDateTime.now().plusMinutes(15))
-                    .build();
+        LocalDateTime lastSent = passwordResetTokenEntity.getLinkLastSentAt();
+        if (lastSent != null) {
+            LocalDateTime cooldownEndTime = lastSent.plusSeconds(COOLDOWN_SECONDS);
+            if (LocalDateTime.now().isBefore(cooldownEndTime)) {
+                long secondsRemaining = Duration.between(LocalDateTime.now(), cooldownEndTime).getSeconds();
+                throw new CooldownNotMetException("Please wait " + secondsRemaining + " seconds before requesting a new password reset link.");
+            }
         }
 
-        passwordResetTokenRepository.save(passwordResetToken);
+        passwordResetTokenEntity.setToken(UUID.randomUUID().toString());
+        passwordResetTokenEntity.setExpiryDate(LocalDateTime.now().plusMinutes(15));
+        passwordResetTokenEntity.setUserEmail(userEntity.getEmail());
+        passwordResetTokenEntity.setLinkLastSentAt(LocalDateTime.now());
+        passwordResetTokenRepository.save(passwordResetTokenEntity);
 
-        emailService.sendPasswordResetLink(user.getEmail(), user.getName(), passwordResetToken.getToken());
-
+        emailService.sendPasswordResetLink(userEntity.getEmail(), userEntity.getName(), passwordResetTokenEntity.getToken());
         return SuccessResponseDto.of("A new password reset link has been sent to your email.");
+
     }
 
     @Override
