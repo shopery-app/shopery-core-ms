@@ -1,0 +1,54 @@
+databaseChangeLog:
+  - changeSet:
+      id: 15082025_create_shops_table
+      author: Jahangir Alisoy
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            tableExists:
+              tableName: shops
+      changes:
+        - createTable:
+            tableName: shops
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    unique: true
+                    foreignKeyName: fk_shops_user
+                    references: users(id)
+              - column:
+                  name: shop_name
+                  type: varchar(40)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: description
+                  type: varchar(2000)
+              - column:
+                  name: total_income
+                  type: decimal(19, 2)
+                  defaultValueNumeric: "0.00"
+              - column:
+                  name: rating
+                  type: double
+                  defaultValueNumeric: "0.0"
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false

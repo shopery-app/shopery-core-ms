@@ -1,5 +1,6 @@
 package az.shopery.controller;
 
+import az.shopery.model.dto.request.ShopCreateRequestDto;
 import az.shopery.model.dto.request.UserProfileUpdateRequestDto;
 import az.shopery.model.dto.response.BecomeMerchantResponseDto;
 import az.shopery.model.dto.response.SuccessResponseDto;
@@ -41,5 +42,13 @@ public class UserController {
     @PreAuthorize("hasAuthority('CUSTOMER')")
     public ResponseEntity<SuccessResponseDto<BecomeMerchantResponseDto>> becomeMerchant(Principal principal) {
         return ResponseEntity.ok(userService.becomeMerchant(principal.getName()));
+    }
+
+    @PostMapping("/shop")
+    @PreAuthorize("hasAuthority('MERCHANT')")
+    public ResponseEntity<SuccessResponseDto<Void>> createMyShop(
+            Principal principal,
+            @Valid @RequestBody ShopCreateRequestDto shopCreateRequestDto) {
+        return ResponseEntity.ok(userService.createMyShop(principal.getName(), shopCreateRequestDto));
     }
 }
