@@ -33,4 +33,9 @@ public class PublicProductController {
     public ResponseEntity<SuccessResponseDto<ProductDetailResponseDto>> getProductById(@PathVariable String productId) {
         return ResponseEntity.ok(productService.getPublicProductById(productId));
     }
+
+    @GetMapping("/top-discounts")
+    public ResponseEntity<SuccessResponseDto<Page<ProductResponseDto>>> getTopDiscountedProducts(Pageable pageable) {
+        return ResponseEntity.ok(productService.getTopDiscountedProducts(pageable));
+    }
 }

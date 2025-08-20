@@ -1,7 +1,6 @@
 package az.shopery.utils.annotation;
 
-import az.shopery.utils.enums.ProductCondition;
-import az.shopery.utils.validation.ProductConditionValidator;
+import az.shopery.utils.validation.EnumValidator;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 import java.lang.annotation.Documented;
@@ -11,12 +10,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Documented
-@Constraint(validatedBy = ProductConditionValidator.class)
+@Constraint(validatedBy = EnumValidator.class)
 @Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ValidProductCondition {
-    String message() default "Invalid product condition provided.";
+public @interface ValidEnum {
+    String message() default "Value is not a valid!";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
-    ProductCondition[] anyOf() default {};
+    Class<? extends Enum<?>> enumClass();
 }
