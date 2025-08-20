@@ -6,6 +6,7 @@ import az.shopery.model.dto.request.ProductCreateRequestDto;
 import az.shopery.model.dto.response.ProductDetailResponseDto;
 import az.shopery.model.dto.response.ProductResponseDto;
 import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.DiscountDto;
 import az.shopery.model.dto.shared.PriceHistoryDto;
 import az.shopery.model.entity.PriceHistoryEntity;
 import az.shopery.model.entity.ProductEntity;
@@ -17,6 +18,9 @@ import az.shopery.repository.UserRepository;
 import az.shopery.service.ProductService;
 import az.shopery.utils.aws.FileStorageService;
 import az.shopery.utils.enums.ProductCategory;
+import az.shopery.utils.enums.ProductCondition;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -61,8 +65,8 @@ public class ProductServiceImpl implements ProductService {
                 .currentPrice(productCreateRequestDto.getPrice())
                 .originalPrice(productCreateRequestDto.getPrice())
                 .stockQuantity(productCreateRequestDto.getStockQuantity())
-                .category(productCreateRequestDto.getCategory())
-                .condition(productCreateRequestDto.getCondition())
+                .category(ProductCategory.valueOf(productCreateRequestDto.getCategory()))
+                .condition(ProductCondition.valueOf(productCreateRequestDto.getCondition()))
                 .priceHistory(new ArrayList<>())
                 .build();
         PriceHistoryEntity initialPrice = PriceHistoryEntity.builder()
@@ -95,8 +99,8 @@ public class ProductServiceImpl implements ProductService {
         productEntity.setProductName(productCreateRequestDto.getProductName());
         productEntity.setDescription(productCreateRequestDto.getDescription());
         productEntity.setStockQuantity(productCreateRequestDto.getStockQuantity());
-        productEntity.setCategory(productCreateRequestDto.getCategory());
-        productEntity.setCondition(productCreateRequestDto.getCondition());
+        productEntity.setCategory(ProductCategory.valueOf(productCreateRequestDto.getCategory()));
+        productEntity.setCondition(ProductCondition.valueOf(productCreateRequestDto.getCondition()));
 
         ProductEntity updatedProductEntity = productRepository.save(productEntity);
         return SuccessResponseDto.of(mapToDetailDto(updatedProductEntity), "Product updated successfully.");
@@ -180,9 +184,19 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public SuccessResponseDto<ProductDetailResponseDto> getPublicProductById(String productId) {
         UUID id = parse(productId);
-        ProductEntity productEntity = productRepository.findById(id)
+        ProductEntity productEntity = productRepository.findByIdWithPriceHistory(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
         return SuccessResponseDto.of(mapToDetailDto(productEntity), "Product retrieved successfully.");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SuccessResponseDto<Page<ProductResponseDto>> getTopDiscountedProducts(Pageable pageable) {
+        Page<ProductEntity> productEntityPage = productRepository.findTopDiscountedProducts(pageable);
+        Page<ProductResponseDto> productResponseDtoPage = productEntityPage.map(this::mapToBriefDto);
+
+        log.info("Top discounted products retrieved successfully for page {} of size {}", productResponseDtoPage.getTotalElements(), pageable.getPageSize());
+        return SuccessResponseDto.of(productResponseDtoPage, "Top discounted products retrieved successfully.");
     }
 
     private ShopEntity getShopForMerchant(String userEmail) {
@@ -196,7 +210,7 @@ public class ProductServiceImpl implements ProductService {
         ProductEntity product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
         if (!product.getShop().getId().equals(shopId)) {
-            throw new SecurityException("Access Denied: Product does not belong to your shop.");
+            throw new ResourceNotFoundException("You do not have product with id: " + productId + " in your shop.");
         }
         return product;
     }
@@ -207,16 +221,18 @@ public class ProductServiceImpl implements ProductService {
                 .productName(product.getProductName())
                 .description(product.getDescription())
                 .imageUrl(generatePresignedUrl(product.getImageUrl()))
-                .currentPrice(product.getCurrentPrice())
-                .previousPrice(product.getOriginalPrice())
+                .discountDto(calculateDiscountFromOriginalPrice(product.getCurrentPrice(), product.getOriginalPrice()))
                 .build();
     }
 
     private ProductDetailResponseDto mapToDetailDto(ProductEntity product) {
-        List<PriceHistoryDto> historyDtos = product.getPriceHistory() != null ?
+        List<PriceHistoryDto> historyDtos = (product.getPriceHistory() != null) ?
                 product.getPriceHistory().stream()
-                        .map(ph -> PriceHistoryDto.builder().price(ph.getPrice()).setAt(ph.getCreatedAt()).build())
-                        .sorted(Comparator.comparing(PriceHistoryDto::getSetAt).reversed())
+                        .sorted(Comparator.comparing(PriceHistoryEntity::getCreatedAt).reversed())
+                        .map(ph -> PriceHistoryDto.builder()
+                                .price(ph.getPrice())
+                                .setAt(ph.getCreatedAt())
+                                .build())
                         .toList() :
                 Collections.emptyList();
 
@@ -225,8 +241,7 @@ public class ProductServiceImpl implements ProductService {
                 .productName(product.getProductName())
                 .description(product.getDescription())
                 .imageUrl(generatePresignedUrl(product.getImageUrl()))
-                .currentPrice(product.getCurrentPrice())
-                .previousPrice(product.getOriginalPrice())
+                .discountDto(calculateDiscountFromOriginalPrice(product.getCurrentPrice(), product.getOriginalPrice()))
                 .stockQuantity(product.getStockQuantity())
                 .category(product.getCategory())
                 .condition(product.getCondition())
@@ -260,5 +275,20 @@ public class ProductServiceImpl implements ProductService {
             log.error("Failed to generate presigned URL for key: {}", fileKey, e);
             return null;
         }
+    }
+
+    private DiscountDto calculateDiscountFromOriginalPrice(BigDecimal currentPrice, BigDecimal originalPrice) {
+        if (originalPrice == null || currentPrice.compareTo(originalPrice) >= 0) {
+            return null;
+        }
+
+        BigDecimal difference = originalPrice.subtract(currentPrice);
+        BigDecimal percentageDecimal = difference.divide(originalPrice, 2, RoundingMode.HALF_UP);
+        int percentage = percentageDecimal.multiply(new BigDecimal("100")).intValue();
+        return DiscountDto.builder()
+                .percentage(percentage)
+                .originalPrice(originalPrice)
+                .currentPrice(currentPrice)
+                .build();
     }
 }

@@ -1,11 +1,11 @@
 package az.shopery.model.dto.request;
 
-import az.shopery.utils.annotation.ValidProductCategory;
-import az.shopery.utils.annotation.ValidProductCondition;
+import az.shopery.utils.annotation.ValidEnum;
 import az.shopery.utils.enums.ProductCategory;
 import az.shopery.utils.enums.ProductCondition;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
@@ -25,15 +25,17 @@ import java.math.BigDecimal;
 public class ProductCreateRequestDto {
     @NotBlank(message = "Product name cannot be empty!")
     @Size(min = 3, max = 255, message = "Product name must be between 3 and 255 characters long.")
+    @Pattern(regexp = "^[A-Za-z0-9]+$", message = "Product name cannot contain special characters!")
     String productName;
     @Size(max = 2000, message = "Maximum product description length exceeded!")
+    @Pattern(regexp = "^[A-Za-z0-9]+$", message = "Product description cannot contain special characters!")
     String description;
-    @NotNull
-    @ValidProductCondition(message = "You must specify a valid product condition (e.g., NEW, USED).")
-    ProductCondition condition;
-    @NotNull
-    @ValidProductCategory(message = "You must specify a valid product category (e.g., HOME, FASHION).")
-    ProductCategory category;
+    @NotBlank(message = "Condition must not be empty.")
+    @ValidEnum(enumClass = ProductCondition.class, message = "Invalid product condition.")
+    String condition;
+    @NotBlank(message = "Category must not be empty.")
+    @ValidEnum(enumClass = ProductCategory.class, message = "Invalid product category.")
+    String category;
     @NotNull
     @Positive
     BigDecimal price;

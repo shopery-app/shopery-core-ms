@@ -1,9 +1,9 @@
 package az.shopery.model.dto.response;
 
+import az.shopery.model.dto.shared.DiscountDto;
 import az.shopery.model.dto.shared.PriceHistoryDto;
 import az.shopery.utils.enums.ProductCategory;
 import az.shopery.utils.enums.ProductCondition;
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -24,8 +24,7 @@ public class ProductDetailResponseDto {
     String productName;
     String description;
     String imageUrl;
-    BigDecimal currentPrice;
-    BigDecimal previousPrice;
+    DiscountDto discountDto;
     Integer stockQuantity;
     ProductCategory category;
     ProductCondition condition;

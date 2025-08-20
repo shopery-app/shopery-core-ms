@@ -18,4 +18,5 @@ public interface ProductService {
     SuccessResponseDto<Page<ProductResponseDto>> searchPublicProducts(ProductCategory category, Pageable pageable);
     SuccessResponseDto<ProductDetailResponseDto> getPublicProductById(String productId);
     SuccessResponseDto<Void> deleteProductImage(String userEmail, String productId);
+    SuccessResponseDto<Page<ProductResponseDto>> getTopDiscountedProducts(Pageable pageable);
 }

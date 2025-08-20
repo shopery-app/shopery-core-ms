@@ -1,7 +1,6 @@
-package az.shopery.model.dto.response;
+package az.shopery.model.dto.shared;
 
-import az.shopery.model.dto.shared.DiscountDto;
-import java.util.UUID;
+import java.math.BigDecimal;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,10 +13,8 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ProductResponseDto {
-    UUID id;
-    String productName;
-    String description;
-    String imageUrl;
-    DiscountDto discountDto;
+public class DiscountDto {
+    int percentage;
+    BigDecimal originalPrice;
+    BigDecimal currentPrice;
 }
