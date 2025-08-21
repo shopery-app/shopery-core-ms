@@ -25,10 +25,10 @@ import java.math.BigDecimal;
 public class ProductCreateRequestDto {
     @NotBlank(message = "Product name cannot be empty!")
     @Size(min = 3, max = 255, message = "Product name must be between 3 and 255 characters long.")
-    @Pattern(regexp = "^[A-Za-z0-9]+$", message = "Product name cannot contain special characters!")
+    @Pattern(regexp = "^[A-Za-z0-9\\s]+$", message = "Product name cannot contain special characters!")
     String productName;
     @Size(max = 2000, message = "Maximum product description length exceeded!")
-    @Pattern(regexp = "^[A-Za-z0-9]+$", message = "Product description cannot contain special characters!")
+    @Pattern(regexp = "^[A-Za-z0-9\\s]+$", message = "Product description cannot contain special characters!")
     String description;
     @NotBlank(message = "Condition must not be empty.")
     @ValidEnum(enumClass = ProductCondition.class, message = "Invalid product condition.")

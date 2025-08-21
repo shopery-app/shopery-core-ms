@@ -209,7 +209,14 @@ public class ProductServiceImpl implements ProductService {
     private ProductEntity getProductForShop(UUID productId, UUID shopId) {
         ProductEntity product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
-        if (!product.getShop().getId().equals(shopId)) {
+        UUID actualShopId;
+        try {
+            actualShopId = product.getShop().getId();
+        } catch (Exception e) {
+            throw new IllegalStateException("Could not determine shop ownership for product: " + productId);
+        }
+
+        if (!actualShopId.equals(shopId)) {
             throw new ResourceNotFoundException("You do not have product with id: " + productId + " in your shop.");
         }
         return product;
