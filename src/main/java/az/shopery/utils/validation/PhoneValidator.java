@@ -6,12 +6,14 @@ import com.google.i18n.phonenumbers.Phonenumber;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
+import java.util.Objects;
+
 public class PhoneValidator implements ConstraintValidator<ValidPhone, String> {
     private final PhoneNumberUtil phoneNumberUtil = PhoneNumberUtil.getInstance();
 
     @Override
     public boolean isValid(String phoneNumber, ConstraintValidatorContext constraintValidatorContext) {
-        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+        if (Objects.isNull(phoneNumber) || phoneNumber.trim().isEmpty()) {
             return true;
         }
 

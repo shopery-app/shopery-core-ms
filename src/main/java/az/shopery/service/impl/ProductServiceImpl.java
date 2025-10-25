@@ -20,11 +20,8 @@ import az.shopery.utils.common.DiscountCalculator;
 import az.shopery.utils.enums.ProductCategory;
 import az.shopery.utils.enums.ProductCondition;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -117,7 +114,7 @@ public class ProductServiceImpl implements ProductService {
         productEntity.setImageUrl(newImageUrlKey);
         productRepository.save(productEntity);
 
-        if (oldImageUrlKey != null) {
+        if (Objects.nonNull(oldImageUrlKey)) {
             fileStorageService.delete(oldImageUrlKey);
         }
 
@@ -134,7 +131,7 @@ public class ProductServiceImpl implements ProductService {
         ProductEntity productEntity = getProductForShop(id, shopEntity.getId());
 
         String imageKey = productEntity.getImageUrl();
-        if (imageKey == null || imageKey.isBlank()) {
+        if (Objects.isNull(imageKey) || imageKey.isBlank()) {
             throw new ResourceNotFoundException("No product image found for product: " + productId);
         }
 
@@ -154,7 +151,7 @@ public class ProductServiceImpl implements ProductService {
 
         String imageKey = productEntity.getImageUrl();
         productRepository.delete(productEntity);
-        if (imageKey != null) {
+        if (Objects.nonNull(imageKey)) {
             fileStorageService.delete(imageKey);
         }
         log.info("Product '{}' deleted successfully for shop {}", productEntity.getProductName(), shopEntity.getShopName());
@@ -172,7 +169,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public SuccessResponseDto<Page<ProductResponseDto>> searchPublicProducts(ProductCategory category, Pageable pageable) {
-        Page<ProductEntity> productEntityPage = (category != null)
+        Page<ProductEntity> productEntityPage = (Objects.nonNull(category))
                 ? productRepository.findByCategory(category, pageable)
                 : productRepository.findAll(pageable);
         return SuccessResponseDto.of(productEntityPage.map(this::mapToBriefDto), "Products retrieved successfully.");
@@ -229,7 +226,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private ProductDetailResponseDto mapToDetailDto(ProductEntity product) {
-        List<PriceHistoryDto> historyDtos = (product.getPriceHistory() != null) ?
+        List<PriceHistoryDto> historyDtos = (Objects.nonNull(product.getPriceHistory())) ?
                 product.getPriceHistory().stream()
                         .sorted(Comparator.comparing(PriceHistoryEntity::getCreatedAt).reversed())
                         .map(ph -> PriceHistoryDto.builder()
@@ -267,7 +264,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private String generatePresignedUrl(String fileKey) {
-        if (fileKey == null || fileKey.isBlank()) {
+        if (Objects.isNull(fileKey) || fileKey.isBlank()) {
             return null;
         }
         try {

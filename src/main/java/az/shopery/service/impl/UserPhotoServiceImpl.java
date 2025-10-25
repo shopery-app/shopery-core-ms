@@ -8,6 +8,8 @@ import az.shopery.repository.UserRepository;
 import az.shopery.service.UserPhotoService;
 import az.shopery.utils.aws.FileStorageService;
 import java.time.Duration;
+import java.util.Objects;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,7 +48,7 @@ public class UserPhotoServiceImpl implements UserPhotoService {
     public SuccessResponseDto<String> generatePresignedUrlForPhoto(String userEmail) {
         UserEntity userEntity = getUserByEmail(userEmail);
         String fileKey = userEntity.getProfilePhotoUrl();
-        if (fileKey == null || fileKey.isBlank()) {
+        if (Objects.isNull(fileKey) || fileKey.isBlank()) {
             throw new ResourceNotFoundException("No profile photo found for user: " + userEmail);
         }
         try {
@@ -68,7 +70,7 @@ public class UserPhotoServiceImpl implements UserPhotoService {
     public SuccessResponseDto<Void> deleteProfilePhoto(String userEmail) {
         UserEntity userEntity = getUserByEmail(userEmail);
         String fileKey = userEntity.getProfilePhotoUrl();
-        if (fileKey == null || fileKey.isBlank()) {
+        if (Objects.isNull(fileKey) || fileKey.isBlank()) {
             throw new ResourceNotFoundException("No profile photo found for user: " + userEmail);
         }
         fileStorageService.delete(fileKey);

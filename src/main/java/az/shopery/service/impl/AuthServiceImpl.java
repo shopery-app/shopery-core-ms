@@ -25,6 +25,7 @@ import az.shopery.utils.enums.VerificationProgress;
 import az.shopery.utils.security.JwtService;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
@@ -143,7 +144,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         LocalDateTime lastSent = verificationTokenEntity.getCodeLastSentAt();
-        if (lastSent != null) {
+        if (Objects.nonNull(lastSent)) {
             LocalDateTime cooldownEndTime = lastSent.plusSeconds(COOLDOWN_SECONDS);
             if (LocalDateTime.now().isBefore(cooldownEndTime)) {
                 long secondsRemaining = Duration.between(LocalDateTime.now(), cooldownEndTime).getSeconds();
@@ -176,7 +177,7 @@ public class AuthServiceImpl implements AuthService {
                 .findByUserEmail(userEntity.getEmail()).orElse(new PasswordResetTokenEntity());
 
         LocalDateTime lastSent = passwordResetTokenEntity.getLinkLastSentAt();
-        if (lastSent != null) {
+        if (Objects.nonNull(lastSent)) {
             LocalDateTime cooldownEndTime = lastSent.plusSeconds(COOLDOWN_SECONDS);
             if (LocalDateTime.now().isBefore(cooldownEndTime)) {
                 long secondsRemaining = Duration.between(LocalDateTime.now(), cooldownEndTime).getSeconds();
@@ -223,7 +224,7 @@ public class AuthServiceImpl implements AuthService {
         UserEntity user = userRepository.findByEmail(userLoginRequestDto.getEmail())
                 .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password."));
 
-        if (user.getAccountLockedUntil() != null && user.getAccountLockedUntil().isAfter(LocalDateTime.now())) {
+        if (Objects.nonNull(user.getAccountLockedUntil()) && user.getAccountLockedUntil().isAfter(LocalDateTime.now())) {
             throw new InvalidCredentialsException("Your account has been locked due to too many " +
                     "failed login attempts. Please try again later.");
         }
@@ -235,7 +236,7 @@ public class AuthServiceImpl implements AuthService {
                             userLoginRequestDto.getPassword()
                     )
             );
-            if (user.getFailedLoginAttempts() > 0 || user.getAccountLockedUntil() != null) {
+            if (user.getFailedLoginAttempts() > 0 || Objects.nonNull(user.getAccountLockedUntil())) {
                 user.setFailedLoginAttempts(0);
                 user.setAccountLockedUntil(null);
                 userRepository.save(user);
@@ -247,7 +248,7 @@ public class AuthServiceImpl implements AuthService {
             }
             userRepository.save(user);
 
-            if (user.getAccountLockedUntil() != null) {
+            if (Objects.nonNull(user.getAccountLockedUntil())) {
                 throw new InvalidCredentialsException("Too many failed login attempts. " +
                         "Your account has been locked for " + LOCK_DURATION_MINUTES + " minutes.");
             } else {
@@ -283,7 +284,7 @@ public class AuthServiceImpl implements AuthService {
             throw new InvalidCredentialsException("Invalid or expired refresh token.");
         }
 
-        if (userEmail == null) {
+        if (Objects.isNull(userEmail)) {
             throw new InvalidCredentialsException("Invalid or expired refresh token.");
         }
 

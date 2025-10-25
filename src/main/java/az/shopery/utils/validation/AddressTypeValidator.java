@@ -5,6 +5,7 @@ import az.shopery.utils.enums.AddressType;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -21,10 +22,10 @@ public class AddressTypeValidator implements ConstraintValidator<ValidAddressTyp
 
     @Override
     public boolean isValid(AddressType value, ConstraintValidatorContext context) {
-        if (value == null) {
+        if (Objects.isNull(value)) {
             return false;
         }
-        if (allowedValues != null && !allowedValues.isEmpty()) {
+        if (Objects.nonNull(allowedValues) && !allowedValues.isEmpty()) {
             return allowedValues.contains(value);
         }
         return true;

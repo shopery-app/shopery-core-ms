@@ -4,12 +4,13 @@ import az.shopery.model.dto.shared.DiscountDto;
 import lombok.experimental.UtilityClass;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Objects;
 
 @UtilityClass
 public class DiscountCalculator {
 
     public static DiscountDto calculateDiscountFromOriginalPrice(BigDecimal currentPrice, BigDecimal originalPrice) {
-        if (originalPrice == null || currentPrice.compareTo(originalPrice) >= 0) {
+        if (Objects.isNull(originalPrice) || currentPrice.compareTo(originalPrice) >= 0) {
             return null;
         }
 

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @Slf4j
@@ -63,7 +64,7 @@ public class ClaudeServiceImpl implements ClaudeService {
                     })
                     .block();
 
-            if (response == null || response.getContent() == null || response.getContent().isEmpty()) {
+            if (Objects.isNull(response) || Objects.isNull(response.getContent()) || response.getContent().isEmpty()) {
                 throw new ExternalServiceException("Empty response from Claude API");
             }
 

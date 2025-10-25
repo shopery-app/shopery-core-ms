@@ -2,6 +2,7 @@ package az.shopery.utils.aws;
 
 import az.shopery.handler.exception.FileStorageException;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
@@ -56,7 +57,7 @@ public class S3StorageServiceImpl implements FileStorageService {
 
     @Override
     public void delete(String fileKey) {
-        if (fileKey == null || fileKey.isBlank()) {
+        if (Objects.isNull(fileKey) || fileKey.isBlank()) {
             return;
         }
         try {

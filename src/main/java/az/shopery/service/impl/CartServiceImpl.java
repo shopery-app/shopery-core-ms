@@ -20,11 +20,7 @@ import az.shopery.service.CartService;
 import az.shopery.service.ProductService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -217,7 +213,7 @@ public class CartServiceImpl implements CartService {
     }
 
     private CartResponseDto mapToDto(CartEntity cartEntity) {
-        if (cartEntity.getItems() == null) {
+        if (Objects.isNull(cartEntity.getItems())) {
             return CartResponseDto.builder()
                     .items(Collections.emptyList())
                     .totalPrice(BigDecimal.ZERO)

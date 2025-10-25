@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;
@@ -38,7 +39,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         final String jwt;
         final String userEmail;
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (Objects.isNull(authHeader) || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -52,15 +53,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        if (Objects.nonNull(userEmail) && Objects.isNull(SecurityContextHolder.getContext().getAuthentication())) {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
             if (jwtService.isTokenValid(jwt, userDetails)) {
                 UserEntity userEntity = userRepository.findByEmail(userEmail).orElse(null);
-                if (userEntity != null && userEntity.getLastRoleChangeAt() != null) {
+                if (Objects.nonNull(userEntity) && Objects.nonNull(userEntity.getLastRoleChangeAt())) {
                     Date tokenIssuedAt = jwtService.extractIssuedAt(jwt);
                     var lastRoleChangeAtTruncated = userEntity.getLastRoleChangeAt().truncatedTo(ChronoUnit.SECONDS);
 
-                    if (tokenIssuedAt != null && tokenIssuedAt.toInstant().isBefore(lastRoleChangeAtTruncated)) {
+                    if (Objects.nonNull(tokenIssuedAt) && tokenIssuedAt.toInstant().isBefore(lastRoleChangeAtTruncated)) {
                         log.warn("Attempt to use an old JWT after rol change for user: {}", userEmail);
                         filterChain.doFilter(request, response);
                         return;
