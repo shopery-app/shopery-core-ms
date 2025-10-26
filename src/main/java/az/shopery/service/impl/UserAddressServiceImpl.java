@@ -1,7 +1,8 @@
 package az.shopery.service.impl;
 
+import static az.shopery.utils.common.UuidUtils.parse;
+
 import az.shopery.handler.exception.AddressLimitExceededException;
-import az.shopery.handler.exception.InvalidUuidFormatException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.model.dto.request.AddressRequestDto;
 import az.shopery.model.dto.response.AddressResponseDto;
@@ -135,14 +136,6 @@ public class UserAddressServiceImpl implements UserAddressService {
 
     private UserEntity getUserByEmail(String userEmail) {
         return userRepository.findByEmail(userEmail).orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + userEmail));
-    }
-
-    private UUID parse(String uuidString) {
-        try {
-            return UUID.fromString(uuidString);
-        } catch (IllegalArgumentException exception) {
-            throw new InvalidUuidFormatException("It is not a valid UUID format!");
-        }
     }
 
     private UserAddressEntity getAddressForUser(String userEmail, String addressId) {

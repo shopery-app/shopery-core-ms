@@ -1,7 +1,8 @@
 package az.shopery.service.impl;
 
+import static az.shopery.utils.common.UuidUtils.parse;
+
 import az.shopery.handler.exception.IllegalRequestException;
-import az.shopery.handler.exception.InvalidUuidFormatException;
 import az.shopery.handler.exception.OwnProductInteractionException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.model.dto.response.CartItemResponseDto;
@@ -20,7 +21,12 @@ import az.shopery.service.CartService;
 import az.shopery.service.ProductService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -242,13 +248,5 @@ public class CartServiceImpl implements CartService {
                 .product(productService.mapToBriefDto(cartItemEntity.getProduct()))
                 .quantity(cartItemEntity.getQuantity())
                 .build();
-    }
-
-    private UUID parse(String uuidString) {
-        try {
-            return UUID.fromString(uuidString);
-        } catch (IllegalArgumentException exception) {
-            throw new InvalidUuidFormatException("It is not a valid UUID format!");
-        }
     }
 }

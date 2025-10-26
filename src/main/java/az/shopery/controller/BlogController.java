@@ -30,7 +30,7 @@ public class BlogController {
         return ResponseEntity.ok(blogService.addMyBlog(principal.getName(), blogRequestDto));
     }
 
-    @PostMapping(value = "/{blogId}", consumes = {"multipart/form-data"})
+    @PostMapping(value = "/{blogId}/image", consumes = {"multipart/form-data"})
     public ResponseEntity<SuccessResponseDto<String>> uploadBlogImage(Principal principal,
                                                                       @PathVariable String blogId,
                                                                       @RequestParam("image") MultipartFile imageFile){

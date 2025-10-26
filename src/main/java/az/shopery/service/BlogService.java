@@ -10,8 +10,8 @@ import java.util.List;
 
 @Service
 public interface BlogService {
-    SuccessResponseDto<List<BlogResponseDto>> getMyBlogs(String email);
-    SuccessResponseDto<BlogResponseDto> addMyBlog(String email, @Valid BlogRequestDto blogRequestDto);
+    SuccessResponseDto<List<BlogResponseDto>> getMyBlogs(String userEmail);
+    SuccessResponseDto<BlogResponseDto> addMyBlog(String userEmail, @Valid BlogRequestDto blogRequestDto);
     SuccessResponseDto<String> updateBlogImage(String userEmail, String blogId, MultipartFile imageFile);
     SuccessResponseDto<String> deleteBlogImage(String userEmail, String blogId);
 }

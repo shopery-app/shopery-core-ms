@@ -1,6 +1,7 @@
 package az.shopery.service.impl;
 
-import az.shopery.handler.exception.InvalidUuidFormatException;
+import static az.shopery.utils.common.UuidUtils.parse;
+
 import az.shopery.handler.exception.OwnProductInteractionException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.model.dto.response.ProductResponseDto;
@@ -130,13 +131,5 @@ public class WishlistServiceImpl implements WishlistService {
         return WishlistResponseDto.builder()
                 .products(productDtos)
                 .build();
-    }
-
-    private UUID parse(String uuidString) {
-        try {
-            return UUID.fromString(uuidString);
-        } catch (IllegalArgumentException exception) {
-            throw new InvalidUuidFormatException("It is not a valid UUID format!");
-        }
     }
 }

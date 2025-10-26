@@ -1,6 +1,7 @@
 package az.shopery.service.impl;
 
-import az.shopery.handler.exception.InvalidUuidFormatException;
+import static az.shopery.utils.common.UuidUtils.parse;
+
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.model.dto.request.BlogRequestDto;
 import az.shopery.model.dto.response.BlogResponseDto;
@@ -10,16 +11,11 @@ import az.shopery.model.entity.UserEntity;
 import az.shopery.repository.BlogRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.BlogService;
-import az.shopery.utils.aws.FileStorageService;
+import az.shopery.utils.aws.S3FileUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.presigner.S3Presigner;
-import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
-import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -32,24 +28,20 @@ public class BlogServiceImpl implements BlogService {
 
     private final BlogRepository blogRepository;
     private final UserRepository userRepository;
-    private final FileStorageService fileStorageService;
-    private final S3Presigner s3Presigner;
-
-    @Value("${aws.s3.bucket-name}")
-    private String bucketName;
+    private final S3FileUtil s3FileUtil;
 
     @Override
-    public SuccessResponseDto<List<BlogResponseDto>> getMyBlogs(String email) {
-        List<BlogEntity> blogs = blogRepository.getBlogsByUserEmail(email);
+    public SuccessResponseDto<List<BlogResponseDto>> getMyBlogs(String userEmail) {
+        List<BlogEntity> blogs = blogRepository.getBlogsByUserEmail(userEmail);
         return SuccessResponseDto.of(blogs.stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList()), "Your blogs retrieved successfully");
     }
 
     @Override
-    public SuccessResponseDto<BlogResponseDto> addMyBlog(String email, BlogRequestDto blogRequestDto) {
-        UserEntity user = userRepository.findByEmail(email).orElseThrow(() ->
-                new IllegalArgumentException("User with email " + email + " not found."));
+    public SuccessResponseDto<BlogResponseDto> addMyBlog(String userEmail, BlogRequestDto blogRequestDto) {
+        UserEntity user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new IllegalArgumentException("User with email " + userEmail + " not found."));
 
         BlogEntity blogEntity = BlogEntity.builder()
                 .user(user)
@@ -74,16 +66,12 @@ public class BlogServiceImpl implements BlogService {
         }
 
         String oldImageUrlKey = blogEntity.getImageUrl();
-        String newImageUrlKey = fileStorageService.store(imageFile);
+        String newImageUrlKey = s3FileUtil.uploadNewFile(oldImageUrlKey, imageFile);
 
         blogEntity.setImageUrl(newImageUrlKey);
         blogRepository.save(blogEntity);
 
-        if(Objects.nonNull(oldImageUrlKey)) {
-            fileStorageService.delete(oldImageUrlKey);
-        }
-
-        String presignedUrl = generatePresignedUrl(newImageUrlKey);
+        String presignedUrl = s3FileUtil.generatePresignedUrl(newImageUrlKey);
         return SuccessResponseDto.of(presignedUrl, "Blog image updated successfully!");
     }
 
@@ -103,13 +91,13 @@ public class BlogServiceImpl implements BlogService {
             throw new ResourceNotFoundException("No blog image found for blog: " + blogId);
         }
 
-        fileStorageService.delete(imageKey);
+        s3FileUtil.deleteFileIfExists(imageKey);
+
         blogEntity.setImageUrl(null);
         blogRepository.save(blogEntity);
         log.info("Blog image deleted successfully for blog {}", blogEntity.getBlogTitle());
         return SuccessResponseDto.of(null, "Blog image deleted successfully!");
     }
-
 
     private BlogResponseDto mapToDto(BlogEntity blogEntity) {
         return BlogResponseDto.builder()
@@ -120,28 +108,5 @@ public class BlogServiceImpl implements BlogService {
                 .createdAt(blogEntity.getCreatedAt())
                 .updatedAt(blogEntity.getUpdatedAt())
                 .build();
-    }
-    private UUID parse(String uuidString) {
-        try {
-            return UUID.fromString(uuidString);
-        } catch (IllegalArgumentException exception) {
-            throw new InvalidUuidFormatException("It is not a valid UUID format!");
-        }
-    }
-    private String generatePresignedUrl(String fileKey) {
-        if (Objects.isNull(fileKey) || fileKey.isBlank()) {
-            return null;
-        }
-        try {
-            GetObjectRequest getObjectRequest = GetObjectRequest.builder().bucket(bucketName).key(fileKey).build();
-            GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
-                    .signatureDuration(Duration.ofMinutes(10))
-                    .getObjectRequest(getObjectRequest)
-                    .build();
-            return s3Presigner.presignGetObject(presignRequest).url().toString();
-        } catch (Exception e) {
-            log.error("Failed to generate presigned URL for key: {}", fileKey, e);
-            return null;
-        }
     }
 }

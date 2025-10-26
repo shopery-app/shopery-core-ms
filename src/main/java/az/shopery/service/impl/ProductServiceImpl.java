@@ -1,6 +1,7 @@
 package az.shopery.service.impl;
 
-import az.shopery.handler.exception.InvalidUuidFormatException;
+import static az.shopery.utils.common.UuidUtils.parse;
+
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.model.dto.request.ProductCreateRequestDto;
 import az.shopery.model.dto.response.ProductDetailResponseDto;
@@ -15,22 +16,17 @@ import az.shopery.repository.ProductRepository;
 import az.shopery.repository.ShopRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.ProductService;
-import az.shopery.utils.aws.FileStorageService;
+import az.shopery.utils.aws.S3FileUtil;
 import az.shopery.utils.common.DiscountCalculator;
 import az.shopery.utils.enums.ProductCategory;
 import az.shopery.utils.enums.ProductCondition;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.presigner.S3Presigner;
-import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -46,11 +42,7 @@ public class ProductServiceImpl implements ProductService {
     private final UserRepository userRepository;
     private final ShopRepository shopRepository;
     private final ProductRepository productRepository;
-    private final FileStorageService fileStorageService;
-    private final S3Presigner s3Presigner;
-
-    @Value("${aws.s3.bucket-name}")
-    private String bucketName;
+    private final S3FileUtil s3FileUtil;
 
     @Override
     @Transactional
@@ -113,16 +105,12 @@ public class ProductServiceImpl implements ProductService {
         ProductEntity productEntity = getProductForShop(id, shopEntity.getId());
 
         String oldImageUrlKey = productEntity.getImageUrl();
-        String newImageUrlKey = fileStorageService.store(imageFile);
+        String newImageUrlKey = s3FileUtil.uploadNewFile(oldImageUrlKey, imageFile);
 
         productEntity.setImageUrl(newImageUrlKey);
         productRepository.save(productEntity);
 
-        if (Objects.nonNull(oldImageUrlKey)) {
-            fileStorageService.delete(oldImageUrlKey);
-        }
-
-        String presignedUrl = generatePresignedUrl(newImageUrlKey);
+        String presignedUrl = s3FileUtil.generatePresignedUrl(newImageUrlKey);
         log.info("Product image updated successfully for product {}", productEntity.getProductName());
         return SuccessResponseDto.of(presignedUrl, "Product image updated successfully.");
     }
@@ -139,7 +127,7 @@ public class ProductServiceImpl implements ProductService {
             throw new ResourceNotFoundException("No product image found for product: " + productId);
         }
 
-        fileStorageService.delete(imageKey);
+        s3FileUtil.deleteFileIfExists(imageKey);
         productEntity.setImageUrl(null);
         productRepository.save(productEntity);
         log.info("Product image deleted successfully for product {}", productEntity.getProductName());
@@ -155,9 +143,7 @@ public class ProductServiceImpl implements ProductService {
 
         String imageKey = productEntity.getImageUrl();
         productRepository.delete(productEntity);
-        if (Objects.nonNull(imageKey)) {
-            fileStorageService.delete(imageKey);
-        }
+        s3FileUtil.deleteFileIfExists(imageKey);
         log.info("Product '{}' deleted successfully for shop {}", productEntity.getProductName(), shopEntity.getShopName());
         return SuccessResponseDto.of(null, "Product deleted successfully.");
     }
@@ -221,7 +207,7 @@ public class ProductServiceImpl implements ProductService {
                 .id(productEntity.getId())
                 .productName(productEntity.getProductName())
                 .description(productEntity.getDescription())
-                .imageUrl(generatePresignedUrl(productEntity.getImageUrl()))
+                .imageUrl(s3FileUtil.generatePresignedUrl(productEntity.getImageUrl()))
                 .currentPrice(productEntity.getCurrentPrice())
                 .discountDto(DiscountCalculator.calculateDiscountFromOriginalPrice(
                         productEntity.getCurrentPrice(),
@@ -244,7 +230,7 @@ public class ProductServiceImpl implements ProductService {
                 .id(product.getId())
                 .productName(product.getProductName())
                 .description(product.getDescription())
-                .imageUrl(generatePresignedUrl(product.getImageUrl()))
+                .imageUrl(s3FileUtil.generatePresignedUrl(product.getImageUrl()))
                 .currentPrice(product.getCurrentPrice())
                 .discountDto(DiscountCalculator.calculateDiscountFromOriginalPrice(
                         product.getCurrentPrice(),
@@ -257,30 +243,5 @@ public class ProductServiceImpl implements ProductService {
                 .priceHistory(historyDtos)
                 .createdAt(product.getCreatedAt())
                 .build();
-    }
-
-    private UUID parse(String uuidString) {
-        try {
-            return UUID.fromString(uuidString);
-        } catch (IllegalArgumentException exception) {
-            throw new InvalidUuidFormatException("It is not a valid UUID format!");
-        }
-    }
-
-    private String generatePresignedUrl(String fileKey) {
-        if (Objects.isNull(fileKey) || fileKey.isBlank()) {
-            return null;
-        }
-        try {
-            GetObjectRequest getObjectRequest = GetObjectRequest.builder().bucket(bucketName).key(fileKey).build();
-            GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
-                    .signatureDuration(Duration.ofMinutes(10))
-                    .getObjectRequest(getObjectRequest)
-                    .build();
-            return s3Presigner.presignGetObject(presignRequest).url().toString();
-        } catch (Exception e) {
-            log.error("Failed to generate presigned URL for key: {}", fileKey, e);
-            return null;
-        }
     }
 }

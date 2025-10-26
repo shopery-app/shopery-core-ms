@@ -1,5 +1,8 @@
 package az.shopery.service.impl;
 
+import static az.shopery.utils.common.NameMapperHelper.first;
+import static az.shopery.utils.common.NameMapperHelper.last;
+
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.model.dto.request.ShopCreateRequestDto;
 import az.shopery.model.dto.request.UserProfileUpdateRequestDto;
@@ -15,7 +18,6 @@ import az.shopery.utils.enums.UserRole;
 import az.shopery.utils.security.JwtService;
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.User;
@@ -135,16 +137,5 @@ public class UserServiceImpl implements UserService {
     private UserEntity getUserByEmail(String userEmail) {
         return userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + userEmail));
-    }
-
-    private String first(String name) {
-        var parts = Arrays.stream(name.trim().split("\\s+")).toList();
-        return parts.isEmpty() ? "" : parts.getFirst();
-    }
-
-    private String last(String name) {
-        var parts = Arrays.stream(name.trim().split("\\s+")).toList();
-        if (parts.size() <= 1) return "";
-        return String.join(" ", parts.subList(1, parts.size()));
     }
 }
