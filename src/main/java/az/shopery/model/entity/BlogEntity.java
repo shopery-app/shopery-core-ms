@@ -2,6 +2,7 @@ package az.shopery.model.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -17,11 +18,15 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.UuidGenerator;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.Instant;
 import java.util.UUID;
 
 @Entity
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
 @AllArgsConstructor
@@ -42,8 +47,10 @@ public class BlogEntity {
     String content;
     @Column(name = "image_url", nullable = false)
     String imageUrl;
+    @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     Instant createdAt;
+    @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     Instant updatedAt;
 }

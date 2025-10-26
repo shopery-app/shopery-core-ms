@@ -5,7 +5,6 @@ import az.shopery.model.dto.response.BlogResponseDto;
 import az.shopery.model.dto.response.SuccessResponseDto;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 
 @Service
