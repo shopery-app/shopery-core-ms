@@ -1,7 +1,6 @@
 package az.shopery.service.impl;
 
 import static az.shopery.utils.common.UuidUtils.parse;
-
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.model.dto.request.BlogRequestDto;
 import az.shopery.model.dto.response.BlogResponseDto;
@@ -12,6 +11,7 @@ import az.shopery.repository.BlogRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.BlogService;
 import az.shopery.utils.aws.S3FileUtil;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -39,6 +39,34 @@ public class BlogServiceImpl implements BlogService {
     }
 
     @Override
+    public SuccessResponseDto<List<BlogResponseDto>> getAllBlogs() {
+        List<BlogEntity> blogs = blogRepository.findAll();
+        return SuccessResponseDto.of(
+                blogs.stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList()), "All blogs retrieved successfully!");
+    }
+
+    @Override
+    @Transactional
+    public SuccessResponseDto<Void> deleteMyBlog(String userEmail, String blogId) {
+        UUID id = parse(blogId);
+        UserEntity user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User with this email " + userEmail + " not found."));
+        BlogEntity blogEntity = blogRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Blog with this id " + id + " not found."));
+
+        if(!blogEntity.getUser().getEmail().equals(userEmail)) {
+            throw new ResourceNotFoundException("Blog not found with id: " + id);
+        }
+
+        String imageKey = blogEntity.getImageUrl();
+        s3FileUtil.deleteFileIfExists(imageKey);
+        blogRepository.deleteById(id);
+        return SuccessResponseDto.of("Blog deleted successfully!");
+    }
+
+    @Override
     public SuccessResponseDto<BlogResponseDto> addMyBlog(String userEmail, BlogRequestDto blogRequestDto) {
         UserEntity user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new IllegalArgumentException("User with email " + userEmail + " not found."));
@@ -58,11 +86,11 @@ public class BlogServiceImpl implements BlogService {
     public SuccessResponseDto<String> updateBlogImage(String userEmail, String blogId, MultipartFile imageFile) {
         UUID id = parse(blogId);
         BlogEntity blogEntity = blogRepository.findById(id)
-                        .orElseThrow(() -> new ResourceNotFoundException("Blog with this id" + id + " not found."));
+                        .orElseThrow(() -> new ResourceNotFoundException("Blog with this id " + id + " not found."));
         UserEntity user = userRepository.findByEmail(userEmail)
                         .orElseThrow(() -> new ResourceNotFoundException("User with email " + userEmail + " not found."));
         if(!blogEntity.getUser().getId().equals(user.getId())) {
-            throw new ResourceNotFoundException("Blog not found with id " + id);
+            throw new ResourceNotFoundException("Blog not found with id: " + id);
         }
 
         String oldImageUrlKey = blogEntity.getImageUrl();
@@ -79,13 +107,13 @@ public class BlogServiceImpl implements BlogService {
     public SuccessResponseDto<String> deleteBlogImage(String userEmail, String blogId) {
         UUID id = parse(blogId);
         BlogEntity blogEntity = blogRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Blog with this id" + id + " not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Blog with this id " + id + " not found."));
         UserEntity user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User with email " + userEmail + " not found."));
         String imageKey = blogEntity.getImageUrl();
 
         if(!blogEntity.getUser().getId().equals(user.getId())) {
-            throw new ResourceNotFoundException("Blog not found with id " + id);
+            throw new ResourceNotFoundException("Blog not found with id: " + id);
         }
         if(Objects.isNull(imageKey) || imageKey.isBlank()) {
             throw new ResourceNotFoundException("No blog image found for blog: " + blogId);

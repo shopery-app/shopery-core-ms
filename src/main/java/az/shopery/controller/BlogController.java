@@ -42,4 +42,9 @@ public class BlogController {
                                                                       @PathVariable String blogId) {
         return ResponseEntity.ok(blogService.deleteBlogImage(principal.getName(), blogId));
     }
+
+    @DeleteMapping("/{blogId}")
+    public ResponseEntity<SuccessResponseDto<Void>> deleteMyBlog(Principal principal, @PathVariable String blogId) {
+        return ResponseEntity.ok(blogService.deleteMyBlog(principal.getName(), blogId));
+    }
 }
