@@ -23,6 +23,13 @@ public class BlogController {
         return ResponseEntity.ok(blogService.getMyBlogs(principal.getName()));
     }
 
+    @GetMapping("/{blogId}")
+    public ResponseEntity<SuccessResponseDto<BlogResponseDto>> getMyBlog(Principal principal,
+                                                                         @PathVariable String blogId) {
+
+        return ResponseEntity.ok(blogService.getMyBlog(principal.getName(), blogId));
+    }
+
     @PostMapping
     public ResponseEntity<SuccessResponseDto<BlogResponseDto>> addMyBlog(
             Principal principal,
@@ -44,7 +51,15 @@ public class BlogController {
     }
 
     @DeleteMapping("/{blogId}")
-    public ResponseEntity<SuccessResponseDto<Void>> deleteMyBlog(Principal principal, @PathVariable String blogId) {
+    public ResponseEntity<SuccessResponseDto<Void>> deleteMyBlog(Principal principal,
+                                                                 @PathVariable String blogId) {
         return ResponseEntity.ok(blogService.deleteMyBlog(principal.getName(), blogId));
+    }
+
+    @PutMapping("/{blogId}")
+    public ResponseEntity<SuccessResponseDto<BlogResponseDto>> updateMyBlog(Principal principal,
+                                                                            @RequestBody BlogRequestDto blogRequestDto,
+                                                                            @PathVariable String blogId) {
+        return ResponseEntity.ok(blogService.updateMyBlog(principal.getName(), blogRequestDto, blogId));
     }
 }

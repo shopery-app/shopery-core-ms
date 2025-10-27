@@ -16,4 +16,6 @@ public interface BlogService {
     SuccessResponseDto<String> deleteBlogImage(String userEmail, String blogId);
     SuccessResponseDto<List<BlogResponseDto>> getAllBlogs();
     SuccessResponseDto<Void> deleteMyBlog(String userEmail, String blogId);
+    SuccessResponseDto<BlogResponseDto> updateMyBlog(String userEmail, BlogRequestDto blogRequestDto, String blogId);
+    SuccessResponseDto<BlogResponseDto> getMyBlog(String userEmail, String blogId);
 }
