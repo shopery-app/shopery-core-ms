@@ -16,12 +16,12 @@ import az.shopery.utils.aws.S3FileUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,11 +34,9 @@ public class BlogServiceImpl implements BlogService {
 
     @Override
     @Transactional
-    public SuccessResponseDto<List<BlogResponseDto>> getMyBlogs(String userEmail) {
-        List<BlogEntity> blogs = blogRepository.getBlogsByUserEmail(userEmail);
-        return SuccessResponseDto.of(blogs.stream()
-                .map(this::mapToDto)
-                .collect(Collectors.toList()), "Your blogs retrieved successfully!");
+    public SuccessResponseDto<Page<BlogResponseDto>> getMyBlogs(String userEmail, Pageable pageable) {
+        Page<BlogEntity> blogs = blogRepository.getBlogsByUserEmail(userEmail, pageable);
+        return SuccessResponseDto.of(blogs.map(this::mapToDto), "Your blogs retrieved successfully!");
     }
 
     @Override
@@ -50,12 +48,9 @@ public class BlogServiceImpl implements BlogService {
 
     @Override
     @Transactional
-    public SuccessResponseDto<List<BlogResponseDto>> getAllBlogs() {
-        List<BlogEntity> blogs = blogRepository.findAll();
-        return SuccessResponseDto.of(
-                blogs.stream()
-                        .map(this::mapToDto)
-                        .collect(Collectors.toList()), "All blogs retrieved successfully!");
+    public SuccessResponseDto<Page<BlogResponseDto>> getAllBlogs(Pageable pageable) {
+        Page<BlogEntity> blogs = blogRepository.findAll(pageable);
+        return SuccessResponseDto.of(blogs.map(this::mapToDto), "All blogs retrieved successfully!");
     }
 
     @Override
@@ -123,8 +118,7 @@ public class BlogServiceImpl implements BlogService {
 
         blogEntity.setBlogTitle(blogRequestDto.getTitle());
         blogEntity.setContent(blogRequestDto.getContent());
-        BlogEntity updatedBlogEntity = blogRepository.save(blogEntity);
-
+        BlogEntity updatedBlogEntity = blogRepository.saveAndFlush(blogEntity);
         return SuccessResponseDto.of(mapToDto(updatedBlogEntity), "Blog updated successfully!");
     }
 

@@ -6,11 +6,12 @@ import az.shopery.model.dto.response.SuccessResponseDto;
 import az.shopery.service.BlogService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.security.Principal;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/users/me/blogs")
@@ -20,21 +21,20 @@ public class BlogController {
     private final BlogService blogService;
 
     @GetMapping
-    public ResponseEntity<SuccessResponseDto<List<BlogResponseDto>>> getMyBlogs(Principal principal) {
-        return ResponseEntity.ok(blogService.getMyBlogs(principal.getName()));
+    public ResponseEntity<SuccessResponseDto<Page<BlogResponseDto>>> getMyBlogs(Principal principal,
+                                                                                Pageable pageable) {
+        return ResponseEntity.ok(blogService.getMyBlogs(principal.getName(), pageable));
     }
 
     @GetMapping("/{blogId}")
     public ResponseEntity<SuccessResponseDto<BlogResponseDto>> getMyBlog(Principal principal,
                                                                          @PathVariable String blogId) {
-
         return ResponseEntity.ok(blogService.getMyBlog(principal.getName(), blogId));
     }
 
     @PostMapping
-    public ResponseEntity<SuccessResponseDto<BlogResponseDto>> addMyBlog(
-            Principal principal,
-            @RequestBody @Valid BlogRequestDto blogRequestDto) {
+    public ResponseEntity<SuccessResponseDto<BlogResponseDto>> addMyBlog(Principal principal,
+                                                                         @RequestBody @Valid BlogRequestDto blogRequestDto) {
         return ResponseEntity.ok(blogService.addMyBlog(principal.getName(), blogRequestDto));
     }
 
