@@ -242,6 +242,10 @@ public class AuthServiceImpl implements AuthService {
                 userRepository.save(user);
             }
         } catch (Exception exception) {
+            if (Objects.nonNull(user.getAccountLockedUntil()) && user.getAccountLockedUntil().isBefore(LocalDateTime.now())) {
+                user.setFailedLoginAttempts(0);
+                user.setAccountLockedUntil(null);
+            }
             user.setFailedLoginAttempts(user.getFailedLoginAttempts() + 1);
             if (user.getFailedLoginAttempts() >= MAX_FAILED_ATTEMPTS) {
                 user.setAccountLockedUntil(LocalDateTime.now().plusMinutes(LOCK_DURATION_MINUTES));
