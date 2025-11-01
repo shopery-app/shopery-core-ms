@@ -8,4 +8,5 @@ import java.util.UUID;
 public interface BlogLikeRepository extends JpaRepository<BlogLikeEntity, UUID> {
     void deleteByUserEmailAndBlog(String userEmail, BlogEntity blog);
     boolean existsByUserEmailAndBlog(String userEmail, BlogEntity blog);
+    Integer countByBlog(BlogEntity blog);
 }

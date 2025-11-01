@@ -28,10 +28,10 @@ public class BlogLikeServiceImpl implements BlogLikeService {
     @Override
     public SuccessResponseDto<Void> toggleBlogLike(String userEmail, String blogId) {
         UUID id = parse(blogId);
-        BlogEntity blog = blogRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Blog with id " + id + " not found."));
         UserEntity user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User with email " + userEmail + " not found."));
+        BlogEntity blog = blogRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Blog with id " + id + " not found."));
 
         if(blogLikeRepository.existsByUserEmailAndBlog(userEmail, blog)){
             blogLikeRepository.deleteByUserEmailAndBlog(userEmail, blog);

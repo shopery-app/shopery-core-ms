@@ -6,13 +6,17 @@ import az.shopery.model.dto.response.BecomeMerchantResponseDto;
 import az.shopery.model.dto.response.SuccessResponseDto;
 import az.shopery.model.dto.response.UserProfileResponseDto;
 import az.shopery.service.UserService;
-import az.shopery.service.BlogLikeService;
 import jakarta.validation.Valid;
-import java.security.Principal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/v1/users/me")
@@ -21,7 +25,6 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
-    private final BlogLikeService blogLikeService;
 
     @GetMapping("/profile")
     public ResponseEntity<SuccessResponseDto<UserProfileResponseDto>> getMyProfile(Principal principal) {
@@ -47,12 +50,5 @@ public class UserController {
             Principal principal,
             @Valid @RequestBody ShopCreateRequestDto shopCreateRequestDto) {
         return ResponseEntity.ok(userService.createMyShop(principal.getName(), shopCreateRequestDto));
-    }
-
-    @PostMapping("/blogs/{blogId}/like")
-    public ResponseEntity<SuccessResponseDto<Void>> likeBlog(
-            Principal principal,
-            @PathVariable String blogId) {
-        return ResponseEntity.ok(blogLikeService.toggleBlogLike(principal.getName(), blogId));
     }
 }

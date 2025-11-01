@@ -8,6 +8,7 @@ import az.shopery.model.dto.response.SuccessResponseDto;
 import az.shopery.model.dto.shared.AuthorDto;
 import az.shopery.model.entity.BlogEntity;
 import az.shopery.model.entity.UserEntity;
+import az.shopery.repository.BlogLikeRepository;
 import az.shopery.repository.BlogRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.BlogService;
@@ -28,6 +29,7 @@ import java.util.UUID;
 public class BlogServiceImpl implements BlogService {
 
     private final BlogRepository blogRepository;
+    private final BlogLikeRepository blogLikeRepository;
     private final UserRepository userRepository;
     private final S3FileUtil s3FileUtil;
 
@@ -143,9 +145,7 @@ public class BlogServiceImpl implements BlogService {
                 .imageUrl(blogEntity.getImageUrl())
                 .createdAt(blogEntity.getCreatedAt())
                 .updatedAt(blogEntity.getUpdatedAt())
-                .likeCount(blogEntity.getBlogLikes() != null
-                        ? blogEntity.getBlogLikes().size()
-                        : 0)
+                .likeCount(blogLikeRepository.countByBlog(blogEntity))
                 .author(AuthorDto.builder()
                         .name(blogEntity.getUser().getName())
                         .profilePhotoUrl(blogEntity.getUser().getProfilePhotoUrl())
