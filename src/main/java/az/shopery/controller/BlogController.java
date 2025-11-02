@@ -3,13 +3,22 @@ package az.shopery.controller;
 import az.shopery.model.dto.request.BlogRequestDto;
 import az.shopery.model.dto.response.BlogResponseDto;
 import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.service.BlogLikeService;
 import az.shopery.service.BlogService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import java.security.Principal;
 
@@ -19,6 +28,7 @@ import java.security.Principal;
 public class BlogController {
 
     private final BlogService blogService;
+    private final BlogLikeService blogLikeService;
 
     @GetMapping
     public ResponseEntity<SuccessResponseDto<Page<BlogResponseDto>>> getMyBlogs(Principal principal,
@@ -62,5 +72,12 @@ public class BlogController {
                                                                             @RequestBody @Valid BlogRequestDto blogRequestDto,
                                                                             @PathVariable String blogId) {
         return ResponseEntity.ok(blogService.updateMyBlog(principal.getName(), blogRequestDto, blogId));
+    }
+
+    @PostMapping("/blogs/{blogId}/like")
+    public ResponseEntity<SuccessResponseDto<Void>> likeBlog(
+            Principal principal,
+            @PathVariable String blogId) {
+        return ResponseEntity.ok(blogLikeService.toggleBlogLike(principal.getName(), blogId));
     }
 }
