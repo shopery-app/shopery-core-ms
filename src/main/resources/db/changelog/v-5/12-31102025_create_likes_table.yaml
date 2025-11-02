@@ -1,0 +1,28 @@
+databaseChangeLog:
+  - changeSet:
+      id: 25102025_create_likes_table
+      author: Nijat Alizada
+      changes:
+        - createTable:
+            tableName: blog_likes
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: blog_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_likes_blog
+                    references: blogs(id)
+              - column:
+                  name: user_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_likes_user
+                    references: users(id)
