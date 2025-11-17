@@ -19,6 +19,7 @@ import az.shopery.repository.ProductRepository;
 import az.shopery.repository.ShopRepository;
 import az.shopery.repository.UserAddressRepository;
 import az.shopery.repository.UserRepository;
+import az.shopery.service.EmailService;
 import az.shopery.service.OrderService;
 import az.shopery.utils.enums.OrderStatus;
 import java.math.BigDecimal;
@@ -46,6 +47,7 @@ public class OrderServiceImpl implements OrderService {
     private final ShopRepository shopRepository;
     private final UserAddressRepository userAddressRepository;
     private final OrderRepository orderRepository;
+    private final EmailService emailService;
 
     @Override
     @Transactional
@@ -144,6 +146,8 @@ public class OrderServiceImpl implements OrderService {
                 .sorted(Comparator.comparing(OrderEntity::getCreatedAt).reversed())
                 .map(this::map)
                 .toList();
+
+        emailService.sendOrderConfirmation(user.getEmail(), user.getName(), createdOrders);
 
         log.info("Created {} order(s) for user {} from cart.", dtos.size(), userEmail);
         return SuccessResponseDto.of(dtos, "Order(s) placed successfully.");

@@ -1,5 +1,6 @@
 package az.shopery.service.impl;
 
+import az.shopery.model.entity.OrderEntity;
 import az.shopery.service.EmailService;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,8 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -67,6 +70,29 @@ public class EmailServiceImpl implements EmailService {
             log.info("Password reset link sent to {}", to);
         } catch (Exception e) {
             log.error("Error sending password reset link to {}", to, e);
+        }
+    }
+
+    @Override
+    public void sendOrderConfirmation(String to, String name, List<OrderEntity> orders) {
+        try {
+            Context context = new Context();
+            context.setVariable("userName", name);
+            context.setVariable("orders", orders);
+
+            String htmlContent = templateEngine.process("order-confirmation-email", context);
+
+            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(to);
+            helper.setSubject("Your Shopery Order Confirmation");
+            helper.setText(htmlContent, true);
+
+            javaMailSender.send(message);
+            log.info("Order confirmation email sent to {}", to);
+        } catch (Exception e) {
+            log.error("Error sending order confirmation to {}", to, e);
         }
     }
 }
