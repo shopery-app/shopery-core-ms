@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 15122025_modify_users_table
+      author: Nijat Alizada
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: password_changed_at
+                  type: timestamp
+      rollback:
+        - dropColumn:
+            columnName: password_changed_at
+            tableName: users

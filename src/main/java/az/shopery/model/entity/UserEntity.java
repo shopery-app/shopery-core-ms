@@ -76,6 +76,8 @@ public class UserEntity {
     Date dateOfBirth;
     @Column(name = "last_role_change_at")
     Instant lastRoleChangeAt;
+    @Column(name = "password_changed_at")
+    Instant passwordChangedAt;
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     WishlistEntity wishlist;
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

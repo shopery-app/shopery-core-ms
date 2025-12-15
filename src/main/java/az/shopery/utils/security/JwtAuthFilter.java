@@ -67,6 +67,16 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                         return;
                     }
                 }
+                if (Objects.nonNull(userEntity) && Objects.nonNull(userEntity.getPasswordChangedAt())) {
+                    Date tokenIssuedAt = jwtService.extractIssuedAt(jwt);
+                    var lastPasswordChangeAtTruncated = userEntity.getPasswordChangedAt().truncatedTo(ChronoUnit.SECONDS);
+
+                    if (Objects.nonNull(tokenIssuedAt) && tokenIssuedAt.toInstant().isBefore(lastPasswordChangeAtTruncated)) {
+                        log.warn("Attempt to use an old JWT after password change for user: {}", userEmail);
+                        filterChain.doFilter(request, response);
+                        return;
+                    }
+                }
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails,
                         null,
