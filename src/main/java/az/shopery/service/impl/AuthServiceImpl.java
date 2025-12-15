@@ -161,7 +161,7 @@ public class AuthServiceImpl implements AuthService {
         verificationTokenRepository.save(verificationTokenEntity);
 
         emailService.sendVerificationCode(
-                verificationTokenEntity.getUserEmail(), verificationTokenEntity.getUserName(), newCode, true);
+                verificationTokenEntity.getUserEmail(), verificationTokenEntity.getUserName(), newCode, Boolean.TRUE);
 
         return SuccessResponseDto.of("A new verification code has been sent to your email.");
     }

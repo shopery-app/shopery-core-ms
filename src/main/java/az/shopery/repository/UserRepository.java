@@ -19,5 +19,5 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     @Query("SELECT u FROM UserEntity u WHERE u.email = :email")
     Optional<UserEntity> findAndLockByEmail(String email);
     Page<UserEntity> findAllByUserRole(UserRole userRole, Pageable pageable);
-    boolean existsByEmail(String email);
+    Boolean existsByEmail(String email);
 }
