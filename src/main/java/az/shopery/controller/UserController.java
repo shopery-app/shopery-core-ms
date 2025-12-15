@@ -1,9 +1,11 @@
 package az.shopery.controller;
 
 import az.shopery.model.dto.request.ShopCreateRequestDto;
+import az.shopery.model.dto.request.UserPasswordUpdateRequestDto;
 import az.shopery.model.dto.request.UserProfileUpdateRequestDto;
 import az.shopery.model.dto.response.BecomeMerchantResponseDto;
 import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.response.UserPasswordUpdateResponseDto;
 import az.shopery.model.dto.response.UserProfileResponseDto;
 import az.shopery.service.UserService;
 import jakarta.validation.Valid;
@@ -32,8 +34,7 @@ public class UserController {
     }
 
     @PutMapping("/profile")
-    public ResponseEntity<SuccessResponseDto<UserProfileResponseDto>> updateMyProfile(
-            Principal principal,
+    public ResponseEntity<SuccessResponseDto<UserProfileResponseDto>> updateMyProfile(Principal principal,
             @Valid @RequestBody UserProfileUpdateRequestDto userProfileUpdateRequestDto) {
         return ResponseEntity.ok(userService.updateMyProfile(principal.getName(), userProfileUpdateRequestDto));
     }
@@ -50,5 +51,11 @@ public class UserController {
             Principal principal,
             @Valid @RequestBody ShopCreateRequestDto shopCreateRequestDto) {
         return ResponseEntity.ok(userService.createMyShop(principal.getName(), shopCreateRequestDto));
+    }
+
+    @PutMapping("/password")
+    public ResponseEntity<SuccessResponseDto<UserPasswordUpdateResponseDto>> updatePassword(Principal principal,
+                                                                                            @Valid @RequestBody UserPasswordUpdateRequestDto userPasswordUpdateRequestDto){
+        return ResponseEntity.ok(userService.updateMyPassword(principal.getName(), userPasswordUpdateRequestDto));
     }
 }

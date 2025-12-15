@@ -2,16 +2,20 @@ package az.shopery.service.impl;
 
 import static az.shopery.utils.common.NameMapperHelper.first;
 import static az.shopery.utils.common.NameMapperHelper.last;
+import az.shopery.handler.exception.InvalidCredentialsException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.model.dto.request.ShopCreateRequestDto;
+import az.shopery.model.dto.request.UserPasswordUpdateRequestDto;
 import az.shopery.model.dto.request.UserProfileUpdateRequestDto;
 import az.shopery.model.dto.response.BecomeMerchantResponseDto;
 import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.response.UserPasswordUpdateResponseDto;
 import az.shopery.model.dto.response.UserProfileResponseDto;
 import az.shopery.model.entity.ShopEntity;
 import az.shopery.model.entity.UserEntity;
 import az.shopery.repository.ShopRepository;
 import az.shopery.repository.UserRepository;
+import az.shopery.service.EmailService;
 import az.shopery.service.UserService;
 import az.shopery.utils.enums.UserRole;
 import az.shopery.utils.security.JwtService;
@@ -20,6 +24,7 @@ import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +36,8 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final JwtService jwtService;
     private final ShopRepository shopRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     @Override
     @Transactional(readOnly = true)
@@ -133,8 +140,50 @@ public class UserServiceImpl implements UserService {
         return SuccessResponseDto.of(null, "Shop created successfully.");
     }
 
+    @Override
+    public SuccessResponseDto<UserPasswordUpdateResponseDto> updateMyPassword(String userEmail, UserPasswordUpdateRequestDto userPasswordUpdateRequestDto) {
+        UserEntity userEntity = getUserByEmail(userEmail);
+        if(!passwordEncoder.matches(userPasswordUpdateRequestDto.getOldPassword(), userEntity.getPassword())) {
+            throw new InvalidCredentialsException("Invalid credentials.");
+        }
+        if(userPasswordUpdateRequestDto.getNewPassword().equals(userPasswordUpdateRequestDto.getOldPassword())) {
+            throw new IllegalArgumentException("New password must be different from the old password.");
+        }
+        userEntity.setPassword(passwordEncoder.encode(userPasswordUpdateRequestDto.getNewPassword()));
+        userEntity.setPasswordChangedAt(Instant.now());
+        userRepository.save(userEntity);
+
+        var userDetails = User.withUsername(userEntity.getEmail())
+                .password(userEntity.getPassword())
+                .authorities(userEntity.getUserRole().name())
+                .build();
+
+        String accessToken = jwtService.generateToken(userDetails);
+        String refreshToken = jwtService.generateRefreshToken(userDetails);
+        var userPasswordUpdateResponseDto = UserPasswordUpdateResponseDto.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .userProfileResponseDto(mapToDto(userEntity))
+                .build();
+        emailService.sendPasswordChangedNotification(userEntity.getEmail(), userEntity.getName());
+
+        return SuccessResponseDto.of(userPasswordUpdateResponseDto, "Password has been updated successfully.");
+    }
+
     private UserEntity getUserByEmail(String userEmail) {
         return userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + userEmail));
+    }
+
+    public UserProfileResponseDto mapToDto(UserEntity userEntity) {
+        return UserProfileResponseDto.builder()
+                .firstName(first(userEntity.getName()))
+                .lastName(last(userEntity.getName()))
+                .email(userEntity.getEmail())
+                .phone(userEntity.getPhone())
+                .dateOfBirth(userEntity.getDateOfBirth())
+                .profilePhotoUrl(userEntity.getProfilePhotoUrl())
+                .createdAt(userEntity.getCreatedAt())
+                .build();
     }
 }
