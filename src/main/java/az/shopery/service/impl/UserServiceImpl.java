@@ -166,7 +166,7 @@ public class UserServiceImpl implements UserService {
         emailUpdateTokenEntity.setExpiryDate(LocalDateTime.now().plusMinutes(5));
         emailUpdateTokenRepository.save(emailUpdateTokenEntity);
 
-        emailService.sendVerificationCode(userEmailUpdateRequestDto.getEmail(), userEntity.getName(), code, false);
+        emailService.sendVerificationCode(userEmailUpdateRequestDto.getEmail(), userEntity.getName(), code, Boolean.FALSE);
 
         return SuccessResponseDto.of("Verification code has been sent to your email address");
     }

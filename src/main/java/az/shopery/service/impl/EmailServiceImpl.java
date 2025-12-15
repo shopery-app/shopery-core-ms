@@ -25,7 +25,7 @@ public class EmailServiceImpl implements EmailService {
     private String frontendBaseUrl;
 
     @Override
-    public void sendVerificationCode(String to, String name, String code, boolean isRegistration) {
+    public void sendVerificationCode(String to, String name, String code, Boolean isRegistration) {
         try {
             Context context = new Context();
             context.setVariable("userName", name);
