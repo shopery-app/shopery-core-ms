@@ -56,7 +56,7 @@ public class AdminServiceImpl implements AdminService {
         orders.forEach(order -> {
            UserEntity customer = order.getUser();
            emailService.sendMerchantClosedNotification(customer.getEmail(), customer.getName(), user.getName());
-           order.setStatus(OrderStatus.CLOSED);
+           order.setStatus(OrderStatus.CANCELLED);
         });
 
         return SuccessResponseDto.of("User deleted successfully");
