@@ -3,6 +3,8 @@ package az.shopery.service.impl;
 import az.shopery.model.entity.OrderEntity;
 import az.shopery.service.EmailService;
 import jakarta.mail.internet.MimeMessage;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,14 +13,13 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class EmailServiceImpl implements EmailService {
 
-    private final JavaMailSender javaMailSender;
+    private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
 
     @Value("${application.frontend.base-url}")
@@ -26,118 +27,88 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void sendVerificationCode(String to, String name, String code, Boolean isRegistration) {
-        try {
-            Context context = new Context();
-            context.setVariable("userName", name);
-            context.setVariable("verificationCode", code);
-            context.setVariable("isRegistration", isRegistration);
-
-            String htmlContent = templateEngine.process("verification-email", context);
-
-            MimeMessage message = javaMailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            helper.setTo(to);
-            helper.setSubject("Your Shopery Verification Code");
-            helper.setText(htmlContent, true);
-
-            javaMailSender.send(message);
-            log.info("Verification code sent to {}", to);
-        } catch (Exception e) {
-            log.error("Error sending verification code to {}", to, e);
-        }
+        sendEmail(
+                to,
+                "Your Shopery Verification Code",
+                "verification-email",
+                Map.of(
+                        "userName", name,
+                        "verificationCode", code,
+                        "isRegistration", isRegistration
+                )
+        );
     }
 
     @Override
     public void sendPasswordResetLink(String to, String name, String token) {
-        try {
-            String resetUrl = frontendBaseUrl + "/reset-password?token=" + token;
+        String resetUrl = frontendBaseUrl + "/reset-password?token=" + token;
 
-            Context context = new Context();
-            context.setVariable("userName", name);
-            context.setVariable("resetUrl", resetUrl);
-
-            String htmlContent = templateEngine.process("password-reset-email", context);
-
-            MimeMessage message = javaMailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            helper.setTo(to);
-            helper.setSubject("Your Shopery Password Reset Link");
-            helper.setText(htmlContent, true);
-
-            javaMailSender.send(message);
-            log.info("Password reset link sent to {}", to);
-        } catch (Exception e) {
-            log.error("Error sending password reset link to {}", to, e);
-        }
+        sendEmail(
+                to,
+                "Your Shopery Password Reset Link",
+                "password-reset-email",
+                Map.of(
+                        "userName", name,
+                        "resetUrl", resetUrl
+                )
+        );
     }
 
     @Override
     public void sendOrderConfirmation(String to, String name, List<OrderEntity> orders) {
-        try {
-            Context context = new Context();
-            context.setVariable("userName", name);
-            context.setVariable("orders", orders);
-
-            String htmlContent = templateEngine.process("order-confirmation-email", context);
-
-            MimeMessage message = javaMailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            helper.setTo(to);
-            helper.setSubject("Your Shopery Order Confirmation");
-            helper.setText(htmlContent, true);
-
-            javaMailSender.send(message);
-            log.info("Order confirmation email sent to {}", to);
-        } catch (Exception e) {
-            log.error("Error sending order confirmation to {}", to, e);
-        }
+        sendEmail(
+                to,
+                "Your Shopery Order Confirmation",
+                "order-confirmation-email",
+                Map.of(
+                        "userName", name,
+                        "orders", orders
+                )
+        );
     }
 
     @Override
     public void sendPasswordChangedNotification(String to, String name) {
-        try{
-            Context context = new Context();
-            context.setVariable("userName", name);
-
-            String htmlContent = templateEngine.process("change-password-email", context);
-
-            MimeMessage message = javaMailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            helper.setTo(to);
-            helper.setSubject("Shopery Password Update");
-            helper.setText(htmlContent, true);
-
-            javaMailSender.send(message);
-
-        } catch (Exception e){
-            log.error("Error sending email to {}", to, e);
-        }
+        sendEmail(
+                to,
+                "Shopery Password Update",
+                "change-password-email",
+                Map.of("userName", name)
+        );
     }
 
     @Override
     public void sendMerchantClosedNotification(String to, String customerName, String merchantName) {
-        try{
+        sendEmail(
+                to,
+                "Shopery Merchant Update",
+                "merchant-closed-notification-email",
+                Map.of(
+                        "userName", customerName,
+                        "merchantName", merchantName
+                )
+        );
+    }
+
+    private void sendEmail(String to, String subject, String templateName, Map<String, Object> variables) {
+        try {
             Context context = new Context();
-            context.setVariable("userName", customerName);
-            context.setVariable("merchantName", merchantName);
+            variables.forEach(context::setVariable);
 
-            String htmlContent = templateEngine.process("merchant-closed-notification-email", context);
+            String htmlContent = templateEngine.process(templateName, context);
 
-            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
             helper.setTo(to);
-            helper.setSubject("Shopery Merchant Update");
+            helper.setSubject(subject);
             helper.setText(htmlContent, true);
 
-            javaMailSender.send(message);
+            mailSender.send(message);
+            log.info("Email [{}] successfully sent to {}", subject, to);
 
-        } catch (Exception e){
-            log.error("Error sending email to {}", to, e);
+        } catch (Exception e) {
+            log.error("Failed to send email [{}] to {}", subject, to, e);
         }
     }
 }
