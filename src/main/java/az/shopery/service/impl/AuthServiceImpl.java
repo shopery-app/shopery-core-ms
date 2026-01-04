@@ -21,6 +21,7 @@ import az.shopery.repository.UserRepository;
 import az.shopery.repository.VerificationTokenRepository;
 import az.shopery.service.AuthService;
 import az.shopery.service.EmailService;
+import az.shopery.utils.enums.UserStatus;
 import az.shopery.utils.enums.VerificationProgress;
 import az.shopery.utils.security.JwtService;
 import java.time.Duration;
@@ -55,7 +56,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public SuccessResponseDto<Void> register(UserRegisterRequestDto userRegisterRequestDto) {
-        if (userRepository.findByEmail(userRegisterRequestDto.getEmail()).isPresent()) {
+        if (userRepository.findByEmailAndStatus(userRegisterRequestDto.getEmail(), UserStatus.ACTIVE).isPresent()) {
             throw new EmailAlreadyExistsException(
                     "Email '" + userRegisterRequestDto.getEmail() + "' is already in use.");
         }
@@ -139,7 +140,7 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "No registration process found for this email. Please register first."));
 
-        if (userRepository.findByEmail(resendCodeRequestDto.getEmail()).isPresent()) {
+        if (userRepository.findByEmailAndStatus(resendCodeRequestDto.getEmail(), UserStatus.ACTIVE).isPresent()) {
             throw new EmailAlreadyExistsException("This account has already been verified.");
         }
 
@@ -169,7 +170,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public SuccessResponseDto<Void> forgotPassword(ForgotPasswordRequestDto forgotPasswordRequestDto) {
-        var userEntity = userRepository.findByEmail(forgotPasswordRequestDto.getEmail())
+        var userEntity = userRepository.findByEmailAndStatus(forgotPasswordRequestDto.getEmail(), UserStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "User not found with email: " + forgotPasswordRequestDto.getEmail()));
 
@@ -207,7 +208,7 @@ public class AuthServiceImpl implements AuthService {
             throw new InvalidCredentialsException("Password reset token expired. Please request a new one.");
         }
 
-        var user = userRepository.findByEmail(resetToken.getUserEmail())
+        var user = userRepository.findByEmailAndStatus(resetToken.getUserEmail(), UserStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "User not found for the given token."));
 
@@ -221,7 +222,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional(noRollbackFor = InvalidCredentialsException.class)
     public SuccessResponseDto<UserAuthResponseDto> login(UserLoginRequestDto userLoginRequestDto) {
-        UserEntity user = userRepository.findByEmail(userLoginRequestDto.getEmail())
+        UserEntity user = userRepository.findByEmailAndStatus(userLoginRequestDto.getEmail(), UserStatus.ACTIVE)
                 .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password."));
 
         if (Objects.nonNull(user.getAccountLockedUntil()) && user.getAccountLockedUntil().isAfter(LocalDateTime.now())) {
@@ -292,7 +293,7 @@ public class AuthServiceImpl implements AuthService {
             throw new InvalidCredentialsException("Invalid or expired refresh token.");
         }
 
-        var userEntity = this.userRepository.findByEmail(userEmail)
+        var userEntity = this.userRepository.findByEmailAndStatus(userEmail, UserStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("User associated with token not found."));
 
         var userDetails = User.withUsername(userEntity.getEmail())

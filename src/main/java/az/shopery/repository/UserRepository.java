@@ -15,7 +15,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface UserRepository extends JpaRepository<UserEntity, UUID> {
-    Optional<UserEntity> findByEmail(String email);
+    Optional<UserEntity> findByEmailAndStatus(String email, UserStatus status);
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT u FROM UserEntity u WHERE u.email = :email")
     Optional<UserEntity> findAndLockByEmail(String email);
