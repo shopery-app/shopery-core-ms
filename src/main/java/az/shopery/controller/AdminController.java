@@ -11,11 +11,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
 import java.security.Principal;
 
 @RestController
@@ -44,5 +41,10 @@ public class AdminController {
     @GetMapping("/support-tickets")
     public ResponseEntity<SuccessResponseDto<Page<SupportTicketResponseDto>>> getSupportTickets(Pageable pageable, Principal principal) {
         return ResponseEntity.ok(adminService.getSupportTickets(pageable, principal.getName()));
+    }
+
+    @PatchMapping("/support-tickets/{id}/close")
+    public ResponseEntity<SuccessResponseDto<Void>> closeSupportTickets(@PathVariable String id, Principal principal) {
+        return ResponseEntity.ok(adminService.closeSupportTicket(id, principal.getName()));
     }
 }

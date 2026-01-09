@@ -21,6 +21,13 @@ public class UserSupportTicketController {
 
     private final SupportTicketService supportTicketService;
 
+    @PostMapping
+    public ResponseEntity<SuccessResponseDto<Void>> createMySupportTicket(
+            @RequestBody @Valid SupportTicketRequestDto supportTicketRequestDto,
+            Principal principal) {
+        return ResponseEntity.ok(supportTicketService.createMySupportTicket(supportTicketRequestDto, principal.getName()));
+    }
+
     @GetMapping
     public ResponseEntity<SuccessResponseDto<Page<UserSupportTicketResponseDto>>> getMySupportTicket(Principal principal, Pageable pageable) {
         return ResponseEntity.ok(supportTicketService.getMySupportTickets(principal.getName(), pageable));

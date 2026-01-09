@@ -19,4 +19,6 @@ public interface SupportTicketRepository extends JpaRepository<SupportTicketEnti
     Page<SupportTicketEntity> getAllSupportTicketsByCreatedBy(@Param("creator") UserEntity creator, Pageable pageable);
     @Query("select st from SupportTicketEntity st left join fetch st.assignedAdmin where st.id = :id and st.createdBy = :user")
     Optional<SupportTicketEntity> findByIdAndCreatedBy(@Param("id") UUID id, @Param("user") UserEntity user);
+    @Query("select st from SupportTicketEntity st left join fetch st.createdBy where st.id = :id and st.assignedAdmin = :admin")
+    Optional<SupportTicketEntity> findByIdAndAssignedAdmin(@Param("id") UUID id, @Param("admin") UserEntity admin);
 }

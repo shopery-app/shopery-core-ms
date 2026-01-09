@@ -14,4 +14,5 @@ public interface AdminService {
     SuccessResponseDto<Page<UserProfileResponseDto>> getMerchants(Pageable pageable);
     SuccessResponseDto<Void> closeMerchant(CloseMerchantRequestDto closeMerchantRequestDto);
     SuccessResponseDto<Page<SupportTicketResponseDto>> getSupportTickets(Pageable pageable, String userEmail);
+    SuccessResponseDto<Void> closeSupportTicket(String id, String userEmail);
 }

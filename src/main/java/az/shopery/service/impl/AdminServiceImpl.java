@@ -16,6 +16,7 @@ import az.shopery.repository.UserRepository;
 import az.shopery.service.AdminService;
 import az.shopery.service.EmailService;
 import az.shopery.utils.enums.OrderStatus;
+import az.shopery.utils.enums.TicketStatus;
 import az.shopery.utils.enums.UserRole;
 import az.shopery.utils.enums.UserStatus;
 import jakarta.transaction.Transactional;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import static az.shopery.utils.common.NameMapperHelper.first;
 import static az.shopery.utils.common.NameMapperHelper.last;
+import static az.shopery.utils.common.UuidUtils.parse;
 
 @Service
 @RequiredArgsConstructor
@@ -68,10 +70,22 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public SuccessResponseDto<Page<SupportTicketResponseDto>> getSupportTickets(Pageable pageable, String userEmail) {
-        UserEntity admin = userRepository.findByEmailAndUserRoleAndStatus(userEmail, UserRole.ADMIN, UserStatus.ACTIVE)
-                .orElseThrow(() -> new ResourceNotFoundException("Admin not found!"));
-        Page<SupportTicketEntity> supportTicketEntities = supportTicketRepository.getAllSupportTicketsByAssignedAdmin(admin, pageable);
+        Page<SupportTicketEntity> supportTicketEntities = supportTicketRepository.getAllSupportTicketsByAssignedAdmin(getAdmin(userEmail), pageable);
         return SuccessResponseDto.of(supportTicketEntities.map(this::mapToSupportTicketResponseDto), "Support tickets are retrieved successfully!");
+    }
+
+    @Override
+    public SuccessResponseDto<Void> closeSupportTicket(String id, String userEmail) {
+        SupportTicketEntity supportTicketEntity = supportTicketRepository.findByIdAndAssignedAdmin(parse(id), getAdmin(userEmail))
+                .orElseThrow(() -> new ResourceNotFoundException("Support ticket not found!"));
+        supportTicketEntity.setStatus(TicketStatus.CLOSED);
+        supportTicketRepository.save(supportTicketEntity);
+        return SuccessResponseDto.of("Support ticket has been closed successfully!");
+    }
+
+    private UserEntity getAdmin(String userEmail) {
+        return userRepository.findByEmailAndUserRoleAndStatus(userEmail, UserRole.ADMIN, UserStatus.ACTIVE)
+                .orElseThrow(() -> new ResourceNotFoundException("Admin not found!"));
     }
 
     private UserProfileResponseDto mapToDto(UserEntity userEntity) {

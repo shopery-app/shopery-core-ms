@@ -34,7 +34,7 @@ public class SupportTicketServiceImpl implements SupportTicketService {
 
     @Override
     @Transactional
-    public SuccessResponseDto<Void> createSupportTicket(SupportTicketRequestDto supportTicketRequestDto, String userEmail) {
+    public SuccessResponseDto<Void> createMySupportTicket(SupportTicketRequestDto supportTicketRequestDto, String userEmail) {
         SupportTicketEntity supportTicketEntity = SupportTicketEntity.builder()
                 .subject(supportTicketRequestDto.getSubject())
                 .description(supportTicketRequestDto.getDescription())
