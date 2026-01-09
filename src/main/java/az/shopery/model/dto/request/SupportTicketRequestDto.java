@@ -13,7 +13,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class CreateSupportTicketRequestDto {
+public class SupportTicketRequestDto {
     @NotBlank(message = "Subject cannot be blank!")
     String subject;
     @NotBlank(message = "Description cannot be blank!")

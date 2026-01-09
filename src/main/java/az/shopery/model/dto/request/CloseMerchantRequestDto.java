@@ -1,5 +1,7 @@
 package az.shopery.model.dto.request;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,5 +15,7 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CloseMerchantRequestDto {
+    @Email(message = "Email is not valid!")
+    @NotBlank(message = "Email cannot be empty!")
     String email;
 }
