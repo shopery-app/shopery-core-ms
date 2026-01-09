@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: 19_09012026_add-dates-to-support-tickets
+      author: Jahangir Alisoy
+      changes:
+        - addColumn:
+            tableName: support_tickets
+            columns:
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
