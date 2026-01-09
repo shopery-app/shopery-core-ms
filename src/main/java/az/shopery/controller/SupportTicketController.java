@@ -1,6 +1,6 @@
 package az.shopery.controller;
 
-import az.shopery.model.dto.request.CreateSupportTicketRequestDto;
+import az.shopery.model.dto.request.SupportTicketRequestDto;
 import az.shopery.model.dto.response.SuccessResponseDto;
 import az.shopery.service.SupportTicketService;
 import jakarta.validation.Valid;
@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import java.security.Principal;
 
 @RestController
@@ -24,8 +23,8 @@ public class SupportTicketController {
 
     @PostMapping
     public ResponseEntity<SuccessResponseDto<Void>> createSupportTicket(
-            @RequestBody @Valid CreateSupportTicketRequestDto createSupportTicketRequestDto,
+            @RequestBody @Valid SupportTicketRequestDto supportTicketRequestDto,
             Principal principal) {
-        return ResponseEntity.ok(supportTicketService.createSupportTicket(createSupportTicketRequestDto, principal.getName()));
+        return ResponseEntity.ok(supportTicketService.createSupportTicket(supportTicketRequestDto, principal.getName()));
     }
 }
