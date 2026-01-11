@@ -9,4 +9,5 @@ public interface EmailService {
     void sendOrderConfirmation(String to, String name, List<OrderEntity> orders);
     void sendPasswordChangedNotification(String to, String name);
     void sendMerchantClosedNotification(String to, String customerName, String merchantName);
+    void sendSupportTicketClosedNotification(String to, String userName, String ticketSubject, String ticketId);
 }

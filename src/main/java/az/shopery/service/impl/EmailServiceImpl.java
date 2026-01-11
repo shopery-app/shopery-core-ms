@@ -90,6 +90,20 @@ public class EmailServiceImpl implements EmailService {
         );
     }
 
+    @Override
+    public void sendSupportTicketClosedNotification(String to, String userName, String ticketSubject, String ticketId) {
+        sendEmail(
+                to,
+                "Your Support Ticket Has Been Closed",
+                "support-ticket-closed-email",
+                Map.of(
+                        "userName", userName,
+                        "ticketSubject", ticketSubject,
+                        "ticketId", ticketId
+                )
+        );
+    }
+
     private void sendEmail(String to, String subject, String templateName, Map<String, Object> variables) {
         try {
             Context context = new Context();

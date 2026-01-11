@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20_11012026_add_is_user_notified_to_support_tickets_table
+      author: Jahangir Alisoy
+      changes:
+        - addColumn:
+            tableName: support_tickets
+            columns:
+              - column:
+                  name: is_user_notified
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false

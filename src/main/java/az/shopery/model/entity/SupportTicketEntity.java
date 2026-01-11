@@ -55,6 +55,9 @@ public class SupportTicketEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_admin_id")
     UserEntity assignedAdmin;
+    @Builder.Default
+    @Column(name = "is_user_notified", nullable = false)
+    Boolean isUserNotified = Boolean.FALSE;
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     Instant createdAt;

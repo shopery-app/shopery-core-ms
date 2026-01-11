@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Support Ticket Closed</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f4f6f8;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #333333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .header {
+            background-color: #0f62fe;
+            padding: 20px;
+            text-align: center;
+            color: #ffffff;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .content {
+            padding: 24px;
+            line-height: 1.6;
+        }
+        .content h2 {
+            margin-top: 0;
+            font-size: 18px;
+        }
+        .ticket-box {
+            background-color: #f1f4f9;
+            padding: 16px;
+            border-radius: 4px;
+            margin: 16px 0;
+        }
+        .footer {
+            padding: 16px;
+            text-align: center;
+            font-size: 12px;
+            color: #777777;
+            background-color: #fafafa;
+        }
+        .btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 20px;
+            background-color: #0f62fe;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        Support Ticket Closed
+    </div>
+
+    <div class="content">
+        <h2>Hello <span th:text="${userName}">User</span>,</h2>
+
+        <p>
+            We would like to inform you that your support ticket has been successfully
+            reviewed and closed by our support team.
+        </p>
+
+        <div class="ticket-box">
+            <strong>Ticket ID:</strong>
+            <span th:text="${ticketId}">TICKET_ID</span>
+            <br><br>
+            <strong>Subject:</strong>
+            <span th:text="${ticketSubject}">Ticket Subject</span>
+        </div>
+
+        <p>
+            If you believe this issue is not fully resolved, or you have further questions,
+            you can create a new support ticket anytime.
+        </p>
+
+        <a class="btn" href="#" th:href="@{${frontendBaseUrl}/support}">
+            Go to Support Center
+        </a>
+    </div>
+
+    <div class="footer">
+        © 2026 Shopery. All rights reserved.
+    </div>
+</div>
+</body>
+</html>

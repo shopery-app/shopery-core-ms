@@ -2,12 +2,14 @@ package az.shopery.repository;
 
 import az.shopery.model.entity.SupportTicketEntity;
 import az.shopery.model.entity.UserEntity;
+import az.shopery.utils.enums.TicketStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -21,4 +23,5 @@ public interface SupportTicketRepository extends JpaRepository<SupportTicketEnti
     Optional<SupportTicketEntity> findByIdAndCreatedBy(@Param("id") UUID id, @Param("user") UserEntity user);
     @Query("select st from SupportTicketEntity st left join fetch st.createdBy where st.id = :id and st.assignedAdmin = :admin")
     Optional<SupportTicketEntity> findByIdAndAssignedAdmin(@Param("id") UUID id, @Param("admin") UserEntity admin);
+    List<SupportTicketEntity> findAllByStatusAndIsUserNotifiedFalse(TicketStatus status);
 }
