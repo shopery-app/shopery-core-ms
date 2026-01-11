@@ -1,14 +1,3 @@
-spring:
-  datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/shopery_db}
-    username: shopery_user
-    password: shopery_pass
-    driver-class-name: org.postgresql.Driver
-  jpa:
-    hibernate:
-      ddl-auto: update
-    open-in-view: false
-
 server:
   port: ${PORT:8080}
 
