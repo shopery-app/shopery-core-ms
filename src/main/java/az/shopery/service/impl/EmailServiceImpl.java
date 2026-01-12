@@ -21,6 +21,9 @@ public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
+    @Value("${app.mail.from}")
+    private String from;
+
 
     @Value("${application.frontend.base-url}")
     private String frontendBaseUrl;
@@ -104,7 +107,7 @@ public class EmailServiceImpl implements EmailService {
         );
     }
 
-    private void sendEmail(String to, String subject, String templateName, Map<String, Object> variables) {
+    private void sendEmail(String to, String subject, String templateName,  Map<String, Object> variables) {
         try {
             Context context = new Context();
             variables.forEach(context::setVariable);
@@ -114,6 +117,7 @@ public class EmailServiceImpl implements EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
+            helper.setFrom(from);
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(htmlContent, true);

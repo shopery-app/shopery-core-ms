@@ -22,17 +22,21 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
   mail:
-    host: smtp.gmail.com
+    host: smtp-relay.brevo.com
     port: 587
-    username: ${NO_REPLY_USERNAME}
-    password: ${NO_REPLY_PASSWORD}
+    username: ${NO_REPLY_BREVO_USERNAME}
+    password: ${NO_REPLY_BREVO_PASSWORD}
+    protocol: smtp
     properties:
       mail:
         smtp:
           auth: true
           starttls:
             enable: true
-            required: true
+
+app:
+  mail:
+    from: ${NO_REPLY_SHOPERY_USERNAME}
 
 application:
   security:
@@ -60,3 +64,11 @@ claude:
     model: claude-sonnet-4-20250514
     max-tokens: 1024
     version: 2023-06-01
+
+resilience4j:
+  ratelimiter:
+    instances:
+      auth-rate-limiter:
+        limitForPeriod: 5
+        limitRefreshPeriod: 120s
+        timeoutDuration: 100ms
