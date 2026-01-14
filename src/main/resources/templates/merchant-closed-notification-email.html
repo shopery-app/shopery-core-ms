@@ -2,100 +2,50 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shopery Merchant Update</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-            line-height: 1.6;
-        }
-        .container {
-            max-width: 600px;
-            margin: 20px auto;
-            background-color: #ffffff;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        .header {
-            background-color: #E74C3C;
-            color: #ffffff;
-            padding: 20px;
-            text-align: center;
-        }
-        .header h1 {
-            margin: 0;
-            font-size: 24px;
-        }
-        .content {
-            padding: 30px;
-            color: #333333;
-        }
-        .content p {
-            margin: 0 0 20px;
-        }
-        .info-container {
-            background-color: #fdecea;
-            border-left: 5px solid #E74C3C;
-            padding: 20px;
-            margin: 20px 0;
-        }
-        .info-title {
-            font-size: 16px;
-            font-weight: bold;
-            color: #c0392b;
-            margin-bottom: 10px;
-        }
-        .footer {
-            background-color: #f8f9fa;
-            color: #888888;
-            padding: 20px;
-            text-align: center;
-            font-size: 12px;
-        }
-        .footer a {
-            color: #4A90E2;
-            text-decoration: none;
-        }
-    </style>
+    <title>Order Cancelled – Merchant Unavailable</title>
 </head>
 <body>
+
 <div class="container">
     <div class="header">
-        <h1>Important Merchant Update</h1>
+        <h1>Order Cancelled</h1>
     </div>
 
     <div class="content">
         <p>Hi <strong th:text="${userName}">User</strong>,</p>
 
         <p>
-            We’re writing to inform you about an important update related to one of your previous orders.
+            We regret to inform you that your order has been <strong>canceled</strong>
+            due to an issue with the merchant.
         </p>
 
         <div class="info-container">
-            <div class="info-title">Merchant Account Removed</div>
+            <div class="info-title">Why was my order canceled?</div>
             <p>
                 The merchant
                 <strong th:text="${merchantName}">Merchant Name</strong>
-                has been permanently removed from Shopery by an administrator.
+                is no longer active on Shopery and has been removed from the platform
+                by our administrators.
             </p>
         </div>
 
         <p>
-            Any past orders you placed with this merchant remain محفوظ in your order history.
-            However, the merchant will no longer be available for future purchases or support.
+            <strong>No charges will be applied</strong> for this order.
+            If any payment was already made, a full refund will be processed
+            according to your payment provider’s policies.
         </p>
 
         <p>
-            If you have any unresolved issues related to an order from this merchant,
-            please contact our support team and we’ll be happy to assist you.
+            You can view the canceled order in your order history for reference.
+            We encourage you to explore other trusted merchants available on Shopery.
         </p>
 
         <p>
-            Thanks for being a valued member of Shopery.<br>
+            We sincerely apologize for the inconvenience and appreciate your understanding.
+        </p>
+
+        <p>
+            Kind regards,<br>
             <strong>The Shopery Team</strong>
         </p>
     </div>
@@ -105,5 +55,6 @@
         <p>This is an automated message. Please do not reply.</p>
     </div>
 </div>
+
 </body>
 </html>

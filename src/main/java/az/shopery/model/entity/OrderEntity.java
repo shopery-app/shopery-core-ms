@@ -69,6 +69,9 @@ public class OrderEntity {
     String postalCode;
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     List<OrderItemEntity> items;
+    @Builder.Default
+    @Column(name = "is_user_notified", nullable = false)
+    Boolean isUserNotified = Boolean.FALSE;
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     Instant createdAt;
