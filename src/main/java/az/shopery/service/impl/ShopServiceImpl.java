@@ -13,7 +13,6 @@ import az.shopery.repository.ShopRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.ShopService;
 import java.util.Collections;
-import java.util.UUID;
 import az.shopery.utils.common.DiscountCalculator;
 import az.shopery.utils.enums.UserStatus;
 import lombok.RequiredArgsConstructor;
@@ -54,7 +53,7 @@ public class ShopServiceImpl implements ShopService {
     @Override
     @Transactional(readOnly = true)
     public SuccessResponseDto<Page<ShopResponseDto>> getAllShops(Pageable pageable) {
-        Page<ShopEntity> shopPage = shopRepository.findAll(pageable);
+        Page<ShopEntity> shopPage = shopRepository.findAllWithActiveOwners(pageable);
         Page<ShopResponseDto> dtoPage = shopPage.map(this::mapToPublicShopDtoWithoutProducts);
 
         log.info("Retrieved {} shops for page {} of size {}", dtoPage.getTotalElements(), pageable.getPageNumber(), pageable.getPageSize());
@@ -64,8 +63,7 @@ public class ShopServiceImpl implements ShopService {
     @Override
     @Transactional(readOnly = true)
     public SuccessResponseDto<ShopResponseDto> getShopById(String shopId) {
-        UUID id = parse(shopId);
-        ShopEntity shopEntity = shopRepository.findByIdWithProducts(id)
+        ShopEntity shopEntity = shopRepository.findActiveShopByIdWithProducts(parse(shopId))
                 .orElseThrow(() -> new ResourceNotFoundException("Shop not found for id: " + shopId));
         var shopResponseDto = mapToPublicShopDtoWithProducts(shopEntity);
 
@@ -76,7 +74,7 @@ public class ShopServiceImpl implements ShopService {
     @Override
     @Transactional(readOnly = true)
     public SuccessResponseDto<ShopResponseDto> getShopByShopName(String shopName) {
-        ShopEntity shopEntity = shopRepository.findByShopNameWithProducts(shopName)
+        ShopEntity shopEntity = shopRepository.findActiveShopByShopNameWithProducts(shopName)
                 .orElseThrow(() -> new ResourceNotFoundException("Shop not found for name: " + shopName));
         var shopResponseDto = mapToPublicShopDtoWithProducts(shopEntity);
 

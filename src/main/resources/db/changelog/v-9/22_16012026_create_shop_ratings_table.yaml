@@ -1,0 +1,78 @@
+databaseChangeLog:
+  - changeSet:
+      id: 22_16012026_create_shop_ratings_table
+      author: Jahangir Alisoy
+      changes:
+        - createTable:
+            tableName: shop_ratings
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: shop_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: rating
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+        - addUniqueConstraint:
+            tableName: shop_ratings
+            columnNames: user_id, shop_id
+            constraintName: uk_shop_ratings_user_shop
+
+        - addForeignKeyConstraint:
+            baseTableName: shop_ratings
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_shop_ratings_user
+            onDelete: cascade
+
+        - addForeignKeyConstraint:
+            baseTableName: shop_ratings
+            baseColumnNames: shop_id
+            referencedTableName: shops
+            referencedColumnNames: id
+            constraintName: fk_shop_ratings_shop
+            onDelete: cascade
+
+        - createIndex:
+            tableName: shop_ratings
+            indexName: idx_shop_ratings_shop_id
+            columns:
+              - column:
+                  name: shop_id
+
+        - createIndex:
+            tableName: shop_ratings
+            indexName: idx_shop_ratings_user_id
+            columns:
+              - column:
+                  name: user_id
+
+      rollback:
+        - dropTable:
+            tableName: shop_ratings
