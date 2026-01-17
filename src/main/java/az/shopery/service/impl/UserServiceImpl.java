@@ -1,5 +1,8 @@
 package az.shopery.service.impl;
 
+import static az.shopery.utils.common.NameMapperHelper.first;
+import static az.shopery.utils.common.NameMapperHelper.last;
+
 import az.shopery.handler.exception.EmailAlreadyExistsException;
 import az.shopery.handler.exception.InvalidCredentialsException;
 import az.shopery.handler.exception.ResourceNotFoundException;
@@ -8,15 +11,21 @@ import az.shopery.model.dto.request.UserEmailUpdateRequestDto;
 import az.shopery.model.dto.request.UserEmailVerificationRequestDto;
 import az.shopery.model.dto.request.UserPasswordUpdateRequestDto;
 import az.shopery.model.dto.request.UserProfileUpdateRequestDto;
-import az.shopery.model.dto.response.*;
+import az.shopery.model.dto.response.BecomeMerchantResponseDto;
+import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.response.UserEmailUpdateResponseDto;
+import az.shopery.model.dto.response.UserPasswordUpdateResponseDto;
+import az.shopery.model.dto.response.UserProfileResponseDto;
 import az.shopery.model.entity.EmailUpdateTokenEntity;
-import az.shopery.model.entity.ShopEntity;
+import az.shopery.model.entity.ShopCreationRequestEntity;
 import az.shopery.model.entity.UserEntity;
 import az.shopery.repository.EmailUpdateTokenRepository;
 import az.shopery.repository.ShopRepository;
 import az.shopery.repository.UserRepository;
+import az.shopery.repository.admin.ShopCreationRequestRepository;
 import az.shopery.service.EmailService;
 import az.shopery.service.UserService;
+import az.shopery.utils.admin.AdminAssignmentService;
 import az.shopery.utils.enums.UserRole;
 import az.shopery.utils.enums.UserStatus;
 import az.shopery.utils.security.JwtService;
@@ -26,12 +35,9 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.concurrent.ThreadLocalRandom;
-import static az.shopery.utils.common.NameMapperHelper.first;
-import static az.shopery.utils.common.NameMapperHelper.last;
 
 @Service
 @Slf4j
@@ -39,11 +45,13 @@ import static az.shopery.utils.common.NameMapperHelper.last;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final JwtService jwtService;
     private final ShopRepository shopRepository;
+    private final EmailUpdateTokenRepository emailUpdateTokenRepository;
+    private final ShopCreationRequestRepository shopCreationRequestRepository;
+    private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
-    private final EmailUpdateTokenRepository emailUpdateTokenRepository;
+    private final AdminAssignmentService adminAssignmentService;
 
     @Override
     @Transactional(readOnly = true)
@@ -72,7 +80,7 @@ public class UserServiceImpl implements UserService {
     public SuccessResponseDto<BecomeMerchantResponseDto> becomeMerchant(String userEmail) {
         UserEntity userEntity = getUserByEmail(userEmail);
 
-        if (userEntity.getUserRole() == UserRole.MERCHANT) {
+        if (userEntity.getUserRole().equals(UserRole.MERCHANT)) {
             return SuccessResponseDto.of(null, "You are already a merchant.");
         }
 
@@ -104,22 +112,19 @@ public class UserServiceImpl implements UserService {
         if (shopRepository.existsByUser(userEntity)) {
             throw new IllegalStateException("User already has a shop.");
         }
-
         if (shopRepository.existsByShopName(shopCreateRequestDto.getShopName())) {
             throw new IllegalStateException("Shop with name '" + shopCreateRequestDto.getShopName() + "' already exists.");
         }
 
-        ShopEntity newShop = ShopEntity.builder()
-                .user(userEntity)
+        ShopCreationRequestEntity shopCreationRequestEntity = ShopCreationRequestEntity.builder()
+                .createdBy(userEntity)
+                .assignedAdmin(adminAssignmentService.assignRandomAdmin())
                 .shopName(shopCreateRequestDto.getShopName())
                 .description(shopCreateRequestDto.getDescription())
-                .totalIncome(BigDecimal.ZERO)
-                .rating(0.0)
                 .build();
-        ShopEntity savedShop = shopRepository.save(newShop);
-        log.info("New shop '{}' created successfully for user {}", savedShop.getShopName(), userEmail);
+        shopCreationRequestRepository.save(shopCreationRequestEntity);
 
-        return SuccessResponseDto.of(null, "Shop created successfully.");
+        return SuccessResponseDto.of(null, "Your request has been submitted and assigned to an admin for review.");
     }
 
     @Override

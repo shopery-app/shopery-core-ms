@@ -1,4 +1,4 @@
-package az.shopery.repository;
+package az.shopery.repository.admin;
 
 import az.shopery.model.entity.SupportTicketEntity;
 import az.shopery.model.entity.UserEntity;

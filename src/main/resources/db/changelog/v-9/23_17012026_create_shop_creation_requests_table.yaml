@@ -1,0 +1,86 @@
+databaseChangeLog:
+  - changeSet:
+      id: 23_17012026_create_shop_creation_requests_table
+      author: Jahangir Alisoy
+      changes:
+        - createTable:
+            tableName: shop_creation_requests
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: shop_name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: description
+                  type: varchar(1000)
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: assigned_admin_id
+                  type: uuid
+              - column:
+                  name: is_user_notified
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: request_status
+                  type: varchar(30)
+                  defaultValue: PENDING
+                  constraints:
+                    nullable: false
+              - column:
+                  name: rejection_reason
+                  type: varchar(1000)
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: shop_creation_requests
+            baseColumnNames: created_by_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_shop_request_created_by
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: shop_creation_requests
+            baseColumnNames: assigned_admin_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_shop_request_assigned_admin
+            onDelete: SET NULL
+
+        - createIndex:
+            tableName: shop_creation_requests
+            indexName: idx_shop_request_status
+            columns:
+              - column:
+                  name: request_status
+
+        - createIndex:
+            tableName: shop_creation_requests
+            indexName: idx_shop_request_assigned_admin
+            columns:
+              - column:
+                  name: assigned_admin_id

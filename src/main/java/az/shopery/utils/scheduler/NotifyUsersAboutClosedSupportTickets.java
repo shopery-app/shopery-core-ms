@@ -4,7 +4,7 @@ import static az.shopery.utils.common.NameMapperHelper.first;
 
 import az.shopery.model.dto.event.SupportTicketClosedNotificationEvent;
 import az.shopery.model.entity.SupportTicketEntity;
-import az.shopery.repository.SupportTicketRepository;
+import az.shopery.repository.admin.SupportTicketRepository;
 import az.shopery.utils.enums.TicketStatus;
 import jakarta.transaction.Transactional;
 import java.util.List;
