@@ -2,6 +2,7 @@ package az.shopery.service;
 
 import az.shopery.model.dto.request.CloseMerchantRequestDto;
 import az.shopery.model.dto.request.ShopCreationRequestRejectDto;
+import az.shopery.model.dto.response.ShopCreationRequestResponseDto;
 import az.shopery.model.dto.response.SuccessResponseDto;
 import az.shopery.model.dto.response.SupportTicketResponseDto;
 import az.shopery.model.dto.response.UserProfileResponseDto;
@@ -18,4 +19,5 @@ public interface AdminService {
     SuccessResponseDto<Void> closeSupportTicket(String id, String userEmail);
     SuccessResponseDto<Void> approve(String id, String userEmail);
     SuccessResponseDto<Void> reject(String id, String userEmail, ShopCreationRequestRejectDto shopCreationRequestRejectDto);
+    SuccessResponseDto<Page<ShopCreationRequestResponseDto>> getShopCreationRequestsByAssignedAdmin(String userEmail, Pageable pageable);
 }

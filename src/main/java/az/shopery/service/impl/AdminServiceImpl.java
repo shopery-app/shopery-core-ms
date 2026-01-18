@@ -3,15 +3,17 @@ package az.shopery.service.impl;
 import static az.shopery.utils.common.NameMapperHelper.first;
 import static az.shopery.utils.common.NameMapperHelper.last;
 import static az.shopery.utils.common.UuidUtils.parse;
-
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.model.dto.event.ShopCreationRequestApprovedEvent;
 import az.shopery.model.dto.event.ShopCreationRequestRejectedEvent;
 import az.shopery.model.dto.request.CloseMerchantRequestDto;
 import az.shopery.model.dto.request.ShopCreationRequestRejectDto;
+import az.shopery.model.dto.response.ShopCreationRequestResponseDto;
 import az.shopery.model.dto.response.SuccessResponseDto;
 import az.shopery.model.dto.response.SupportTicketResponseDto;
 import az.shopery.model.dto.response.UserProfileResponseDto;
+import az.shopery.model.dto.shared.ShopCreationAssignedAdminDto;
+import az.shopery.model.dto.shared.ShopCreationCreatorDto;
 import az.shopery.model.dto.shared.SupportTicketCreatorDto;
 import az.shopery.model.entity.OrderEntity;
 import az.shopery.model.entity.ShopCreationRequestEntity;
@@ -30,7 +32,6 @@ import az.shopery.utils.enums.TicketStatus;
 import az.shopery.utils.enums.UserRole;
 import az.shopery.utils.enums.UserStatus;
 import jakarta.transaction.Transactional;
-
 import java.math.BigDecimal;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -126,6 +127,14 @@ public class AdminServiceImpl implements AdminService {
         return SuccessResponseDto.of("Shop creation request has been rejected successfully!");
     }
 
+    @Override
+    @Transactional
+    public SuccessResponseDto<Page<ShopCreationRequestResponseDto>> getShopCreationRequestsByAssignedAdmin(String userEmail, Pageable pageable) {
+        Page<ShopCreationRequestEntity> shopCreationRequestEntities = shopCreationRequestRepository.findByAssignedAdminAndStatus(getAdmin(userEmail), RequestStatus.PENDING, pageable);
+        return SuccessResponseDto.of(shopCreationRequestEntities.map(this::mapToShopCreationRequestResponseDto),
+                "Shop creation requests retrieved successfully for this admin!");
+    }
+
     private UserEntity getAdmin(String userEmail) {
         return userRepository.findByEmailAndUserRoleAndStatus(userEmail, UserRole.ADMIN, UserStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("Admin not found!"));
@@ -163,6 +172,25 @@ public class AdminServiceImpl implements AdminService {
                         .name(creator.getName())
                         .email(creator.getEmail())
                         .build())
+                .build();
+    }
+
+    private ShopCreationRequestResponseDto mapToShopCreationRequestResponseDto (ShopCreationRequestEntity shopCreationRequestEntity) {
+        UserEntity creator = shopCreationRequestEntity.getCreatedBy();
+        UserEntity admin = shopCreationRequestEntity.getAssignedAdmin();
+        return ShopCreationRequestResponseDto.builder()
+                .id(shopCreationRequestEntity.getId())
+                .creator(ShopCreationCreatorDto.builder()
+                        .id(creator.getId())
+                        .name(creator.getName())
+                        .email(creator.getEmail())
+                        .build())
+                .admin(ShopCreationAssignedAdminDto.builder()
+                        .id(admin.getId())
+                        .name(admin.getName())
+                        .email(admin.getEmail())
+                        .build())
+                .createdAt(shopCreationRequestEntity.getCreatedAt())
                 .build();
     }
 }

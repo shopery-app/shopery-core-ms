@@ -2,6 +2,7 @@ package az.shopery.controller;
 
 import az.shopery.model.dto.request.CloseMerchantRequestDto;
 import az.shopery.model.dto.request.ShopCreationRequestRejectDto;
+import az.shopery.model.dto.response.ShopCreationRequestResponseDto;
 import az.shopery.model.dto.response.SuccessResponseDto;
 import az.shopery.model.dto.response.SupportTicketResponseDto;
 import az.shopery.model.dto.response.UserProfileResponseDto;
@@ -12,8 +13,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import java.security.Principal;
 
 @RestController
@@ -47,6 +53,11 @@ public class AdminController {
     @PatchMapping("/support-tickets/{id}/close")
     public ResponseEntity<SuccessResponseDto<Void>> closeSupportTickets(@PathVariable String id, Principal principal) {
         return ResponseEntity.ok(adminService.closeSupportTicket(id, principal.getName()));
+    }
+
+    @GetMapping("/shop-creation-requests")
+    public ResponseEntity<SuccessResponseDto<Page<ShopCreationRequestResponseDto>>> getShopCreationRequests(Pageable pageable, Principal principal) {
+        return ResponseEntity.ok(adminService.getShopCreationRequestsByAssignedAdmin(principal.getName(), pageable));
     }
 
     @PostMapping("/shop-creation-requests/{id}/approve")
