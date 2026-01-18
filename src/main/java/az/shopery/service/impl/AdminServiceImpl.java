@@ -3,40 +3,43 @@ package az.shopery.service.impl;
 import static az.shopery.utils.common.NameMapperHelper.first;
 import static az.shopery.utils.common.NameMapperHelper.last;
 import static az.shopery.utils.common.UuidUtils.parse;
+
+import az.shopery.handler.exception.IllegalRequestException;
 import az.shopery.handler.exception.ResourceNotFoundException;
-import az.shopery.model.dto.event.ShopCreationRequestApprovedEvent;
-import az.shopery.model.dto.event.ShopCreationRequestRejectedEvent;
+import az.shopery.mapper.TaskMapper;
+import az.shopery.model.dto.response.task.TaskResponseDto;
+import az.shopery.model.entity.task.TaskEntity;
+import az.shopery.model.event.ShopCreationRequestApprovedEvent;
+import az.shopery.model.event.ShopCreationRequestRejectedEvent;
 import az.shopery.model.dto.request.CloseMerchantRequestDto;
 import az.shopery.model.dto.request.ShopCreationRequestRejectDto;
-import az.shopery.model.dto.response.ShopCreationRequestResponseDto;
 import az.shopery.model.dto.response.SuccessResponseDto;
-import az.shopery.model.dto.response.SupportTicketResponseDto;
 import az.shopery.model.dto.response.UserProfileResponseDto;
-import az.shopery.model.dto.shared.TaskCreatorDto;
 import az.shopery.model.entity.OrderEntity;
-import az.shopery.model.entity.ShopCreationRequestEntity;
+import az.shopery.model.entity.task.ShopCreationRequestEntity;
 import az.shopery.model.entity.ShopEntity;
-import az.shopery.model.entity.SupportTicketEntity;
+import az.shopery.model.entity.task.SupportTicketEntity;
 import az.shopery.model.entity.UserEntity;
 import az.shopery.repository.OrderRepository;
 import az.shopery.repository.ShopRepository;
-import az.shopery.repository.admin.ShopCreationRequestRepository;
-import az.shopery.repository.admin.SupportTicketRepository;
+import az.shopery.repository.TaskRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.AdminService;
 import az.shopery.utils.enums.OrderStatus;
 import az.shopery.utils.enums.RequestStatus;
+import az.shopery.utils.enums.TaskCategory;
 import az.shopery.utils.enums.TicketStatus;
 import az.shopery.utils.enums.UserRole;
 import az.shopery.utils.enums.UserStatus;
-import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -44,10 +47,10 @@ public class AdminServiceImpl implements AdminService {
 
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
-    private final SupportTicketRepository supportTicketRepository;
-    private final ShopCreationRequestRepository shopCreationRequestRepository;
+    private final TaskRepository taskRepository;
     private final ShopRepository shopRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final TaskMapper taskMapper;
 
     @Override
     public SuccessResponseDto<Page<UserProfileResponseDto>> getCustomers(Pageable pageable) {
@@ -79,17 +82,26 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public SuccessResponseDto<Page<SupportTicketResponseDto>> getSupportTickets(Pageable pageable, String userEmail) {
-        Page<SupportTicketEntity> supportTicketEntities = supportTicketRepository.getAllSupportTicketsByAssignedAdmin(getAdmin(userEmail), pageable);
-        return SuccessResponseDto.of(supportTicketEntities.map(this::mapToSupportTicketResponseDto), "Support tickets are retrieved successfully!");
+    @Transactional(readOnly = true)
+    public SuccessResponseDto<Page<TaskResponseDto>> getTasks(TaskCategory taskCategory, Pageable pageable, String userEmail) {
+        UserEntity assignedAdmin = getAdmin(userEmail);
+        Page<TaskEntity> tasks = (Objects.isNull(taskCategory))
+                ? taskRepository.findAllByAssignedAdmin(assignedAdmin, pageable)
+                : taskRepository.findAllByAssignedAdminAndTaskCategory(assignedAdmin, taskCategory, pageable);
+
+        return SuccessResponseDto.of(tasks.map(taskMapper::toDto), "Tasks are retrieved successfully!");
     }
 
     @Override
+    @Transactional
     public SuccessResponseDto<Void> closeSupportTicket(String id, String userEmail) {
-        SupportTicketEntity supportTicketEntity = supportTicketRepository.findByIdAndAssignedAdmin(parse(id), getAdmin(userEmail))
-                .orElseThrow(() -> new ResourceNotFoundException("Support ticket not found!"));
-        supportTicketEntity.setStatus(TicketStatus.CLOSED);
-        supportTicketRepository.save(supportTicketEntity);
+        TaskEntity taskEntity = taskRepository.findByIdAndAssignedAdmin(parse(id), getAdmin(userEmail))
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found!"));
+
+        if (!(taskEntity instanceof SupportTicketEntity supportTicketEntity)) {
+            throw new IllegalRequestException("Task is not a support ticket!");
+        }
+        supportTicketEntity.setTicketStatus(TicketStatus.CLOSED);
         return SuccessResponseDto.of("Support ticket has been closed successfully!");
     }
 
@@ -107,7 +119,7 @@ public class AdminServiceImpl implements AdminService {
                 .build();
 
         shopRepository.save(shop);
-        shopCreationRequestEntity.setStatus(RequestStatus.APPROVED);
+        shopCreationRequestEntity.setRequestStatus(RequestStatus.APPROVED);
         applicationEventPublisher.publishEvent(new ShopCreationRequestApprovedEvent(shopCreationRequestEntity));
 
         return SuccessResponseDto.of("Shop creation request has been approved successfully!");
@@ -118,19 +130,11 @@ public class AdminServiceImpl implements AdminService {
     public SuccessResponseDto<Void> reject(String id, String userEmail, ShopCreationRequestRejectDto shopCreationRequestRejectDto) {
         ShopCreationRequestEntity shopCreationRequestEntity = getShopCreationRequestEntity(id, userEmail);
 
-        shopCreationRequestEntity.setStatus(RequestStatus.REJECTED);
+        shopCreationRequestEntity.setRequestStatus(RequestStatus.REJECTED);
         shopCreationRequestEntity.setRejectionReason(shopCreationRequestRejectDto.getReason());
         applicationEventPublisher.publishEvent(new ShopCreationRequestRejectedEvent(shopCreationRequestEntity));
 
         return SuccessResponseDto.of("Shop creation request has been rejected successfully!");
-    }
-
-    @Override
-    @Transactional
-    public SuccessResponseDto<Page<ShopCreationRequestResponseDto>> getShopCreationRequestsByAssignedAdmin(String userEmail, Pageable pageable) {
-        Page<ShopCreationRequestEntity> shopCreationRequestEntities = shopCreationRequestRepository.findByAssignedAdminAndStatus(getAdmin(userEmail), RequestStatus.PENDING, pageable);
-        return SuccessResponseDto.of(shopCreationRequestEntities.map(this::mapToShopCreationRequestResponseDto),
-                "Shop creation requests retrieved successfully for this admin!");
     }
 
     private UserEntity getAdmin(String userEmail) {
@@ -139,9 +143,14 @@ public class AdminServiceImpl implements AdminService {
     }
 
     private ShopCreationRequestEntity getShopCreationRequestEntity(String id, String userEmail) {
-        UserEntity admin = getAdmin(userEmail);
-        return shopCreationRequestRepository.findByIdAndAssignedAdminAndStatus(parse(id), admin, RequestStatus.PENDING)
-                .orElseThrow(() -> new  ResourceNotFoundException("Shop creation request not found!"));
+        TaskEntity taskEntity = taskRepository.findByIdAndAssignedAdmin(parse(id), getAdmin(userEmail))
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found!"));
+
+        if (!(taskEntity instanceof ShopCreationRequestEntity shopCreationRequestEntity)) {
+            throw new IllegalRequestException("Task is not a shop creation request!");
+        }
+
+        return shopCreationRequestEntity;
     }
 
     private UserProfileResponseDto mapToDto(UserEntity userEntity) {
@@ -153,36 +162,6 @@ public class AdminServiceImpl implements AdminService {
                 .dateOfBirth(userEntity.getDateOfBirth())
                 .profilePhotoUrl(userEntity.getProfilePhotoUrl())
                 .createdAt(userEntity.getCreatedAt())
-                .build();
-    }
-
-    private SupportTicketResponseDto mapToSupportTicketResponseDto(SupportTicketEntity supportTicketEntity) {
-        UserEntity creator = supportTicketEntity.getCreatedBy();
-        return SupportTicketResponseDto.builder()
-                .id(supportTicketEntity.getId())
-                .subject(supportTicketEntity.getSubject())
-                .description(supportTicketEntity.getDescription())
-                .status(supportTicketEntity.getStatus())
-                .createdAt(supportTicketEntity.getCreatedAt())
-                .updatedAt(supportTicketEntity.getUpdatedAt())
-                .creator(TaskCreatorDto.builder()
-                        .id(creator.getId())
-                        .name(creator.getName())
-                        .email(creator.getEmail())
-                        .build())
-                .build();
-    }
-
-    private ShopCreationRequestResponseDto mapToShopCreationRequestResponseDto (ShopCreationRequestEntity shopCreationRequestEntity) {
-        UserEntity creator = shopCreationRequestEntity.getCreatedBy();
-        return ShopCreationRequestResponseDto.builder()
-                .id(shopCreationRequestEntity.getId())
-                .creator(TaskCreatorDto.builder()
-                        .id(creator.getId())
-                        .name(creator.getName())
-                        .email(creator.getEmail())
-                        .build())
-                .createdAt(shopCreationRequestEntity.getCreatedAt())
                 .build();
     }
 }

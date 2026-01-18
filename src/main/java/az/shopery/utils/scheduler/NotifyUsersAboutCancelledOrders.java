@@ -2,7 +2,7 @@ package az.shopery.utils.scheduler;
 
 import static az.shopery.utils.common.NameMapperHelper.first;
 
-import az.shopery.model.dto.event.OrderCancelledNotificationEvent;
+import az.shopery.model.event.OrderCancelledNotificationEvent;
 import az.shopery.model.entity.OrderEntity;
 import az.shopery.repository.OrderRepository;
 import az.shopery.utils.enums.OrderStatus;

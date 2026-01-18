@@ -1,6 +1,6 @@
 package az.shopery.listener;
 
-import az.shopery.model.dto.event.OrderCancelledNotificationEvent;
+import az.shopery.model.event.OrderCancelledNotificationEvent;
 import az.shopery.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

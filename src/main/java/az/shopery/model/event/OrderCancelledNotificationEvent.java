@@ -1,4 +1,4 @@
-package az.shopery.model.dto.event;
+package az.shopery.model.event;
 
 public record OrderCancelledNotificationEvent(
         String email,

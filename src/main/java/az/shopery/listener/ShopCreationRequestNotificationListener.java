@@ -1,7 +1,7 @@
 package az.shopery.listener;
 
-import az.shopery.model.dto.event.ShopCreationRequestApprovedEvent;
-import az.shopery.model.dto.event.ShopCreationRequestRejectedEvent;
+import az.shopery.model.event.ShopCreationRequestApprovedEvent;
+import az.shopery.model.event.ShopCreationRequestRejectedEvent;
 import az.shopery.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,0 +1,8 @@
+databaseChangeLog:
+  - changeSet:
+      id: 25_18012026_drop_support_tickets_table
+      author: Jahangir Alisoy
+      changes:
+        - dropTable:
+            tableName: support_tickets
+            cascadeConstraints: true

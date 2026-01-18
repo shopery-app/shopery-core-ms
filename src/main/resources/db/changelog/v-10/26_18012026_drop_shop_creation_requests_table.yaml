@@ -1,0 +1,8 @@
+databaseChangeLog:
+  - changeSet:
+      id: 26_18012026_drop_shop_creation_requests_table
+      author: Jahangir Alisoy
+      changes:
+        - dropTable:
+            tableName: shop_creation_requests
+            cascadeConstraints: true

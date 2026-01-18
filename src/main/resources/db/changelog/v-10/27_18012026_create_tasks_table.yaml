@@ -1,0 +1,74 @@
+databaseChangeLog:
+  - changeSet:
+      id: 27_18012026_create_tasks_table
+      author: Jahangir Alisoy
+      changes:
+        - createTable:
+            tableName: tasks
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: task_category
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: subject
+                  type: VARCHAR(255)
+              - column:
+                  name: description
+                  type: TEXT
+              - column:
+                  name: shop_name
+                  type: VARCHAR(255)
+              - column:
+                  name: shop_description
+                  type: TEXT
+              - column:
+                  name: request_status
+                  type: VARCHAR(50)
+              - column:
+                  name: rejection_reason
+                  type: TEXT
+              - column:
+                  name: ticket_status
+                  type: VARCHAR(50)
+              - column:
+                  name: created_by_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: assigned_admin_id
+                  type: UUID
+              - column:
+                  name: is_user_notified
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: tasks
+            baseColumnNames: created_by_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_tasks_created_by
+        - addForeignKeyConstraint:
+            baseTableName: tasks
+            baseColumnNames: assigned_admin_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_tasks_assigned_admin

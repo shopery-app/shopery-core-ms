@@ -6,9 +6,9 @@ import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.model.dto.request.SupportTicketRequestDto;
 import az.shopery.model.dto.response.SuccessResponseDto;
 import az.shopery.model.dto.response.UserSupportTicketResponseDto;
-import az.shopery.model.entity.SupportTicketEntity;
+import az.shopery.model.entity.task.SupportTicketEntity;
 import az.shopery.model.entity.UserEntity;
-import az.shopery.repository.admin.SupportTicketRepository;
+import az.shopery.repository.TaskRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.SupportTicketService;
 import az.shopery.utils.admin.AdminAssignmentService;
@@ -26,65 +26,69 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class SupportTicketServiceImpl implements SupportTicketService {
 
-    private final SupportTicketRepository supportTicketRepository;
+    private final TaskRepository taskRepository;
     private final UserRepository userRepository;
     private final AdminAssignmentService adminAssignmentService;
 
     @Override
     @Transactional
-    public SuccessResponseDto<Void> createMySupportTicket(SupportTicketRequestDto supportTicketRequestDto, String userEmail) {
-        SupportTicketEntity supportTicketEntity = SupportTicketEntity.builder()
-                .subject(supportTicketRequestDto.getSubject())
-                .description(supportTicketRequestDto.getDescription())
-                .createdBy(getUser(userEmail))
-                .assignedAdmin(adminAssignmentService.assignRandomAdmin())
+    public SuccessResponseDto<Void> createMySupportTicket(SupportTicketRequestDto dto, String userEmail) {
+        UserEntity user = getUser(userEmail);
+        UserEntity assignedAdmin = adminAssignmentService.assignRandomAdmin();
+
+        SupportTicketEntity ticket = SupportTicketEntity.builder()
+                .subject(dto.getSubject())
+                .description(dto.getDescription())
+                .createdBy(user)
+                .assignedAdmin(assignedAdmin)
                 .build();
-        supportTicketRepository.save(supportTicketEntity);
-        return SuccessResponseDto.of(null, "The support ticket created successfully!");
+
+        taskRepository.save(ticket);
+        return SuccessResponseDto.of("The support ticket created successfully!");
     }
 
     @Override
     public SuccessResponseDto<Page<UserSupportTicketResponseDto>> getMySupportTickets(String userEmail, Pageable pageable) {
-        Page<SupportTicketEntity> supportTicketEntities = supportTicketRepository.getAllSupportTicketsByCreatedBy(getUser(userEmail), pageable);
-        return SuccessResponseDto.of(supportTicketEntities.map(this::mapToDto), "Support tickets retrieved successfully!");
+        Page<SupportTicketEntity> tickets = taskRepository.getAllSupportTicketsByCreatedBy(getUser(userEmail), pageable);
+        return SuccessResponseDto.of(tickets.map(this::mapToDto), "Support tickets retrieved successfully!");
     }
 
     @Override
     @Transactional
     public SuccessResponseDto<Void> deleteMySupportTicket(String id, String userEmail) {
-        SupportTicketEntity supportTicketEntity = getSupportTicket(id, userEmail);
-        supportTicketRepository.delete(supportTicketEntity);
-        return SuccessResponseDto.of(null, "The support ticket deleted successfully!");
+        SupportTicketEntity ticket = getSupportTicket(id, userEmail);
+        taskRepository.delete(ticket);
+        return SuccessResponseDto.of("The support ticket deleted successfully!");
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<UserSupportTicketResponseDto> updateMySupportTicket(SupportTicketRequestDto updateSupportTicketRequestDto, String id, String userEmail) {
-        SupportTicketEntity supportTicketEntity = getSupportTicket(id, userEmail);
-        supportTicketEntity.setSubject(updateSupportTicketRequestDto.getSubject());
-        supportTicketEntity.setDescription(updateSupportTicketRequestDto.getDescription());
-        return SuccessResponseDto.of(mapToDto(supportTicketEntity), "Support ticket updated successfully!");
+    public SuccessResponseDto<UserSupportTicketResponseDto> updateMySupportTicket(SupportTicketRequestDto dto, String id, String userEmail) {
+        SupportTicketEntity ticket = getSupportTicket(id, userEmail);
+        ticket.setSubject(dto.getSubject());
+        ticket.setDescription(dto.getDescription());
+        return SuccessResponseDto.of(mapToDto(ticket), "Support ticket updated successfully!");
     }
 
-    private UserEntity getUser(String userEmail) {
-        return userRepository.findByEmailAndStatus(userEmail, UserStatus.ACTIVE)
+    private UserEntity getUser(String email) {
+        return userRepository.findByEmailAndStatus(email, UserStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
     }
 
-    private SupportTicketEntity getSupportTicket(String id, String userEmail) {
-        return supportTicketRepository.findByIdAndCreatedBy(parse(id), getUser(userEmail))
+    private SupportTicketEntity getSupportTicket(String id, String email) {
+        return taskRepository.findSupportTicketByIdAndCreatedBy(parse(id), getUser(email))
                 .orElseThrow(() -> new ResourceNotFoundException("Support ticket not found!"));
     }
 
-    private UserSupportTicketResponseDto mapToDto(SupportTicketEntity supportTicketEntity) {
+    private UserSupportTicketResponseDto mapToDto(SupportTicketEntity ticket) {
         return UserSupportTicketResponseDto.builder()
-                .id(supportTicketEntity.getId())
-                .subject(supportTicketEntity.getSubject())
-                .description(supportTicketEntity.getDescription())
-                .status(supportTicketEntity.getStatus())
-                .assignedTo(supportTicketEntity.getAssignedAdmin().getName())
-                .createdAt(supportTicketEntity.getCreatedAt())
-                .updatedAt(supportTicketEntity.getUpdatedAt())
+                .id(ticket.getId())
+                .subject(ticket.getSubject())
+                .description(ticket.getDescription())
+                .status(ticket.getTicketStatus())
+                .assignedTo(ticket.getAssignedAdmin().getName())
+                .createdAt(ticket.getCreatedAt())
+                .updatedAt(ticket.getUpdatedAt())
                 .build();
     }
 }

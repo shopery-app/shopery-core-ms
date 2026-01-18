@@ -1,27 +1,25 @@
-package az.shopery.model.dto.response;
+package az.shopery.model.dto.response.task;
 
 import az.shopery.model.dto.shared.TaskCreatorDto;
-import az.shopery.utils.enums.TicketStatus;
+import az.shopery.utils.enums.TaskCategory;
+import java.time.Instant;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import java.time.Instant;
-import java.util.UUID;
+import lombok.experimental.SuperBuilder;
 
 @Data
-@Builder
-@AllArgsConstructor
+@SuperBuilder
 @NoArgsConstructor
+@AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class SupportTicketResponseDto {
+public class TaskResponseDto {
     UUID id;
-    String subject;
-    String description;
-    TicketStatus status;
+    TaskCategory taskCategory;
+    TaskCreatorDto taskCreatorDto;
     Instant createdAt;
     Instant updatedAt;
-    TaskCreatorDto creator;
 }

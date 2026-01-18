@@ -2,9 +2,9 @@ package az.shopery.utils.scheduler;
 
 import static az.shopery.utils.common.NameMapperHelper.first;
 
-import az.shopery.model.dto.event.SupportTicketClosedNotificationEvent;
-import az.shopery.model.entity.SupportTicketEntity;
-import az.shopery.repository.admin.SupportTicketRepository;
+import az.shopery.model.event.SupportTicketClosedNotificationEvent;
+import az.shopery.model.entity.task.SupportTicketEntity;
+import az.shopery.repository.TaskRepository;
 import az.shopery.utils.enums.TicketStatus;
 import jakarta.transaction.Transactional;
 import java.util.List;
@@ -19,13 +19,13 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class NotifyUsersAboutClosedSupportTickets {
 
-    private final SupportTicketRepository supportTicketRepository;
+    private final TaskRepository taskRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Scheduled(cron = "0 0 0 * * *")
     @Transactional
     public void notifyUsersAboutClosedSupportTickets() {
-        List<SupportTicketEntity> tickets = supportTicketRepository.findAllByStatusAndIsUserNotifiedFalse(TicketStatus.CLOSED);
+        List<SupportTicketEntity> tickets = taskRepository.findAllByTicketStatusAndIsUserNotifiedFalse(TicketStatus.CLOSED);
         for (SupportTicketEntity ticket : tickets) {
             ticket.setIsUserNotified(Boolean.TRUE);
             applicationEventPublisher.publishEvent(new SupportTicketClosedNotificationEvent(

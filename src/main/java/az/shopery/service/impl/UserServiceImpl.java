@@ -17,27 +17,27 @@ import az.shopery.model.dto.response.UserEmailUpdateResponseDto;
 import az.shopery.model.dto.response.UserPasswordUpdateResponseDto;
 import az.shopery.model.dto.response.UserProfileResponseDto;
 import az.shopery.model.entity.EmailUpdateTokenEntity;
-import az.shopery.model.entity.ShopCreationRequestEntity;
+import az.shopery.model.entity.task.ShopCreationRequestEntity;
 import az.shopery.model.entity.UserEntity;
 import az.shopery.repository.EmailUpdateTokenRepository;
 import az.shopery.repository.ShopRepository;
+import az.shopery.repository.TaskRepository;
 import az.shopery.repository.UserRepository;
-import az.shopery.repository.admin.ShopCreationRequestRepository;
 import az.shopery.service.EmailService;
 import az.shopery.service.UserService;
 import az.shopery.utils.admin.AdminAssignmentService;
 import az.shopery.utils.enums.UserRole;
 import az.shopery.utils.enums.UserStatus;
 import az.shopery.utils.security.JwtService;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 @Slf4j
@@ -47,7 +47,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final ShopRepository shopRepository;
     private final EmailUpdateTokenRepository emailUpdateTokenRepository;
-    private final ShopCreationRequestRepository shopCreationRequestRepository;
+    private final TaskRepository taskRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
@@ -122,9 +122,9 @@ public class UserServiceImpl implements UserService {
                 .shopName(shopCreateRequestDto.getShopName())
                 .description(shopCreateRequestDto.getDescription())
                 .build();
-        shopCreationRequestRepository.save(shopCreationRequestEntity);
+        taskRepository.save(shopCreationRequestEntity);
 
-        return SuccessResponseDto.of(null, "Your request has been submitted and assigned to an admin for review.");
+        return SuccessResponseDto.of("Your request has been submitted and assigned to an admin for review.");
     }
 
     @Override

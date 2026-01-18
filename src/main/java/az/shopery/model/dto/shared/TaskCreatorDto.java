@@ -17,4 +17,5 @@ public class TaskCreatorDto {
     UUID id;
     String name;
     String email;
+    String phone;
 }
