@@ -13,7 +13,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class SupportTicketCreatorDto {
+public class TaskCreatorDto {
     UUID id;
     String name;
     String email;

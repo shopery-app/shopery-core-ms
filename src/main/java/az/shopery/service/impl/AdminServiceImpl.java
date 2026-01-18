@@ -12,9 +12,7 @@ import az.shopery.model.dto.response.ShopCreationRequestResponseDto;
 import az.shopery.model.dto.response.SuccessResponseDto;
 import az.shopery.model.dto.response.SupportTicketResponseDto;
 import az.shopery.model.dto.response.UserProfileResponseDto;
-import az.shopery.model.dto.shared.ShopCreationAssignedAdminDto;
-import az.shopery.model.dto.shared.ShopCreationCreatorDto;
-import az.shopery.model.dto.shared.SupportTicketCreatorDto;
+import az.shopery.model.dto.shared.TaskCreatorDto;
 import az.shopery.model.entity.OrderEntity;
 import az.shopery.model.entity.ShopCreationRequestEntity;
 import az.shopery.model.entity.ShopEntity;
@@ -167,7 +165,7 @@ public class AdminServiceImpl implements AdminService {
                 .status(supportTicketEntity.getStatus())
                 .createdAt(supportTicketEntity.getCreatedAt())
                 .updatedAt(supportTicketEntity.getUpdatedAt())
-                .creator(SupportTicketCreatorDto.builder()
+                .creator(TaskCreatorDto.builder()
                         .id(creator.getId())
                         .name(creator.getName())
                         .email(creator.getEmail())
@@ -177,18 +175,12 @@ public class AdminServiceImpl implements AdminService {
 
     private ShopCreationRequestResponseDto mapToShopCreationRequestResponseDto (ShopCreationRequestEntity shopCreationRequestEntity) {
         UserEntity creator = shopCreationRequestEntity.getCreatedBy();
-        UserEntity admin = shopCreationRequestEntity.getAssignedAdmin();
         return ShopCreationRequestResponseDto.builder()
                 .id(shopCreationRequestEntity.getId())
-                .creator(ShopCreationCreatorDto.builder()
+                .creator(TaskCreatorDto.builder()
                         .id(creator.getId())
                         .name(creator.getName())
                         .email(creator.getEmail())
-                        .build())
-                .admin(ShopCreationAssignedAdminDto.builder()
-                        .id(admin.getId())
-                        .name(admin.getName())
-                        .email(admin.getEmail())
                         .build())
                 .createdAt(shopCreationRequestEntity.getCreatedAt())
                 .build();

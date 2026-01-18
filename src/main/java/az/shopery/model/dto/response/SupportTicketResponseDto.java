@@ -1,6 +1,6 @@
 package az.shopery.model.dto.response;
 
-import az.shopery.model.dto.shared.SupportTicketCreatorDto;
+import az.shopery.model.dto.shared.TaskCreatorDto;
 import az.shopery.utils.enums.TicketStatus;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -23,5 +23,5 @@ public class SupportTicketResponseDto {
     TicketStatus status;
     Instant createdAt;
     Instant updatedAt;
-    SupportTicketCreatorDto creator;
+    TaskCreatorDto creator;
 }

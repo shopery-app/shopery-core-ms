@@ -1,7 +1,6 @@
 package az.shopery.model.dto.response;
 
-import az.shopery.model.dto.shared.ShopCreationAssignedAdminDto;
-import az.shopery.model.dto.shared.ShopCreationCreatorDto;
+import az.shopery.model.dto.shared.TaskCreatorDto;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
@@ -14,7 +13,6 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ShopCreationRequestResponseDto {
     UUID id;
-    ShopCreationCreatorDto creator;
-    ShopCreationAssignedAdminDto admin;
+    TaskCreatorDto creator;
     Instant createdAt;
 }
