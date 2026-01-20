@@ -21,10 +21,9 @@ public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
+
     @Value("${app.mail.from}")
     private String from;
-
-
     @Value("${application.frontend.base-url}")
     private String frontendBaseUrl;
 

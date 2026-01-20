@@ -5,6 +5,7 @@ import az.shopery.model.dto.response.ProductResponseDto;
 import az.shopery.model.dto.response.SuccessResponseDto;
 import az.shopery.service.ProductService;
 import az.shopery.utils.enums.ProductCategory;
+import az.shopery.utils.enums.ProductCondition;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,8 +26,9 @@ public class PublicProductController {
     @GetMapping
     public ResponseEntity<SuccessResponseDto<Page<ProductResponseDto>>> searchProducts(
             @RequestParam(required = false) ProductCategory category,
+            @RequestParam(required = false) ProductCondition condition,
             Pageable pageable) {
-        return ResponseEntity.ok(productService.searchPublicProducts(category, pageable));
+        return ResponseEntity.ok(productService.searchPublicProducts(category, condition, pageable));
     }
 
     @GetMapping("/{productId}")

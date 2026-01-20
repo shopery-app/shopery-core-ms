@@ -5,6 +5,7 @@ import static az.shopery.utils.common.UuidUtils.parse;
 import az.shopery.handler.exception.IllegalRequestException;
 import az.shopery.handler.exception.OwnProductInteractionException;
 import az.shopery.handler.exception.ResourceNotFoundException;
+import az.shopery.mapper.ProductMapper;
 import az.shopery.model.dto.response.CartItemResponseDto;
 import az.shopery.model.dto.response.CartResponseDto;
 import az.shopery.model.dto.response.SuccessResponseDto;
@@ -18,7 +19,7 @@ import az.shopery.repository.ProductRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.repository.WishlistRepository;
 import az.shopery.service.CartService;
-import az.shopery.service.ProductService;
+import az.shopery.utils.enums.UserStatus;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -28,8 +29,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
-import az.shopery.utils.enums.UserStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -44,7 +43,7 @@ public class CartServiceImpl implements CartService {
     private final ProductRepository productRepository;
     private final CartRepository cartRepository;
     private final WishlistRepository wishlistRepository;
-    private final ProductService productService;
+    private final ProductMapper productMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -247,7 +246,7 @@ public class CartServiceImpl implements CartService {
 
     private CartItemResponseDto mapItemToDto(CartItemEntity cartItemEntity) {
         return CartItemResponseDto.builder()
-                .product(productService.mapToBriefDto(cartItemEntity.getProduct()))
+                .product(productMapper.toBriefDto(cartItemEntity.getProduct()))
                 .quantity(cartItemEntity.getQuantity())
                 .build();
     }

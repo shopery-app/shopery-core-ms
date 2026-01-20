@@ -4,6 +4,7 @@ import static az.shopery.utils.common.UuidUtils.parse;
 
 import az.shopery.handler.exception.OwnProductInteractionException;
 import az.shopery.handler.exception.ResourceNotFoundException;
+import az.shopery.mapper.ProductMapper;
 import az.shopery.model.dto.response.ProductResponseDto;
 import az.shopery.model.dto.response.SuccessResponseDto;
 import az.shopery.model.dto.response.WishlistResponseDto;
@@ -13,8 +14,8 @@ import az.shopery.model.entity.WishlistEntity;
 import az.shopery.repository.ProductRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.repository.WishlistRepository;
-import az.shopery.service.ProductService;
 import az.shopery.service.WishlistService;
+import az.shopery.utils.enums.UserStatus;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -22,8 +23,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
-import az.shopery.utils.enums.UserStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -37,7 +36,7 @@ public class WishlistServiceImpl implements WishlistService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final WishlistRepository wishlistRepository;
-    private final ProductService productService;
+    private final ProductMapper productMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -59,7 +58,7 @@ public class WishlistServiceImpl implements WishlistService {
         UserEntity userEntity = findUser(userEmail);
         ProductEntity productEntity = findProduct(parse(productId));
 
-        if (productRepository.existsByIdAndShop_User_Id(parse(productId), userEntity.getId())) {
+        if (productRepository.existsByIdAndShopUser(parse(productId), userEntity)) {
             throw new OwnProductInteractionException("You cannot add a product to your own wishlist.");
         }
 
@@ -127,7 +126,7 @@ public class WishlistServiceImpl implements WishlistService {
     private WishlistResponseDto mapToDto(WishlistEntity wishlistEntity) {
         Set<ProductResponseDto> productDtos = wishlistEntity.getProducts().stream()
                 .sorted(Comparator.comparing(ProductEntity::getProductName))
-                .map(productService::mapToBriefDto)
+                .map(productMapper::toBriefDto)
                 .collect(Collectors.toSet());
 
         return WishlistResponseDto.builder()
