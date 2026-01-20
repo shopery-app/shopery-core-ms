@@ -1,6 +1,6 @@
 DROP TABLE IF EXISTS
     shop_ratings,
-    shop_creation_requests,
+    tasks,
     blog_likes,
     blogs,
     wishlist_products,
@@ -12,7 +12,6 @@ DROP TABLE IF EXISTS
     cart_items,
     carts,
     shops,
-    support_tickets,
     user_addresses,
     password_reset_tokens,
     verification_tokens,
