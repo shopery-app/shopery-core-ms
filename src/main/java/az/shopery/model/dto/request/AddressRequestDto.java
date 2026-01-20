@@ -1,8 +1,9 @@
 package az.shopery.model.dto.request;
 
-import az.shopery.utils.annotation.ValidAddressType;
+import az.shopery.utils.annotation.ValidEnum;
 import az.shopery.utils.enums.AddressType;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -31,6 +32,7 @@ public class AddressRequestDto {
     @NotBlank(message = "Postal code cannot be empty!")
     @Size(max = 20, message = "Postal code is too long.")
     String postalCode;
-    @ValidAddressType(message = "You must specify a valid location type (e.g., HOME, WORK).")
+    @NotNull(message = "Address type is required!")
+    @ValidEnum(enumClass = AddressType.class)
     private AddressType addressType;
 }

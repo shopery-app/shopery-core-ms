@@ -11,6 +11,7 @@ import az.shopery.handler.exception.InvalidUuidFormatException;
 import az.shopery.handler.exception.JwtAuthenticationException;
 import az.shopery.handler.exception.OwnProductInteractionException;
 import az.shopery.handler.exception.ResourceNotFoundException;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
@@ -57,7 +58,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex,
                                                                                HttpServletRequest request) {
-        return buildErrorResponse(ex, HttpStatus.BAD_REQUEST, request);
+        return isInvalidEnumValue(ex) ? buildInvalidEnumResponse(request) : buildErrorResponse(ex, HttpStatus.BAD_REQUEST, request);
     }
 
     @ExceptionHandler(IllegalRequestException.class)
@@ -158,5 +159,21 @@ public class GlobalExceptionHandler {
                 .path(request.getRequestURI())
                 .build();
         return new ResponseEntity<>(errorResponse, status);
+    }
+
+    private boolean isInvalidEnumValue(HttpMessageNotReadableException ex) {
+        return ex.getCause() instanceof InvalidFormatException ife && ife.getTargetType().isEnum();
+    }
+
+    private ResponseEntity<ErrorResponse> buildInvalidEnumResponse(HttpServletRequest request) {
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST)
+                .statusCode(HttpStatus.BAD_REQUEST.value())
+                .timestamp(LocalDateTime.now())
+                .message("Invalid enum value!")
+                .path(request.getRequestURI())
+                .build();
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 }

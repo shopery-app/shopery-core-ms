@@ -26,7 +26,7 @@ import lombok.experimental.SuperBuilder;
 public class SupportTicketEntity extends TaskEntity {
     @Column(name = "subject", nullable = false)
     String subject;
-    @Column(name = "description", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "description", nullable = false)
     String description;
     @Enumerated(EnumType.STRING)
     @Builder.Default

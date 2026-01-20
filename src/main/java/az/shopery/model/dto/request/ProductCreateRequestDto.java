@@ -30,12 +30,12 @@ public class ProductCreateRequestDto {
     @Size(max = 2000, message = "Maximum product description length exceeded!")
     @Pattern(regexp = "^[A-Za-z0-9\\s]+$", message = "Product description cannot contain special characters!")
     String description;
-    @NotBlank(message = "Condition must not be empty.")
-    @ValidEnum(enumClass = ProductCondition.class, message = "Invalid product condition.")
-    String condition;
-    @NotBlank(message = "Category must not be empty.")
-    @ValidEnum(enumClass = ProductCategory.class, message = "Invalid product category.")
-    String category;
+    @NotNull(message = "Product condition is required!")
+    @ValidEnum(enumClass = ProductCondition.class)
+    ProductCondition condition;
+    @NotNull(message = "Product category is required!")
+    @ValidEnum(enumClass = ProductCategory.class)
+    ProductCategory category;
     @NotNull
     @Positive
     BigDecimal price;

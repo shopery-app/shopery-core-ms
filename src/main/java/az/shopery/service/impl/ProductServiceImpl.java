@@ -57,8 +57,8 @@ public class ProductServiceImpl implements ProductService {
                 .currentPrice(productCreateRequestDto.getPrice())
                 .originalPrice(productCreateRequestDto.getPrice())
                 .stockQuantity(productCreateRequestDto.getStockQuantity())
-                .category(ProductCategory.valueOf(productCreateRequestDto.getCategory()))
-                .condition(ProductCondition.valueOf(productCreateRequestDto.getCondition()))
+                .category(productCreateRequestDto.getCategory())
+                .condition(productCreateRequestDto.getCondition())
                 .priceHistory(new ArrayList<>())
                 .build();
         PriceHistoryEntity initialPrice = PriceHistoryEntity.builder()
@@ -91,8 +91,8 @@ public class ProductServiceImpl implements ProductService {
         productEntity.setProductName(productCreateRequestDto.getProductName());
         productEntity.setDescription(productCreateRequestDto.getDescription());
         productEntity.setStockQuantity(productCreateRequestDto.getStockQuantity());
-        productEntity.setCategory(ProductCategory.valueOf(productCreateRequestDto.getCategory()));
-        productEntity.setCondition(ProductCondition.valueOf(productCreateRequestDto.getCondition()));
+        productEntity.setCategory(productCreateRequestDto.getCategory());
+        productEntity.setCondition(productCreateRequestDto.getCondition());
 
         ProductEntity updatedProductEntity = productRepository.save(productEntity);
         return SuccessResponseDto.of(mapToDetailDto(updatedProductEntity), "Product updated successfully.");
