@@ -6,57 +6,57 @@ import az.shopery.model.dto.shared.PriceHistoryDto;
 import az.shopery.model.entity.PriceHistoryEntity;
 import az.shopery.model.entity.ProductEntity;
 import az.shopery.utils.aws.S3FileUtil;
-import az.shopery.utils.common.DiscountCalculator;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
+import lombok.Setter;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.springframework.beans.factory.annotation.Autowired;
 
-@Component
-@RequiredArgsConstructor
-public class ProductMapper {
 
-    private final S3FileUtil s3FileUtil;
+@Mapper(componentModel = "spring",
+        injectionStrategy = org.mapstruct.InjectionStrategy.CONSTRUCTOR,
+        imports = { az.shopery.utils.common.DiscountCalculator.class })
+public abstract class ProductMapper {
 
-    public ProductResponseDto toBriefDto(ProductEntity productEntity) {
-        return ProductResponseDto.builder()
-                .id(productEntity.getId())
-                .productName(productEntity.getProductName())
-                .description(productEntity.getDescription())
-                .imageUrl(s3FileUtil.generatePresignedUrl(productEntity.getImageUrl()))
-                .currentPrice(productEntity.getCurrentPrice())
-                .discountDto(DiscountCalculator.calculateDiscountFromOriginalPrice(productEntity.getCurrentPrice(), productEntity.getOriginalPrice()))
-                .build();
-    }
+    @Setter(onMethod_ = @Autowired)
+    protected S3FileUtil s3FileUtil;
 
-    public ProductDetailResponseDto toDetailDto(ProductEntity product) {
-        List<PriceHistoryDto> historyDtos =
-                Objects.nonNull(product.getPriceHistory())
-                        ? product.getPriceHistory().stream()
-                        .sorted(Comparator.comparing(PriceHistoryEntity::getCreatedAt).reversed())
-                        .map(ph -> PriceHistoryDto.builder()
-                                .price(ph.getPrice())
-                                .setAt(ph.getCreatedAt())
-                                .build())
-                        .toList()
-                        : Collections.emptyList();
+    @Mapping(
+            target = "imageUrl",
+            expression = "java(s3FileUtil.generatePresignedUrl(productEntity.getImageUrl()))"
+    )
+    @Mapping(
+            target = "discountDto",
+            expression = "java(DiscountCalculator.calculateDiscountFromOriginalPrice("
+                    + "productEntity.getCurrentPrice(), productEntity.getOriginalPrice()))"
+    )
+    public abstract ProductResponseDto toBriefDto(ProductEntity productEntity);
 
-        return ProductDetailResponseDto.builder()
-                .id(product.getId())
-                .productName(product.getProductName())
-                .description(product.getDescription())
-                .imageUrl(s3FileUtil.generatePresignedUrl(product.getImageUrl()))
-                .currentPrice(product.getCurrentPrice())
-                .discountDto(DiscountCalculator.calculateDiscountFromOriginalPrice(product.getCurrentPrice(), product.getOriginalPrice()))
-                .stockQuantity(product.getStockQuantity())
-                .category(product.getCategory())
-                .condition(product.getCondition())
-                .shopName(product.getShop().getShopName())
-                .shopId(product.getShop().getId())
-                .priceHistory(historyDtos)
-                .createdAt(product.getCreatedAt())
-                .build();
+    @Mapping(
+            target = "imageUrl",
+            expression = "java(s3FileUtil.generatePresignedUrl(product.getImageUrl()))"
+    )
+    @Mapping(
+            target = "discountDto",
+            expression = "java(DiscountCalculator.calculateDiscountFromOriginalPrice("
+                    + "product.getCurrentPrice(), product.getOriginalPrice()))"
+    )
+    @Mapping(target = "shopName", source = "shop.shopName")
+    @Mapping(target = "shopId", source = "shop.id")
+    @Mapping(target = "priceHistory", source = "priceHistory")
+
+    public abstract ProductDetailResponseDto toDetailDto(ProductEntity product);
+
+    protected List<PriceHistoryDto> mapPriceHistory(List<PriceHistoryEntity> history) {
+        return Objects.nonNull(history) ? history.stream()
+                .sorted(Comparator.comparing(PriceHistoryEntity::getCreatedAt).reversed())
+                .map(ph -> PriceHistoryDto.builder()
+                        .price(ph.getPrice())
+                        .setAt(ph.getCreatedAt())
+                        .build())
+                .toList() :  Collections.emptyList();
     }
 }
