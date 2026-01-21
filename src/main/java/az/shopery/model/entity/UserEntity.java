@@ -97,4 +97,6 @@ public class UserEntity {
     List<UserAddressEntity> userAddresses;
     @OneToMany(mappedBy = "user", orphanRemoval = true)
     List<OrderEntity> orders;
+    @OneToMany(mappedBy = "user", orphanRemoval = true, cascade = CascadeType.ALL)
+    List<SavedBlogEntity> savedBlogs;
 }
