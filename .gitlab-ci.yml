@@ -24,6 +24,14 @@ lint-test-job:
     - sleep 5
     - echo "No lint issues found."
 
+snyk_sast:
+  image: snyk/snyk:docker
+  stage: test
+  script:
+    - snyk auth "$SNYK_TOKEN"
+    - snyk code test
+  allow_failure: true
+
 deploy-job:
   stage: deploy
   script:
