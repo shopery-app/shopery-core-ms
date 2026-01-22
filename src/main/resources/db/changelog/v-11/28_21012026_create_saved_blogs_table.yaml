@@ -1,0 +1,53 @@
+databaseChangeLog:
+  - changeSet:
+      id: 28_21012026_create_saved_blogs_table
+      author: Nijat Alizada
+      changes:
+        - createTable:
+            tableName: saved_blogs
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: blog_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: saved_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+        - addUniqueConstraint:
+            tableName: saved_blogs
+            columnNames: user_id, blog_id
+            constraintName: uq_saved_blogs_user_blog
+
+        - addForeignKeyConstraint:
+            baseTableName: saved_blogs
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_saved_blogs_user
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: saved_blogs
+            baseColumnNames: blog_id
+            referencedTableName: blogs
+            referencedColumnNames: id
+            constraintName: fk_saved_blogs_blog
+            onDelete: CASCADE
