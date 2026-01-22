@@ -28,9 +28,11 @@ snyk_sast:
   image: snyk/snyk:docker
   stage: test
   script:
+    - if [ -z "$SNYK_TOKEN" ]; then echo "SNYK_TOKEN is empty"; else echo "SNYK_TOKEN is set"; fi
     - snyk auth "$SNYK_TOKEN"
     - snyk code test
   allow_failure: true
+
 
 deploy-job:
   stage: deploy
