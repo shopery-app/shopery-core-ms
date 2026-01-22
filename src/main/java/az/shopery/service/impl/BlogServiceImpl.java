@@ -1,14 +1,14 @@
 package az.shopery.service.impl;
 
 import static az.shopery.utils.common.UuidUtils.parse;
+
 import az.shopery.handler.exception.ResourceNotFoundException;
+import az.shopery.mapper.BlogMapper;
 import az.shopery.model.dto.request.BlogRequestDto;
 import az.shopery.model.dto.response.BlogResponseDto;
 import az.shopery.model.dto.response.SuccessResponseDto;
-import az.shopery.model.dto.shared.AuthorDto;
 import az.shopery.model.entity.BlogEntity;
 import az.shopery.model.entity.UserEntity;
-import az.shopery.repository.BlogLikeRepository;
 import az.shopery.repository.BlogRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.BlogService;
@@ -30,29 +30,29 @@ import java.util.UUID;
 public class BlogServiceImpl implements BlogService {
 
     private final BlogRepository blogRepository;
-    private final BlogLikeRepository blogLikeRepository;
     private final UserRepository userRepository;
     private final S3FileUtil s3FileUtil;
+    private final BlogMapper blogMapper;
 
     @Override
     @Transactional
     public SuccessResponseDto<Page<BlogResponseDto>> getMyBlogs(String userEmail, Pageable pageable) {
         Page<BlogEntity> blogs = blogRepository.getBlogsByUserEmail(userEmail, pageable);
-        return SuccessResponseDto.of(blogs.map(this::mapToDto), "Your blogs retrieved successfully!");
+        return SuccessResponseDto.of(blogs.map(blogMapper::toDto), "Your blogs retrieved successfully!");
     }
 
     @Override
     @Transactional
     public SuccessResponseDto<BlogResponseDto> getMyBlog(String userEmail, String blogId) {
         BlogEntity blogEntity = getUserOwnedBlog(blogId, userEmail);
-        return SuccessResponseDto.of(mapToDto(blogEntity), "Your blog retrieved successfully!");
+        return SuccessResponseDto.of(blogMapper.toDto(blogEntity), "Your blog retrieved successfully!");
     }
 
     @Override
     @Transactional
     public SuccessResponseDto<Page<BlogResponseDto>> getAllBlogs(Pageable pageable) {
         Page<BlogEntity> blogs = blogRepository.findAll(pageable);
-        return SuccessResponseDto.of(blogs.map(this::mapToDto), "All blogs retrieved successfully!");
+        return SuccessResponseDto.of(blogs.map(blogMapper::toDto), "All blogs retrieved successfully!");
     }
 
     @Override
@@ -79,7 +79,7 @@ public class BlogServiceImpl implements BlogService {
 
         blogRepository.save(blogEntity);
 
-        return SuccessResponseDto.of(mapToDto(blogEntity), "Blog created successfully!");
+        return SuccessResponseDto.of(blogMapper.toDto(blogEntity), "Blog created successfully!");
     }
 
     @Override
@@ -121,7 +121,7 @@ public class BlogServiceImpl implements BlogService {
         blogEntity.setBlogTitle(blogRequestDto.getTitle());
         blogEntity.setContent(blogRequestDto.getContent());
         BlogEntity updatedBlogEntity = blogRepository.saveAndFlush(blogEntity);
-        return SuccessResponseDto.of(mapToDto(updatedBlogEntity), "Blog updated successfully!");
+        return SuccessResponseDto.of(blogMapper.toDto(updatedBlogEntity), "Blog updated successfully!");
     }
 
     private BlogEntity getUserOwnedBlog(String blogId, String userEmail) {
@@ -136,21 +136,5 @@ public class BlogServiceImpl implements BlogService {
         }
 
         return blogEntity;
-    }
-
-    private BlogResponseDto mapToDto(BlogEntity blogEntity) {
-        return BlogResponseDto.builder()
-                .id(blogEntity.getId())
-                .blogTitle(blogEntity.getBlogTitle())
-                .content(blogEntity.getContent())
-                .imageUrl(blogEntity.getImageUrl())
-                .createdAt(blogEntity.getCreatedAt())
-                .updatedAt(blogEntity.getUpdatedAt())
-                .likeCount(blogLikeRepository.countByBlog(blogEntity))
-                .author(AuthorDto.builder()
-                        .name(blogEntity.getUser().getName())
-                        .profilePhotoUrl(blogEntity.getUser().getProfilePhotoUrl())
-                        .build())
-                .build();
     }
 }

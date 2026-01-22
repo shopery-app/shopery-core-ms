@@ -84,8 +84,7 @@ public class UserController {
     }
 
     @PostMapping("/blogs/save/{blogId}")
-    public ResponseEntity<SuccessResponseDto<Void>> saveBlog(Principal principal,
-                                                             @Valid @PathVariable String blogId){
+    public ResponseEntity<SuccessResponseDto<Void>> saveBlog(Principal principal, @PathVariable String blogId){
         return ResponseEntity.ok(userService.saveBlog(principal.getName(), blogId));
     }
 
@@ -95,9 +94,7 @@ public class UserController {
     }
 
     @DeleteMapping("/blogs/save/{blogId}")
-    public ResponseEntity<SuccessResponseDto<Void>> deleteSavedBlog(Principal principal,
-                                                                    @Valid @PathVariable String blogId){
+    public ResponseEntity<SuccessResponseDto<Void>> deleteSavedBlog(Principal principal, @PathVariable String blogId){
         return ResponseEntity.ok(userService.deleteSavedBlog(principal.getName(), blogId));
     }
-
 }

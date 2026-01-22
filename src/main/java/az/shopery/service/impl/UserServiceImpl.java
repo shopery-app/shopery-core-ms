@@ -1,8 +1,13 @@
 package az.shopery.service.impl;
 
+import static az.shopery.utils.common.NameMapperHelper.first;
+import static az.shopery.utils.common.NameMapperHelper.last;
+import static az.shopery.utils.common.UuidUtils.parse;
+
 import az.shopery.handler.exception.EmailAlreadyExistsException;
 import az.shopery.handler.exception.InvalidCredentialsException;
 import az.shopery.handler.exception.ResourceNotFoundException;
+import az.shopery.mapper.BlogMapper;
 import az.shopery.model.dto.request.ShopCreateRequestDto;
 import az.shopery.model.dto.request.UserEmailUpdateRequestDto;
 import az.shopery.model.dto.request.UserEmailVerificationRequestDto;
@@ -14,13 +19,11 @@ import az.shopery.model.dto.response.SuccessResponseDto;
 import az.shopery.model.dto.response.UserEmailUpdateResponseDto;
 import az.shopery.model.dto.response.UserPasswordUpdateResponseDto;
 import az.shopery.model.dto.response.UserProfileResponseDto;
-import az.shopery.model.dto.shared.AuthorDto;
 import az.shopery.model.entity.BlogEntity;
 import az.shopery.model.entity.EmailUpdateTokenEntity;
 import az.shopery.model.entity.SavedBlogEntity;
 import az.shopery.model.entity.UserEntity;
 import az.shopery.model.entity.task.ShopCreationRequestEntity;
-import az.shopery.repository.BlogLikeRepository;
 import az.shopery.repository.BlogRepository;
 import az.shopery.repository.EmailUpdateTokenRepository;
 import az.shopery.repository.SavedBlogRepository;
@@ -43,11 +46,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
-import static az.shopery.utils.common.NameMapperHelper.first;
-import static az.shopery.utils.common.NameMapperHelper.last;
-import static az.shopery.utils.common.UuidUtils.parse;
 
 @Service
 @Slf4j
@@ -58,13 +57,13 @@ public class UserServiceImpl implements UserService {
     private final ShopRepository shopRepository;
     private final EmailUpdateTokenRepository emailUpdateTokenRepository;
     private final TaskRepository taskRepository;
-    private final JwtService jwtService;
-    private final PasswordEncoder passwordEncoder;
-    private final EmailService emailService;
-    private final AdminAssignmentHelper adminAssignmentHelper;
     private final BlogRepository blogRepository;
     private final SavedBlogRepository savedBlogRepository;
-    private final BlogLikeRepository blogLikeRepository;
+    private final JwtService jwtService;
+    private final EmailService emailService;
+    private final PasswordEncoder passwordEncoder;
+    private final AdminAssignmentHelper adminAssignmentHelper;
+    private final BlogMapper blogMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -227,10 +226,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public SuccessResponseDto<Void> saveBlog(String userEmail, String blogId) {
-        UUID parsedBlogId = parse(blogId);
         UserEntity userEntity = getUserByEmail(userEmail);
-        BlogEntity blogEntity = blogRepository.findById(parsedBlogId).orElseThrow(
-                () -> new ResourceNotFoundException("Blog with this id " + " not found."));
+        BlogEntity blogEntity = blogRepository.findById(parse(blogId))
+                .orElseThrow(() -> new ResourceNotFoundException("Blog not found"));
 
         SavedBlogEntity savedBlogEntity = SavedBlogEntity.builder()
                 .blog(blogEntity)
@@ -238,7 +236,7 @@ public class UserServiceImpl implements UserService {
                 .build();
 
         savedBlogRepository.save(savedBlogEntity);
-        return  SuccessResponseDto.of("Blog has been saved successfully");
+        return SuccessResponseDto.of("Blog has been saved successfully");
     }
 
     @Override
@@ -246,15 +244,15 @@ public class UserServiceImpl implements UserService {
     public SuccessResponseDto<Page<BlogResponseDto>> getSavedBlogs(String userEmail, Pageable pageable) {
         UserEntity userEntity = getUserByEmail(userEmail);
         Page<SavedBlogEntity> savedBlogEntities = savedBlogRepository.findAllByUserId(userEntity.getId(), pageable);
-        return SuccessResponseDto.of(savedBlogEntities.map((savedBlogEntity) -> mapBlogToDto(savedBlogEntity.getBlog())), "Blogs have been retrieved successfully");
+        return SuccessResponseDto.of(savedBlogEntities.map((savedBlogEntity) -> blogMapper.toDto(savedBlogEntity.getBlog())), "Blogs have been retrieved successfully");
     }
 
     @Override
     @Transactional
     public SuccessResponseDto<Void> deleteSavedBlog(String userEmail, String blogId) {
-        SavedBlogEntity  savedBlogEntity = getUserSavedBlog(userEmail, blogId);
+        SavedBlogEntity savedBlogEntity = getUserSavedBlog(userEmail, blogId);
         savedBlogRepository.delete(savedBlogEntity);
-        return  SuccessResponseDto.of("Blog has been unsaved successfully");
+        return SuccessResponseDto.of("Blog has been unsaved successfully");
     }
 
     private UserEntity getUserByEmail(String userEmail) {
@@ -262,11 +260,10 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + userEmail));
     }
 
-    private SavedBlogEntity getUserSavedBlog(String userEmail, String blogId){
-        UUID parsedBlogId = parse(blogId);
+    private SavedBlogEntity getUserSavedBlog(String userEmail, String blogId) {
         UserEntity userEntity = getUserByEmail(userEmail);
-        return savedBlogRepository.findByBlogIdAndUserId(parsedBlogId, userEntity.getId()).orElseThrow(
-                () -> new ResourceNotFoundException("Saved blog with this id for the given user not found."));
+        return savedBlogRepository.findByBlogIdAndUserId(parse(blogId), userEntity.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Saved blog with this id for the given user not found."));
     }
 
     private UserProfileResponseDto mapToDto(UserEntity userEntity) {
@@ -278,22 +275,6 @@ public class UserServiceImpl implements UserService {
                 .dateOfBirth(userEntity.getDateOfBirth())
                 .profilePhotoUrl(userEntity.getProfilePhotoUrl())
                 .createdAt(userEntity.getCreatedAt())
-                .build();
-    }
-
-    private BlogResponseDto mapBlogToDto(BlogEntity blogEntity) {
-        return BlogResponseDto.builder()
-                .id(blogEntity.getId())
-                .blogTitle(blogEntity.getBlogTitle())
-                .content(blogEntity.getContent())
-                .imageUrl(blogEntity.getImageUrl())
-                .createdAt(blogEntity.getCreatedAt())
-                .updatedAt(blogEntity.getUpdatedAt())
-                .likeCount(blogLikeRepository.countByBlog(blogEntity))
-                .author(AuthorDto.builder()
-                        .name(blogEntity.getUser().getName())
-                        .profilePhotoUrl(blogEntity.getUser().getProfilePhotoUrl())
-                        .build())
                 .build();
     }
 }

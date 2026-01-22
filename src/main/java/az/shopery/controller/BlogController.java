@@ -43,7 +43,7 @@ public class BlogController {
     }
 
     @PostMapping
-    public ResponseEntity<SuccessResponseDto<BlogResponseDto>> addMyBlog(Principal principal, @RequestBody @Valid BlogRequestDto blogRequestDto) {
+    public ResponseEntity<SuccessResponseDto<BlogResponseDto>> addMyBlog(Principal principal, @Valid @RequestBody BlogRequestDto blogRequestDto) {
         return ResponseEntity.ok(blogService.addMyBlog(principal.getName(), blogRequestDto));
     }
 
