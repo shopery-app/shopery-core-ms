@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 30_23012026_modify_liked_blogs_table
+      author: Nijat Alizada
+      changes:
+        - addColumn:
+            tableName: blog_likes
+            columns:
+              - column:
+                  name: liked_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false

@@ -59,7 +59,7 @@ public class BlogLikeServiceImpl implements BlogLikeService {
     @Override
     @Transactional
     public SuccessResponseDto<Page<BlogResponseDto>> getLikedBlogs(String userEmail, Pageable pageable) {
-       Page<BlogLikeEntity> blogLikeEntities = blogLikeRepository.findAllByUserEmail(userEmail, pageable);
+       Page<BlogLikeEntity> blogLikeEntities = blogLikeRepository.findAllByUserEmailOrderByLikedAtDesc(userEmail, pageable);
        return SuccessResponseDto.of(blogLikeEntities.map(
                (blogLikeEntity) -> blogMapper.toDto(blogLikeEntity.getBlog())),"Liked blogs retrieved successfully!");
     }

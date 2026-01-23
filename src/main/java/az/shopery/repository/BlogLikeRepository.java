@@ -11,5 +11,5 @@ public interface BlogLikeRepository extends JpaRepository<BlogLikeEntity, UUID> 
     void deleteByUserEmailAndBlog(String userEmail, BlogEntity blog);
     boolean existsByUserEmailAndBlog(String userEmail, BlogEntity blog);
     Integer countByBlog(BlogEntity blog);
-    Page<BlogLikeEntity> findAllByUserEmail(String userEmail, Pageable pageable);
+    Page<BlogLikeEntity> findAllByUserEmailOrderByLikedAtDesc(String userEmail, Pageable pageable);
 }
