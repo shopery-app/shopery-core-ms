@@ -10,6 +10,7 @@ import java.util.UUID;
 public interface BlogRepository extends JpaRepository<BlogEntity, UUID> {
     Optional<BlogEntity> findBlogByIdAndUserEmail(UUID blogId, String userEmail);
     Optional<BlogEntity> findByIdAndUserEmailAndIsArchived(UUID blogId, String userEmail, Boolean isArchived);
+    Optional<BlogEntity> findByIdAndIsArchived(UUID blogId, Boolean isArchived);
     Page<BlogEntity> findAllByUserEmailAndIsArchived(String userEmail, Boolean isArchived, Pageable pageable);
     Page<BlogEntity> findAllByIsArchived(Boolean isArchived, Pageable pageable);
 }

@@ -51,7 +51,7 @@ public class BlogServiceImpl implements BlogService {
     @Override
     public SuccessResponseDto<Void> saveBlog(String userEmail, String blogId) {
         UserEntity userEntity = getUserByEmail(userEmail);
-        BlogEntity blogEntity = blogRepository.findById(parse(blogId))
+        BlogEntity blogEntity = blogRepository.findByIdAndIsArchived(parse(blogId), Boolean.FALSE)
                 .orElseThrow(() -> new ResourceNotFoundException("Blog not found"));
 
         SavedBlogEntity savedBlogEntity = SavedBlogEntity.builder()
@@ -67,7 +67,7 @@ public class BlogServiceImpl implements BlogService {
     @Transactional
     public SuccessResponseDto<Page<BlogResponseDto>> getSavedBlogs(String userEmail, Pageable pageable) {
         UserEntity userEntity = getUserByEmail(userEmail);
-        Page<SavedBlogEntity> savedBlogEntities = savedBlogRepository.findAllByUserId(userEntity.getId(), pageable);
+        Page<SavedBlogEntity> savedBlogEntities = savedBlogRepository.findAllByUserIdAndIsArchived(userEntity.getId(), Boolean.FALSE, pageable);
         return SuccessResponseDto.of(savedBlogEntities.map((savedBlogEntity) -> blogMapper.toDto(savedBlogEntity.getBlog())), "Blogs have been retrieved successfully");
     }
 
@@ -83,13 +83,21 @@ public class BlogServiceImpl implements BlogService {
     public SuccessResponseDto<Void> toggleBlogArchive(String userEmail, String blogId) {
         BlogEntity blogEntity = blogRepository.findBlogByIdAndUserEmail(parse(blogId), userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("Blog with id: " + blogId + " not found!"));
-
+        SavedBlogEntity savedBlogEntity = savedBlogRepository.findByBlog(blogEntity).orElse(null);
         if(blogEntity.getIsArchived()) {
+            if(Objects.nonNull(savedBlogEntity)) {
+                savedBlogEntity.setIsArchived(Boolean.FALSE);
+                savedBlogRepository.save(savedBlogEntity);
+            }
             blogEntity.setIsArchived(Boolean.FALSE);
             blogRepository.save(blogEntity);
             return SuccessResponseDto.of("Blog has been unarchived successfully!");
         }
 
+        if(Objects.nonNull(savedBlogEntity)) {
+            savedBlogEntity.setIsArchived(Boolean.TRUE);
+            savedBlogRepository.save(savedBlogEntity);
+        }
         blogEntity.setIsArchived(Boolean.TRUE);
         blogRepository.save(blogEntity);
         return SuccessResponseDto.of("Blog has been archived successfully!");
@@ -190,7 +198,7 @@ public class BlogServiceImpl implements BlogService {
 
     private SavedBlogEntity getUserSavedBlog(String userEmail, String blogId) {
         UserEntity userEntity = getUserByEmail(userEmail);
-        return savedBlogRepository.findByBlogIdAndUserId(parse(blogId), userEntity.getId())
+        return savedBlogRepository.findByBlogIdAndUserIdAndIsArchived(parse(blogId), userEntity.getId(), Boolean.FALSE)
                 .orElseThrow(() -> new ResourceNotFoundException("Saved blog with this id for the given user not found."));
     }
 }

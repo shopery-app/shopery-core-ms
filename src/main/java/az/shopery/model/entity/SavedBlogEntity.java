@@ -47,4 +47,7 @@ public class SavedBlogEntity {
     @CreatedDate
     @Column(name = "saved_at", nullable = false, updatable = false)
     Instant savedAt;
+    @Builder.Default
+    @Column(name = "is_archived")
+    Boolean isArchived = false;
 }
