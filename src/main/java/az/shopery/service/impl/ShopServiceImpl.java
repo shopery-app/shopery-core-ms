@@ -3,17 +3,15 @@ package az.shopery.service.impl;
 import static az.shopery.utils.common.UuidUtils.parse;
 
 import az.shopery.handler.exception.ResourceNotFoundException;
-import az.shopery.model.dto.response.ProductResponseDto;
+import az.shopery.mapper.ProductMapper;
 import az.shopery.model.dto.response.ShopResponseDto;
 import az.shopery.model.dto.response.SuccessResponseDto;
 import az.shopery.model.dto.response.UserShopResponseDto;
-import az.shopery.model.entity.ProductEntity;
 import az.shopery.model.entity.ShopEntity;
 import az.shopery.repository.ShopRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.ShopService;
 import java.util.Collections;
-import az.shopery.utils.common.DiscountCalculator;
 import az.shopery.utils.enums.UserStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +27,7 @@ public class ShopServiceImpl implements ShopService {
 
     private final UserRepository userRepository;
     private final ShopRepository shopRepository;
+    private final ProductMapper productMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -101,21 +100,8 @@ public class ShopServiceImpl implements ShopService {
                 .rating(shopEntity.getRating())
                 .createdAt(shopEntity.getCreatedAt())
                 .products(shopEntity.getProducts().stream()
-                        .map(this::mapToPublicProductDto)
+                        .map(productMapper::toBriefDto)
                         .toList())
-                .build();
-    }
-
-    private ProductResponseDto mapToPublicProductDto(ProductEntity productEntity) {
-        return ProductResponseDto.builder()
-                .id(productEntity.getId())
-                .productName(productEntity.getProductName())
-                .description(productEntity.getDescription())
-                .imageUrl(productEntity.getImageUrl())
-                .currentPrice(productEntity.getCurrentPrice())
-                .discountDto(DiscountCalculator.calculateDiscountFromOriginalPrice(
-                        productEntity.getCurrentPrice(),
-                        productEntity.getOriginalPrice()))
                 .build();
     }
 }

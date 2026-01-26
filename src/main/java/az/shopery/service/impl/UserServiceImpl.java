@@ -2,7 +2,11 @@ package az.shopery.service.impl;
 
 import static az.shopery.utils.common.NameMapperHelper.first;
 import static az.shopery.utils.common.NameMapperHelper.last;
+import static az.shopery.utils.common.VerificationCodeGenerator.generateSixDigitVerificationCode;
+import static org.springframework.security.core.userdetails.User.withUsername;
+
 import az.shopery.handler.exception.EmailAlreadyExistsException;
+import az.shopery.handler.exception.IllegalRequestException;
 import az.shopery.handler.exception.InvalidCredentialsException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.model.dto.request.ShopCreateRequestDto;
@@ -28,15 +32,13 @@ import az.shopery.utils.common.AdminAssignmentHelper;
 import az.shopery.utils.enums.UserRole;
 import az.shopery.utils.enums.UserStatus;
 import az.shopery.utils.security.JwtService;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 @Slf4j
@@ -56,8 +58,7 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public SuccessResponseDto<UserProfileResponseDto> getMyProfile(String userEmail) {
         UserEntity userEntity = getUserByEmail(userEmail);
-        var dto = mapToDto(userEntity);
-        return SuccessResponseDto.of(dto, "User profile retrieved successfully.");
+        return SuccessResponseDto.of(mapToDto(userEntity), "User profile retrieved successfully.");
     }
 
     @Override
@@ -69,9 +70,8 @@ public class UserServiceImpl implements UserService {
         userEntity.setDateOfBirth(userProfileUpdateRequestDto.getDateOfBirth());
 
         UserEntity updatedUserEntity = userRepository.save(userEntity);
-        var dto = mapToDto(updatedUserEntity);
         log.info("User profile updated successfully for user {}", userEmail);
-        return SuccessResponseDto.of(dto, "User profile updated successfully.");
+        return SuccessResponseDto.of(mapToDto(updatedUserEntity), "User profile updated successfully.");
     }
 
     @Override
@@ -80,14 +80,14 @@ public class UserServiceImpl implements UserService {
         UserEntity userEntity = getUserByEmail(userEmail);
 
         if (userEntity.getUserRole().equals(UserRole.MERCHANT)) {
-            return SuccessResponseDto.of(null, "You are already a merchant.");
+            throw new IllegalRequestException("User is already registered as a merchant.");
         }
 
         userEntity.setUserRole(UserRole.MERCHANT);
         userEntity.setLastRoleChangeAt(Instant.now());
         userRepository.save(userEntity);
 
-        var userDetails = User.withUsername(userEmail)
+        var userDetails = withUsername(userEmail)
                 .password(userEntity.getPassword())
                 .authorities(userEntity.getUserRole().name())
                 .build();
@@ -130,17 +130,17 @@ public class UserServiceImpl implements UserService {
     @Override
     public SuccessResponseDto<UserPasswordUpdateResponseDto> updateMyPassword(String userEmail, UserPasswordUpdateRequestDto userPasswordUpdateRequestDto) {
         UserEntity userEntity = getUserByEmail(userEmail);
-        if(!passwordEncoder.matches(userPasswordUpdateRequestDto.getOldPassword(), userEntity.getPassword())) {
+        if (!passwordEncoder.matches(userPasswordUpdateRequestDto.getOldPassword(), userEntity.getPassword())) {
             throw new InvalidCredentialsException("Invalid credentials.");
         }
-        if(userPasswordUpdateRequestDto.getNewPassword().equals(userPasswordUpdateRequestDto.getOldPassword())) {
+        if (userPasswordUpdateRequestDto.getNewPassword().equals(userPasswordUpdateRequestDto.getOldPassword())) {
             throw new IllegalArgumentException("New password must be different from the old password.");
         }
         userEntity.setPassword(passwordEncoder.encode(userPasswordUpdateRequestDto.getNewPassword()));
         userEntity.setPasswordChangedAt(Instant.now());
         userRepository.save(userEntity);
 
-        var userDetails = User.withUsername(userEntity.getEmail())
+        var userDetails = withUsername(userEntity.getEmail())
                 .password(userEntity.getPassword())
                 .authorities(userEntity.getUserRole().name())
                 .build();
@@ -160,11 +160,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public SuccessResponseDto<Void> changeMyEmail(String userEmail, UserEmailUpdateRequestDto userEmailUpdateRequestDto) {
         UserEntity userEntity = getUserByEmail(userEmail);
-        if(userRepository.existsByEmail(userEmailUpdateRequestDto.getEmail())) {
+        if (userRepository.existsByEmail(userEmailUpdateRequestDto.getEmail())) {
             throw new EmailAlreadyExistsException("Email already exists");
         }
 
-        String code = String.valueOf(ThreadLocalRandom.current().nextInt(100000, 1000000));
+        String code = generateSixDigitVerificationCode();
         EmailUpdateTokenEntity emailUpdateTokenEntity = emailUpdateTokenRepository.findByEmail(userEmailUpdateRequestDto.getEmail())
                 .orElse(new EmailUpdateTokenEntity());
         emailUpdateTokenEntity.setEmail(userEmailUpdateRequestDto.getEmail());
@@ -183,11 +183,11 @@ public class UserServiceImpl implements UserService {
         EmailUpdateTokenEntity emailUpdateTokenEntity = emailUpdateTokenRepository.findByEmail(userEmailVerificationRequestDto.getEmail())
                 .orElseThrow(() -> new ResourceNotFoundException("No pending verification found. It may have expired or been verified already"));
 
-        if(emailUpdateTokenEntity.getExpiryDate().isBefore(LocalDateTime.now())) {
+        if (emailUpdateTokenEntity.getExpiryDate().isBefore(LocalDateTime.now())) {
             emailUpdateTokenRepository.delete(emailUpdateTokenEntity);
             throw new InvalidCredentialsException("Verification token expired. Please request a new one.");
         }
-        if(!emailUpdateTokenEntity.getToken().equals(userEmailVerificationRequestDto.getCode())) {
+        if (!emailUpdateTokenEntity.getToken().equals(userEmailVerificationRequestDto.getCode())) {
             throw new InvalidCredentialsException("Invalid verification code");
         }
 
@@ -195,7 +195,7 @@ public class UserServiceImpl implements UserService {
         userEntity.setEmail(userEmailVerificationRequestDto.getEmail());
         userRepository.save(userEntity);
 
-        var userDetails = User.withUsername(userEntity.getEmail())
+        var userDetails = withUsername(userEntity.getEmail())
                 .password(userEntity.getPassword())
                 .authorities(userEntity.getUserRole().name())
                 .build();
