@@ -1,6 +1,7 @@
 package az.shopery.service.impl;
 
 import static az.shopery.utils.common.UuidUtils.parse;
+
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.mapper.BlogMapper;
 import az.shopery.model.dto.request.BlogRequestDto;
@@ -16,13 +17,13 @@ import az.shopery.service.BlogService;
 import az.shopery.utils.aws.S3FileUtil;
 import az.shopery.utils.enums.UserStatus;
 import jakarta.transaction.Transactional;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor

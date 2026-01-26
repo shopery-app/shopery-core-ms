@@ -1,12 +1,13 @@
 package az.shopery.mapper;
 
+import static az.shopery.utils.common.DiscountCalculator.calculateDiscountFromOriginalPrice;
+
 import az.shopery.model.dto.response.ProductDetailResponseDto;
 import az.shopery.model.dto.response.ProductResponseDto;
 import az.shopery.model.dto.shared.PriceHistoryDto;
 import az.shopery.model.entity.PriceHistoryEntity;
 import az.shopery.model.entity.ProductEntity;
 import az.shopery.utils.aws.S3FileUtil;
-import az.shopery.utils.common.DiscountCalculator;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -27,7 +28,7 @@ public class ProductMapper {
                 .description(productEntity.getDescription())
                 .imageUrl(s3FileUtil.generatePresignedUrl(productEntity.getImageUrl()))
                 .currentPrice(productEntity.getCurrentPrice())
-                .discountDto(DiscountCalculator.calculateDiscountFromOriginalPrice(productEntity.getCurrentPrice(), productEntity.getOriginalPrice()))
+                .discountDto(calculateDiscountFromOriginalPrice(productEntity.getCurrentPrice(), productEntity.getOriginalPrice()))
                 .build();
     }
 
@@ -49,7 +50,7 @@ public class ProductMapper {
                 .description(product.getDescription())
                 .imageUrl(s3FileUtil.generatePresignedUrl(product.getImageUrl()))
                 .currentPrice(product.getCurrentPrice())
-                .discountDto(DiscountCalculator.calculateDiscountFromOriginalPrice(product.getCurrentPrice(), product.getOriginalPrice()))
+                .discountDto(calculateDiscountFromOriginalPrice(product.getCurrentPrice(), product.getOriginalPrice()))
                 .stockQuantity(product.getStockQuantity())
                 .category(product.getCategory())
                 .condition(product.getCondition())

@@ -1,5 +1,7 @@
 package az.shopery.service.impl;
 
+import static az.shopery.utils.common.UuidUtils.parse;
+
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.mapper.BlogMapper;
 import az.shopery.model.dto.response.BlogResponseDto;
@@ -19,7 +21,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import java.util.UUID;
-import static az.shopery.utils.common.UuidUtils.parse;
 
 @Service
 @RequiredArgsConstructor
@@ -39,12 +40,12 @@ public class BlogLikeServiceImpl implements BlogLikeService {
         BlogEntity blog = blogRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Blog with id " + id + " not found."));
 
-        if(blogLikeRepository.existsByUserEmailAndBlog(userEmail, blog)){
+        if (blogLikeRepository.existsByUserEmailAndBlog(userEmail, blog)) {
             blogLikeRepository.deleteByUserEmailAndBlog(userEmail, blog);
             return SuccessResponseDto.of("Blog unliked successfully!");
         }
 
-        try{
+        try {
             BlogLikeEntity blogLikeEntity = BlogLikeEntity.builder()
                     .user(user)
                     .blog(blog)
@@ -60,7 +61,6 @@ public class BlogLikeServiceImpl implements BlogLikeService {
     @Transactional
     public SuccessResponseDto<Page<BlogResponseDto>> getLikedBlogs(String userEmail, Pageable pageable) {
        Page<BlogLikeEntity> blogLikeEntities = blogLikeRepository.findAllByUserEmailOrderByLikedAtDesc(userEmail, pageable);
-       return SuccessResponseDto.of(blogLikeEntities.map(
-               (blogLikeEntity) -> blogMapper.toDto(blogLikeEntity.getBlog())),"Liked blogs retrieved successfully!");
+       return SuccessResponseDto.of(blogLikeEntities.map((blogLikeEntity) -> blogMapper.toDto(blogLikeEntity.getBlog())),"Liked blogs retrieved successfully!");
     }
 }

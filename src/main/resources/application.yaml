@@ -70,3 +70,10 @@ resilience4j:
         limitForPeriod: 5
         limitRefreshPeriod: 120s
         timeoutDuration: 100ms
+
+logging:
+  level:
+    root: INFO
+    az.shopery: DEBUG
+  file:
+    name: logs/shopery.log
