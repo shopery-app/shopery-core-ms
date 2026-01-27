@@ -117,10 +117,14 @@ public class AdminServiceImpl implements AdminService {
                 .totalIncome(BigDecimal.ZERO)
                 .rating(0.0)
                 .build();
-
         shopRepository.save(shop);
         shopCreationRequestEntity.setRequestStatus(RequestStatus.APPROVED);
-        applicationEventPublisher.publishEvent(new ShopCreationRequestApprovedEvent(shopCreationRequestEntity));
+
+        applicationEventPublisher.publishEvent(new ShopCreationRequestApprovedEvent(
+              shopCreationRequestEntity.getCreatedBy().getEmail(),
+              shopCreationRequestEntity.getCreatedBy().getName(),
+              shopCreationRequestEntity.getShopName()
+        ));
 
         return SuccessResponseDto.of("Shop creation request has been approved successfully!");
     }
@@ -132,7 +136,13 @@ public class AdminServiceImpl implements AdminService {
 
         shopCreationRequestEntity.setRequestStatus(RequestStatus.REJECTED);
         shopCreationRequestEntity.setRejectionReason(shopCreationRequestRejectDto.getReason());
-        applicationEventPublisher.publishEvent(new ShopCreationRequestRejectedEvent(shopCreationRequestEntity));
+
+        applicationEventPublisher.publishEvent(new ShopCreationRequestRejectedEvent(
+                shopCreationRequestEntity.getCreatedBy().getEmail(),
+                shopCreationRequestEntity.getCreatedBy().getName(),
+                shopCreationRequestEntity.getShopName(),
+                shopCreationRequestRejectDto.getReason()
+        ));
 
         return SuccessResponseDto.of("Shop creation request has been rejected successfully!");
     }
