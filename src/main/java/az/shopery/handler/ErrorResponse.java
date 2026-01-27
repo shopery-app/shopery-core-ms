@@ -1,7 +1,9 @@
 package az.shopery.handler;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.LocalDateTime;
+import java.util.Map;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,6 +17,7 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ErrorResponse {
     HttpStatus status;
     int statusCode;
@@ -22,4 +25,5 @@ public class ErrorResponse {
     LocalDateTime timestamp;
     String message;
     String path;
+    Map<String, String> errors;
 }

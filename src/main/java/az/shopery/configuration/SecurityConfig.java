@@ -1,6 +1,7 @@
 package az.shopery.configuration;
 
 import static org.springframework.security.config.Customizer.withDefaults;
+
 import az.shopery.repository.UserRepository;
 import az.shopery.utils.security.JwtAuthFilter;
 import az.shopery.utils.security.JwtService;

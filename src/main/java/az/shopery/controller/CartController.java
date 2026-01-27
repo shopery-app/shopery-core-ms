@@ -32,25 +32,17 @@ public class CartController {
     }
 
     @PostMapping("/{productId}")
-    public ResponseEntity<SuccessResponseDto<CartResponseDto>> addProductToCart(
-            Principal principal,
-            @PathVariable String productId,
-            @RequestBody @Valid CartItemUpdateRequestDto cartItemUpdateRequestDto) {
+    public ResponseEntity<SuccessResponseDto<CartResponseDto>> addProductToCart(Principal principal, @PathVariable String productId, @RequestBody @Valid CartItemUpdateRequestDto cartItemUpdateRequestDto) {
         return ResponseEntity.ok(cartService.addProductToCart(principal.getName(), productId, cartItemUpdateRequestDto.getQuantity()));
     }
 
     @PutMapping("/{productId}")
-    public ResponseEntity<SuccessResponseDto<CartResponseDto>> updateProductInCart(
-            Principal principal,
-            @PathVariable String productId,
-            @RequestBody @Valid CartItemUpdateRequestDto cartItemUpdateRequestDto) {
+    public ResponseEntity<SuccessResponseDto<CartResponseDto>> updateProductInCart(Principal principal, @PathVariable String productId, @RequestBody @Valid CartItemUpdateRequestDto cartItemUpdateRequestDto) {
         return ResponseEntity.ok(cartService.updateProductQuantity(principal.getName(), productId, cartItemUpdateRequestDto.getQuantity()));
     }
 
     @DeleteMapping("/{productId}")
-    public ResponseEntity<SuccessResponseDto<CartResponseDto>> removeProductFromCart(
-            Principal principal,
-            @PathVariable String productId) {
+    public ResponseEntity<SuccessResponseDto<CartResponseDto>> removeProductFromCart(Principal principal,  @PathVariable String productId) {
         return ResponseEntity.ok(cartService.removeProductFromCart(principal.getName(), productId));
     }
 
@@ -60,9 +52,7 @@ public class CartController {
     }
 
     @PostMapping("/move-from-wishlist/{productId}")
-    public ResponseEntity<SuccessResponseDto<CartResponseDto>> moveFromWishlist(
-            Principal principal,
-            @PathVariable String productId) {
+    public ResponseEntity<SuccessResponseDto<CartResponseDto>> moveFromWishlist(Principal principal, @PathVariable String productId) {
         return ResponseEntity.ok(cartService.moveProductFromWishlistToCart(principal.getName(), productId));
     }
 }

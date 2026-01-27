@@ -24,46 +24,32 @@ public class MerchantProductController {
     private final ProductService productService;
 
     @PostMapping
-    public ResponseEntity<SuccessResponseDto<ProductDetailResponseDto>> addProduct(
-            Principal principal,
-            @RequestBody @Valid ProductCreateRequestDto productCreateRequestDto) {
+    public ResponseEntity<SuccessResponseDto<ProductDetailResponseDto>> addProduct(Principal principal, @RequestBody @Valid ProductCreateRequestDto productCreateRequestDto) {
         return ResponseEntity.ok(productService.addProduct(principal.getName(), productCreateRequestDto));
     }
 
     @PostMapping(value = "/{productId}/image", consumes = {"multipart/form-data"})
-    public ResponseEntity<SuccessResponseDto<String>> uploadProductImage(
-            Principal principal,
-            @PathVariable String productId,
-            @RequestParam("image") MultipartFile imageFile) {
+    public ResponseEntity<SuccessResponseDto<String>> uploadProductImage(Principal principal, @PathVariable String productId, @RequestParam("image") MultipartFile imageFile) {
         return ResponseEntity.ok(productService.updateProductImage(principal.getName(), productId, imageFile));
     }
 
     @GetMapping
-    public ResponseEntity<SuccessResponseDto<Page<ProductResponseDto>>> getMyProducts(
-            Principal principal,
-            Pageable pageable) {
+    public ResponseEntity<SuccessResponseDto<Page<ProductResponseDto>>> getMyProducts(Principal principal, Pageable pageable) {
         return ResponseEntity.ok(productService.getMyProducts(principal.getName(), pageable));
     }
 
     @PutMapping("/{productId}")
-    public ResponseEntity<SuccessResponseDto<ProductDetailResponseDto>> updateProduct(
-            Principal principal,
-            @PathVariable String productId,
-            @Valid @RequestBody ProductCreateRequestDto productCreateRequestDto) {
+    public ResponseEntity<SuccessResponseDto<ProductDetailResponseDto>> updateProduct(Principal principal, @PathVariable String productId, @Valid @RequestBody ProductCreateRequestDto productCreateRequestDto) {
         return ResponseEntity.ok(productService.updateProduct(principal.getName(), productId, productCreateRequestDto));
     }
 
     @DeleteMapping("/{productId}")
-    public ResponseEntity<SuccessResponseDto<Void>> deleteProduct(
-            Principal principal,
-            @PathVariable String productId) {
+    public ResponseEntity<SuccessResponseDto<Void>> deleteProduct(Principal principal, @PathVariable String productId) {
         return ResponseEntity.ok(productService.deleteProduct(principal.getName(), productId));
     }
 
     @DeleteMapping("/{productId}/image")
-    public ResponseEntity<SuccessResponseDto<Void>> deleteProductImage(
-            Principal principal,
-            @PathVariable String productId) {
+    public ResponseEntity<SuccessResponseDto<Void>> deleteProductImage(Principal principal, @PathVariable String productId) {
         return ResponseEntity.ok(productService.deleteProductImage(principal.getName(), productId));
     }
 }

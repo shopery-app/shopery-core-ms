@@ -24,10 +24,7 @@ public class PublicProductController {
     private final ProductService productService;
 
     @GetMapping
-    public ResponseEntity<SuccessResponseDto<Page<ProductResponseDto>>> searchProducts(
-            @RequestParam(required = false) ProductCategory category,
-            @RequestParam(required = false) ProductCondition condition,
-            Pageable pageable) {
+    public ResponseEntity<SuccessResponseDto<Page<ProductResponseDto>>> searchProducts(@RequestParam(required = false) ProductCategory category, @RequestParam(required = false) ProductCondition condition, Pageable pageable) {
         return ResponseEntity.ok(productService.searchPublicProducts(category, condition, pageable));
     }
 

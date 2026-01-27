@@ -5,13 +5,13 @@ import az.shopery.model.dto.response.SuccessResponseDto;
 import az.shopery.model.dto.response.UserSupportTicketResponseDto;
 import az.shopery.service.SupportTicketService;
 import jakarta.validation.Valid;
+import java.security.Principal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/v1/users/me/support-tickets")
@@ -22,9 +22,7 @@ public class UserSupportTicketController {
     private final SupportTicketService supportTicketService;
 
     @PostMapping
-    public ResponseEntity<SuccessResponseDto<Void>> createMySupportTicket(
-            @RequestBody @Valid SupportTicketRequestDto supportTicketRequestDto,
-            Principal principal) {
+    public ResponseEntity<SuccessResponseDto<Void>> createMySupportTicket(@Valid @RequestBody SupportTicketRequestDto supportTicketRequestDto, Principal principal) {
         return ResponseEntity.ok(supportTicketService.createMySupportTicket(supportTicketRequestDto, principal.getName()));
     }
 
@@ -39,10 +37,7 @@ public class UserSupportTicketController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<SuccessResponseDto<UserSupportTicketResponseDto>> updateMySupportTicket(
-            @RequestBody @Valid SupportTicketRequestDto supportTicketRequestDto,
-            @PathVariable String id,
-            Principal principal) {
+    public ResponseEntity<SuccessResponseDto<UserSupportTicketResponseDto>> updateMySupportTicket(@Valid @RequestBody SupportTicketRequestDto supportTicketRequestDto, @PathVariable String id, Principal principal) {
         return ResponseEntity.ok(supportTicketService.updateMySupportTicket(supportTicketRequestDto, id, principal.getName()));
     }
 }

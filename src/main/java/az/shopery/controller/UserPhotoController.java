@@ -23,9 +23,7 @@ public class UserPhotoController {
     private final UserPhotoService userPhotoService;
 
     @PostMapping(consumes = {"multipart/form-data"})
-    public ResponseEntity<SuccessResponseDto<String>> uploadMyProfilePhoto(
-            Principal principal,
-            @RequestParam("file") MultipartFile multipartFile) {
+    public ResponseEntity<SuccessResponseDto<String>> uploadMyProfilePhoto(Principal principal, @RequestParam("file") MultipartFile multipartFile) {
         return ResponseEntity.ok(userPhotoService.uploadProfilePhoto(principal.getName(), multipartFile));
     }
 

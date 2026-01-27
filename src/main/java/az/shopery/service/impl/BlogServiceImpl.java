@@ -2,6 +2,7 @@ package az.shopery.service.impl;
 
 import static az.shopery.utils.common.UuidUtils.parse;
 
+import az.shopery.handler.exception.IllegalRequestException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.mapper.BlogMapper;
 import az.shopery.model.dto.request.BlogRequestDto;
@@ -133,7 +134,7 @@ public class BlogServiceImpl implements BlogService {
     @Override
     public SuccessResponseDto<BlogResponseDto> addMyBlog(String userEmail, BlogRequestDto blogRequestDto) {
         UserEntity user = userRepository.findByEmailAndStatus(userEmail, UserStatus.ACTIVE)
-                .orElseThrow(() -> new IllegalArgumentException("User with email " + userEmail + " not found."));
+                .orElseThrow(() -> new IllegalRequestException("User with email " + userEmail + " not found."));
 
         BlogEntity blogEntity = BlogEntity.builder()
                 .user(user)

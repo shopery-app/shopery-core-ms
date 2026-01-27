@@ -28,16 +28,12 @@ public class WishlistController {
     }
 
     @PostMapping("/{productId}")
-    public ResponseEntity<SuccessResponseDto<WishlistResponseDto>> addProductToWishlist(
-            Principal principal,
-            @PathVariable String productId) {
+    public ResponseEntity<SuccessResponseDto<WishlistResponseDto>> addProductToWishlist(Principal principal, @PathVariable String productId) {
         return ResponseEntity.ok(wishlistService.addProductToWishlist(principal.getName(), productId));
     }
 
     @DeleteMapping("/{productId}")
-    public ResponseEntity<SuccessResponseDto<WishlistResponseDto>> removeProductFromWishlist(
-            Principal principal,
-            @PathVariable String productId) {
+    public ResponseEntity<SuccessResponseDto<WishlistResponseDto>> removeProductFromWishlist(Principal principal, @PathVariable String productId) {
         return ResponseEntity.ok(wishlistService.removeProductFromWishlist(principal.getName(), productId));
     }
 

@@ -55,7 +55,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         if (Objects.nonNull(userEmail) && Objects.isNull(SecurityContextHolder.getContext().getAuthentication())) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+            UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
             if (jwtService.isTokenValid(jwt, userDetails)) {
                 UserEntity userEntity = userRepository.findByEmailAndStatus(userEmail, UserStatus.ACTIVE).orElse(null);
                 if (Objects.nonNull(userEntity) && Objects.nonNull(userEntity.getLastRoleChangeAt())) {

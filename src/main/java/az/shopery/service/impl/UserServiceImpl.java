@@ -134,7 +134,7 @@ public class UserServiceImpl implements UserService {
             throw new InvalidCredentialsException("Invalid credentials.");
         }
         if (userPasswordUpdateRequestDto.getNewPassword().equals(userPasswordUpdateRequestDto.getOldPassword())) {
-            throw new IllegalArgumentException("New password must be different from the old password.");
+            throw new IllegalRequestException("New password must be different from the old password.");
         }
         userEntity.setPassword(passwordEncoder.encode(userPasswordUpdateRequestDto.getNewPassword()));
         userEntity.setPasswordChangedAt(Instant.now());
