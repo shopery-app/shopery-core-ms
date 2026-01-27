@@ -1,5 +1,10 @@
 package az.shopery.utils.common;
 
+import az.shopery.utils.enums.AddressType;
+import az.shopery.utils.enums.ProductCategory;
+import az.shopery.utils.enums.ProductCondition;
+import az.shopery.utils.enums.TaskCategory;
+import java.util.Map;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -19,4 +24,11 @@ public final class CommonConstraints {
     public static final int SIX_DIGIT_VERIFICATION_CODE_MAX = 999999;
 
     public static final int MAX_ADDRESSES_PER_USER = 6;
+
+    public static final Map<String, Class<? extends Enum<?>>> DROPDOWN_MAP = Map.of(
+            "product-categories", ProductCategory.class,
+            "product-conditions", ProductCondition.class,
+            "address-types", AddressType.class,
+            "task-types", TaskCategory.class
+    );
 }

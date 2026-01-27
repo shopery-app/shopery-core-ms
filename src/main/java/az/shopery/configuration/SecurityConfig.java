@@ -71,6 +71,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/shops/**").permitAll()
                         .requestMatchers("/api/v1/products/**").permitAll()
                         .requestMatchers("/api/v1/blogs/**").permitAll()
+                        .requestMatchers("/api/v1/dropdowns/**").permitAll()
                         .requestMatchers(SWAGGER_WHITELIST).permitAll()
                         .anyRequest().authenticated()
                 )
