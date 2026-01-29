@@ -24,6 +24,7 @@ import az.shopery.model.dto.response.UserAuthResponseDto;
 import az.shopery.model.entity.PasswordResetTokenEntity;
 import az.shopery.model.entity.UserEntity;
 import az.shopery.model.entity.VerificationTokenEntity;
+import az.shopery.model.event.PasswordResetLinkEvent;
 import az.shopery.repository.PasswordResetTokenRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.repository.VerificationTokenRepository;
@@ -37,6 +38,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -54,6 +56,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     @Transactional
@@ -170,7 +173,11 @@ public class AuthServiceImpl implements AuthService {
         passwordResetTokenEntity.setLinkLastSentAt(LocalDateTime.now());
         passwordResetTokenRepository.save(passwordResetTokenEntity);
 
-        emailService.sendPasswordResetLink(userEntity.getEmail(), userEntity.getName(), passwordResetTokenEntity.getToken());
+        applicationEventPublisher.publishEvent(new PasswordResetLinkEvent(
+                userEntity.getEmail(),
+                userEntity.getName(),
+                passwordResetTokenEntity.getToken()
+        ));
         return SuccessResponseDto.of("A new password reset link has been sent to your email.");
     }
 

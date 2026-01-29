@@ -13,6 +13,18 @@ spring:
   liquibase:
     enabled: false
 
+  mail:
+    host: smtp.test.com
+    port: 587
+    username: test@test.com
+    password: test-password
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 application:
   security:
     jwt:
@@ -23,8 +35,15 @@ application:
         expiration: 100000
   frontend:
     base-url: http://localhost:4200/
+  mail:
+    from: noreply@shopery-test.com
 
 aws:
-  region: aws-region-test
+  region: us-east-1
   s3:
-    bucket-name: aws-s3-bucket-name-test
+    bucket-name: test-bucket
+
+AWS_REGION: us-east-1
+AWS_S3_BUCKET_NAME: test-bucket
+NO_REPLY_SHOPERY_USERNAME: noreply@shopery-test.com
+NO_REPLY_SHOPERY_PASSWORD: test-password
