@@ -1,6 +1,7 @@
 DROP TABLE IF EXISTS
     shop_ratings,
     tasks,
+    saved_blogs,
     blog_likes,
     blogs,
     wishlist_products,

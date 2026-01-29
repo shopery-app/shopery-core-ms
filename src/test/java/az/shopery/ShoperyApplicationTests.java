@@ -11,5 +11,4 @@ class ShoperyApplicationTests {
 	@Test
 	void contextLoads() {
 	}
-
 }
