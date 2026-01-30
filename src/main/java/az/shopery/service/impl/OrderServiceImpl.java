@@ -25,12 +25,7 @@ import az.shopery.utils.enums.OrderStatus;
 import az.shopery.utils.enums.UserStatus;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -149,10 +144,14 @@ public class OrderServiceImpl implements OrderService {
                 .map(this::map)
                 .toList();
 
+        List<String> orderIds = createdOrders.stream()
+                        .map(OrderEntity::getId)
+                        .map(String::valueOf)
+                        .toList();
         applicationEventPublisher.publishEvent(new OrderConfirmationNotificationEvent(
                 user.getEmail(),
                 user.getName(),
-                createdOrders
+                orderIds
         ));
 
         log.info("Created {} order(s) for user {} from cart.", dtos.size(), userEmail);

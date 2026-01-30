@@ -1,6 +1,5 @@
 package az.shopery.service.impl;
 
-import az.shopery.model.entity.OrderEntity;
 import az.shopery.service.EmailService;
 import jakarta.mail.internet.MimeMessage;
 import java.util.List;
@@ -57,14 +56,14 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    public void sendOrderConfirmation(String to, String name, List<OrderEntity> orders) {
+    public void sendOrderConfirmation(String to, String name, List<String> orderIds) {
         sendEmail(
                 to,
                 "Your Shopery Order Confirmation",
                 "order-confirmation-email",
                 Map.of(
                         "userName", name,
-                        "orders", orders
+                        "orders", orderIds
                 )
         );
     }
