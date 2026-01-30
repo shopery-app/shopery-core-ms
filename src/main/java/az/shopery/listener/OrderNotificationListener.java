@@ -37,7 +37,7 @@ public class OrderNotificationListener {
             emailService.sendOrderConfirmation(
                     event.userEmail(),
                     event.userName(),
-                    event.createdOrders()
+                    event.orderIds()
             );
         } catch (Exception e) {
             log.error("Failed to send order confirmation email to {}", event.userEmail(), e);
