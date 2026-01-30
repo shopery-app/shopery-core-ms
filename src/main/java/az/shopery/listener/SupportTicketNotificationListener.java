@@ -19,7 +19,7 @@ public class SupportTicketNotificationListener {
     public void handleSupportTicketClosedNotification(SupportTicketClosedNotificationEvent event) {
         try {
             emailService.sendSupportTicketClosedNotification(
-                    event.email(),
+                    event.userEmail(),
                     event.userName(),
                     event.subject(),
                     event.ticketId()

@@ -22,11 +22,12 @@ import az.shopery.model.dto.response.UserProfileResponseDto;
 import az.shopery.model.entity.EmailUpdateTokenEntity;
 import az.shopery.model.entity.UserEntity;
 import az.shopery.model.entity.task.ShopCreationRequestEntity;
+import az.shopery.model.event.PasswordChangedNotificationEvent;
+import az.shopery.model.event.VerificationCodeEvent;
 import az.shopery.repository.EmailUpdateTokenRepository;
 import az.shopery.repository.ShopRepository;
 import az.shopery.repository.TaskRepository;
 import az.shopery.repository.UserRepository;
-import az.shopery.service.EmailService;
 import az.shopery.service.UserService;
 import az.shopery.utils.common.AdminAssignmentHelper;
 import az.shopery.utils.enums.UserRole;
@@ -36,6 +37,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,9 +52,9 @@ public class UserServiceImpl implements UserService {
     private final EmailUpdateTokenRepository emailUpdateTokenRepository;
     private final TaskRepository taskRepository;
     private final JwtService jwtService;
-    private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
     private final AdminAssignmentHelper adminAssignmentHelper;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     @Transactional(readOnly = true)
@@ -152,8 +154,11 @@ public class UserServiceImpl implements UserService {
                 .refreshToken(refreshToken)
                 .userProfileResponseDto(mapToDto(userEntity))
                 .build();
-        emailService.sendPasswordChangedNotification(userEntity.getEmail(), userEntity.getName());
 
+        applicationEventPublisher.publishEvent(new PasswordChangedNotificationEvent(
+                userEntity.getEmail(),
+                userEntity.getName()
+        ));
         return SuccessResponseDto.of(userPasswordUpdateResponseDto, "Password has been updated successfully.");
     }
 
@@ -172,8 +177,12 @@ public class UserServiceImpl implements UserService {
         emailUpdateTokenEntity.setExpiryDate(LocalDateTime.now().plusMinutes(5));
         emailUpdateTokenRepository.save(emailUpdateTokenEntity);
 
-        emailService.sendVerificationCode(userEmailUpdateRequestDto.getEmail(), userEntity.getName(), code, Boolean.FALSE);
-
+        applicationEventPublisher.publishEvent(new VerificationCodeEvent(
+                userEmailUpdateRequestDto.getEmail(),
+                userEntity.getName(),
+                code,
+                Boolean.FALSE
+        ));
         return SuccessResponseDto.of("Verification code has been sent to your email address");
     }
 

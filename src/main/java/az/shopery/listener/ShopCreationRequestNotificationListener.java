@@ -20,21 +20,30 @@ public class ShopCreationRequestNotificationListener {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onApprove(ShopCreationRequestApprovedEvent event) {
-        emailService.sendShopApprovedEmail(
-                event.creatorEmail(),
-                event.creatorName(),
-                event.shopName()
-        );
+        try {
+            emailService.sendShopApprovedEmail(
+                    event.creatorEmail(),
+                    event.creatorName(),
+                    event.shopName()
+            );
+        } catch (Exception e) {
+            log.error("Failed to send shop creation request approved notification to {}", event.creatorEmail(), e);
+        }
+
     }
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onReject(ShopCreationRequestRejectedEvent event) {
-        emailService.sendShopRejectedEmail(
-                event.creatorEmail(),
-                event.creatorName(),
-                event.shopName(),
-                event.rejectionReason()
-        );
+        try {
+            emailService.sendShopRejectedEmail(
+                    event.creatorEmail(),
+                    event.creatorName(),
+                    event.shopName(),
+                    event.rejectionReason()
+            );
+        } catch (Exception e) {
+            log.error("Failed to send shop creation request rejected notification to {}", event.creatorEmail(), e);
+        }
     }
 }

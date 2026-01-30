@@ -1,6 +1,6 @@
 package az.shopery.listener;
 
-import az.shopery.model.event.PasswordResetLinkEvent;
+import az.shopery.model.event.VerificationCodeEvent;
 import az.shopery.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,22 +12,18 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class PasswordResetLinkListener {
+public class VerificationCodeListener {
 
     private final EmailService emailService;
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handlePasswordResetLinkEvent(PasswordResetLinkEvent event) {
-        try {
-            emailService.sendPasswordResetLink(
-                    event.userEmail(),
-                    event.userName(),
-                    event.token()
-            );
-        } catch (Exception e) {
-            log.error("Failed to send password reset link to user {}", event.userEmail(), e);
-        }
-
+    public void handleSendVerificationCode(VerificationCodeEvent event) {
+        emailService.sendVerificationCode(
+                event.userName(),
+                event.userName(),
+                event.code(),
+                event.isRegistration()
+        );
     }
 }

@@ -13,15 +13,16 @@ import az.shopery.model.entity.ProductEntity;
 import az.shopery.model.entity.ShopEntity;
 import az.shopery.model.entity.UserAddressEntity;
 import az.shopery.model.entity.UserEntity;
+import az.shopery.model.event.OrderConfirmationNotificationEvent;
 import az.shopery.repository.CartRepository;
 import az.shopery.repository.OrderRepository;
 import az.shopery.repository.ProductRepository;
 import az.shopery.repository.ShopRepository;
 import az.shopery.repository.UserAddressRepository;
 import az.shopery.repository.UserRepository;
-import az.shopery.service.EmailService;
 import az.shopery.service.OrderService;
 import az.shopery.utils.enums.OrderStatus;
+import az.shopery.utils.enums.UserStatus;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -31,10 +32,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
-import az.shopery.utils.enums.UserStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,7 +49,7 @@ public class OrderServiceImpl implements OrderService {
     private final ShopRepository shopRepository;
     private final UserAddressRepository userAddressRepository;
     private final OrderRepository orderRepository;
-    private final EmailService emailService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     @Transactional
@@ -149,7 +149,11 @@ public class OrderServiceImpl implements OrderService {
                 .map(this::map)
                 .toList();
 
-        emailService.sendOrderConfirmation(user.getEmail(), user.getName(), createdOrders);
+        applicationEventPublisher.publishEvent(new OrderConfirmationNotificationEvent(
+                user.getEmail(),
+                user.getName(),
+                createdOrders
+        ));
 
         log.info("Created {} order(s) for user {} from cart.", dtos.size(), userEmail);
         return SuccessResponseDto.of(dtos, "Order(s) placed successfully.");

@@ -25,11 +25,11 @@ import az.shopery.model.entity.PasswordResetTokenEntity;
 import az.shopery.model.entity.UserEntity;
 import az.shopery.model.entity.VerificationTokenEntity;
 import az.shopery.model.event.PasswordResetLinkEvent;
+import az.shopery.model.event.VerificationCodeEvent;
 import az.shopery.repository.PasswordResetTokenRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.repository.VerificationTokenRepository;
 import az.shopery.service.AuthService;
-import az.shopery.service.EmailService;
 import az.shopery.utils.enums.UserStatus;
 import az.shopery.utils.enums.VerificationProgress;
 import az.shopery.utils.security.JwtService;
@@ -52,7 +52,6 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final VerificationTokenRepository verificationTokenRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
-    private final EmailService emailService;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
@@ -79,8 +78,12 @@ public class AuthServiceImpl implements AuthService {
         verificationTokenEntity.setCodeLastSentAt(LocalDateTime.now());
         verificationTokenRepository.save(verificationTokenEntity);
 
-        emailService.sendVerificationCode(userRegisterRequestDto.getEmail(), userRegisterRequestDto.getName(), code, Boolean.TRUE);
-
+        applicationEventPublisher.publishEvent(new VerificationCodeEvent(
+                userRegisterRequestDto.getEmail(),
+                userRegisterRequestDto.getName(),
+                code,
+                Boolean.TRUE
+        ));
         return SuccessResponseDto.of("Verification code sent to your email. Please verify to complete registration.");
     }
 
@@ -146,7 +149,12 @@ public class AuthServiceImpl implements AuthService {
         verificationTokenEntity.setCodeLastSentAt(LocalDateTime.now());
         verificationTokenRepository.save(verificationTokenEntity);
 
-        emailService.sendVerificationCode(verificationTokenEntity.getUserEmail(), verificationTokenEntity.getUserName(), newCode, Boolean.TRUE);
+        applicationEventPublisher.publishEvent(new VerificationCodeEvent(
+                verificationTokenEntity.getUserEmail(),
+                verificationTokenEntity.getUserName(),
+                newCode,
+                Boolean.TRUE
+        ));
         return SuccessResponseDto.of("A new verification code has been sent to your email.");
     }
 
