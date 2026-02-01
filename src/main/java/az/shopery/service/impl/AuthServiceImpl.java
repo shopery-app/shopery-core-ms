@@ -24,12 +24,14 @@ import az.shopery.model.dto.response.UserAuthResponseDto;
 import az.shopery.model.entity.PasswordResetTokenEntity;
 import az.shopery.model.entity.UserEntity;
 import az.shopery.model.entity.VerificationTokenEntity;
+import az.shopery.model.event.NotificationEvent;
 import az.shopery.model.event.PasswordResetLinkEvent;
 import az.shopery.model.event.VerificationCodeEvent;
 import az.shopery.repository.PasswordResetTokenRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.repository.VerificationTokenRepository;
 import az.shopery.service.AuthService;
+import az.shopery.utils.enums.NotificationType;
 import az.shopery.utils.enums.UserStatus;
 import az.shopery.utils.enums.VerificationProgress;
 import az.shopery.utils.security.JwtService;
@@ -78,11 +80,14 @@ public class AuthServiceImpl implements AuthService {
         verificationTokenEntity.setCodeLastSentAt(LocalDateTime.now());
         verificationTokenRepository.save(verificationTokenEntity);
 
-        applicationEventPublisher.publishEvent(new VerificationCodeEvent(
-                userRegisterRequestDto.getEmail(),
-                userRegisterRequestDto.getName(),
-                code,
-                Boolean.TRUE
+        applicationEventPublisher.publishEvent(new NotificationEvent<>(
+                NotificationType.VERIFICATION_CODE,
+                new VerificationCodeEvent(
+                        userRegisterRequestDto.getEmail(),
+                        userRegisterRequestDto.getName(),
+                        code,
+                        Boolean.TRUE
+                )
         ));
         return SuccessResponseDto.of("Verification code sent to your email. Please verify to complete registration.");
     }
