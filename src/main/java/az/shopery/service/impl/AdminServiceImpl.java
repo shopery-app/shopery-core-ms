@@ -3,7 +3,6 @@ package az.shopery.service.impl;
 import static az.shopery.utils.common.NameMapperHelper.first;
 import static az.shopery.utils.common.NameMapperHelper.last;
 import static az.shopery.utils.common.UuidUtils.parse;
-
 import az.shopery.handler.exception.IllegalRequestException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.mapper.TaskMapper;

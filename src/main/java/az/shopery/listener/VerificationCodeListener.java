@@ -20,7 +20,7 @@ public class VerificationCodeListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleSendVerificationCode(VerificationCodeEvent event) {
         emailService.sendVerificationCode(
-                event.userName(),
+                event.userEmail(),
                 event.userName(),
                 event.code(),
                 event.isRegistration()

@@ -24,6 +24,7 @@ import az.shopery.model.dto.response.UserAuthResponseDto;
 import az.shopery.model.entity.PasswordResetTokenEntity;
 import az.shopery.model.entity.UserEntity;
 import az.shopery.model.entity.VerificationTokenEntity;
+import az.shopery.model.event.PasswordChangedNotificationEvent;
 import az.shopery.model.event.PasswordResetLinkEvent;
 import az.shopery.model.event.VerificationCodeEvent;
 import az.shopery.repository.PasswordResetTokenRepository;
@@ -205,6 +206,11 @@ public class AuthServiceImpl implements AuthService {
         user.setPassword(passwordEncoder.encode(resetPasswordRequestDto.getPassword()));
         userRepository.save(user);
         passwordResetTokenRepository.delete(resetToken);
+
+        applicationEventPublisher.publishEvent(new PasswordChangedNotificationEvent(
+                user.getEmail(),
+                user.getName()
+        ));
 
         return SuccessResponseDto.of("Password reset successful.");
     }

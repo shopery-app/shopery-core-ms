@@ -39,7 +39,7 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(ex, HttpStatus.NOT_FOUND, request);
     }
 
-    @ExceptionHandler({IllegalRequestException.class, InvalidUuidFormatException.class, AddressLimitExceededException.class,})
+    @ExceptionHandler({IllegalRequestException.class, IllegalStateException.class, InvalidUuidFormatException.class, AddressLimitExceededException.class,})
     public ResponseEntity<ErrorResponse> handleBadRequest(Exception ex, HttpServletRequest request) {
         log.debug("Bad request: {}", ex.getMessage());
         return buildErrorResponse(ex, HttpStatus.BAD_REQUEST, request);
