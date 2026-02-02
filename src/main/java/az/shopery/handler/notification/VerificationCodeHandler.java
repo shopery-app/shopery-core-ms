@@ -21,15 +21,15 @@ public class VerificationCodeHandler
     }
 
     @Override
-    public void handle(VerificationCodeEvent payload) {
+    public void handle(VerificationCodeEvent event) {
         emailService.sendVerificationCode(
-                payload.userEmail(),
-                payload.userName(),
-                payload.code(),
-                payload.isRegistration()
+                event.userEmail(),
+                event.userName(),
+                event.code(),
+                event.isRegistration()
         );
 
-        log.debug("Verification code notification sent to {}", payload.userEmail());
+        log.debug("Verification code notification sent to {}", event.userEmail());
     }
 }
 

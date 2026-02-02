@@ -25,6 +25,7 @@ import az.shopery.model.entity.PasswordResetTokenEntity;
 import az.shopery.model.entity.UserEntity;
 import az.shopery.model.entity.VerificationTokenEntity;
 import az.shopery.model.event.NotificationEvent;
+import az.shopery.model.event.PasswordChangedNotificationEvent;
 import az.shopery.model.event.PasswordResetLinkEvent;
 import az.shopery.model.event.VerificationCodeEvent;
 import az.shopery.repository.PasswordResetTokenRepository;
@@ -154,11 +155,14 @@ public class AuthServiceImpl implements AuthService {
         verificationTokenEntity.setCodeLastSentAt(LocalDateTime.now());
         verificationTokenRepository.save(verificationTokenEntity);
 
-        applicationEventPublisher.publishEvent(new VerificationCodeEvent(
-                verificationTokenEntity.getUserEmail(),
-                verificationTokenEntity.getUserName(),
-                newCode,
-                Boolean.TRUE
+        applicationEventPublisher.publishEvent(new NotificationEvent<>(
+                NotificationType.VERIFICATION_CODE,
+                new VerificationCodeEvent(
+                        verificationTokenEntity.getUserEmail(),
+                        verificationTokenEntity.getUserName(),
+                        newCode,
+                        Boolean.TRUE
+                )
         ));
         return SuccessResponseDto.of("A new verification code has been sent to your email.");
     }
@@ -186,10 +190,14 @@ public class AuthServiceImpl implements AuthService {
         passwordResetTokenEntity.setLinkLastSentAt(LocalDateTime.now());
         passwordResetTokenRepository.save(passwordResetTokenEntity);
 
-        applicationEventPublisher.publishEvent(new PasswordResetLinkEvent(
-                userEntity.getEmail(),
-                userEntity.getName(),
-                passwordResetTokenEntity.getToken()
+
+        applicationEventPublisher.publishEvent(new NotificationEvent<>(
+                NotificationType.PASSWORD_RESET_LINK,
+                new PasswordResetLinkEvent(
+                        userEntity.getEmail(),
+                        userEntity.getName(),
+                        passwordResetTokenEntity.getToken()
+                )
         ));
         return SuccessResponseDto.of("A new password reset link has been sent to your email.");
     }
@@ -211,11 +219,13 @@ public class AuthServiceImpl implements AuthService {
         userRepository.save(user);
         passwordResetTokenRepository.delete(resetToken);
 
-        applicationEventPublisher.publishEvent(new PasswordChangedNotificationEvent(
-                user.getEmail(),
-                user.getName()
+        applicationEventPublisher.publishEvent(new NotificationEvent<>(
+                NotificationType.PASSWORD_CHANGED,
+                new PasswordChangedNotificationEvent(
+                        user.getEmail(),
+                        user.getName()
+                )
         ));
-
         return SuccessResponseDto.of("Password reset successful.");
     }
 
