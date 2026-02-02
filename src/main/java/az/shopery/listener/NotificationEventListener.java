@@ -15,22 +15,15 @@ public class NotificationEventListener {
 
     private final Map<NotificationType, NotificationHandler<?>> handlers;
 
-    public NotificationEventListener(
-            List<NotificationHandler<?>> handlerList) {
-
-        this.handlers = handlerList.stream()
-                .collect(Collectors.toMap(
-                        NotificationHandler::supports,
-                        Function.identity()
-                ));
+    public NotificationEventListener(List<NotificationHandler<?>> handlerList) {
+        this.handlers = handlerList.stream().collect(Collectors.toMap(NotificationHandler::supports, Function.identity()));
     }
 
     @EventListener
     public <T> void onNotification(NotificationEvent<T> event) {
 
         @SuppressWarnings("unchecked")
-        NotificationHandler<T> handler =
-                (NotificationHandler<T>) handlers.get(event.type());
+        NotificationHandler<T> handler = (NotificationHandler<T>) handlers.get(event.type());
 
         if (handler == null) {
             throw new IllegalStateException(
@@ -38,6 +31,6 @@ public class NotificationEventListener {
             );
         }
 
-        handler.handle(event.payload());
+        handler.handle(event.function());
     }
 }

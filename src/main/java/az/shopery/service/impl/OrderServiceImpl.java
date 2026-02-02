@@ -13,6 +13,7 @@ import az.shopery.model.entity.ProductEntity;
 import az.shopery.model.entity.ShopEntity;
 import az.shopery.model.entity.UserAddressEntity;
 import az.shopery.model.entity.UserEntity;
+import az.shopery.model.event.NotificationEvent;
 import az.shopery.model.event.OrderConfirmationNotificationEvent;
 import az.shopery.repository.CartRepository;
 import az.shopery.repository.OrderRepository;
@@ -21,6 +22,7 @@ import az.shopery.repository.ShopRepository;
 import az.shopery.repository.UserAddressRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.OrderService;
+import az.shopery.utils.enums.NotificationType;
 import az.shopery.utils.enums.OrderStatus;
 import az.shopery.utils.enums.UserStatus;
 import java.math.BigDecimal;
@@ -148,10 +150,14 @@ public class OrderServiceImpl implements OrderService {
                         .map(OrderEntity::getId)
                         .map(String::valueOf)
                         .toList();
-        applicationEventPublisher.publishEvent(new OrderConfirmationNotificationEvent(
-                user.getEmail(),
-                user.getName(),
-                orderIds
+
+        applicationEventPublisher.publishEvent(new NotificationEvent<>(
+                NotificationType.ORDER_CONFIRMED,
+                new OrderConfirmationNotificationEvent(
+                    user.getEmail(),
+                    user.getName(),
+                    orderIds
+                )
         ));
 
         log.info("Created {} order(s) for user {} from cart.", dtos.size(), userEmail);

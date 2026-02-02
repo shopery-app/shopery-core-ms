@@ -4,5 +4,5 @@ import az.shopery.utils.enums.NotificationType;
 
 public record NotificationEvent<T>(
         NotificationType type,
-        T payload
+        T function
 ) {}
