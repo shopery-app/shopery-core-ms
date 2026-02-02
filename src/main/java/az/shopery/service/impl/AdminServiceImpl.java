@@ -3,42 +3,45 @@ package az.shopery.service.impl;
 import static az.shopery.utils.common.NameMapperHelper.first;
 import static az.shopery.utils.common.NameMapperHelper.last;
 import static az.shopery.utils.common.UuidUtils.parse;
+
 import az.shopery.handler.exception.IllegalRequestException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.mapper.TaskMapper;
-import az.shopery.model.dto.response.task.TaskResponseDto;
-import az.shopery.model.entity.task.TaskEntity;
-import az.shopery.model.event.ShopCreationRequestApprovedEvent;
-import az.shopery.model.event.ShopCreationRequestRejectedEvent;
 import az.shopery.model.dto.request.CloseMerchantRequestDto;
 import az.shopery.model.dto.request.ShopCreationRequestRejectDto;
 import az.shopery.model.dto.response.SuccessResponseDto;
 import az.shopery.model.dto.response.UserProfileResponseDto;
+import az.shopery.model.dto.response.task.TaskResponseDto;
 import az.shopery.model.entity.OrderEntity;
-import az.shopery.model.entity.task.ShopCreationRequestEntity;
 import az.shopery.model.entity.ShopEntity;
-import az.shopery.model.entity.task.SupportTicketEntity;
 import az.shopery.model.entity.UserEntity;
+import az.shopery.model.entity.task.ShopCreationRequestEntity;
+import az.shopery.model.entity.task.SupportTicketEntity;
+import az.shopery.model.entity.task.TaskEntity;
+import az.shopery.model.event.NotificationEvent;
+import az.shopery.model.event.ShopCreationRequestApprovedEvent;
+import az.shopery.model.event.ShopCreationRequestRejectedEvent;
 import az.shopery.repository.OrderRepository;
 import az.shopery.repository.ShopRepository;
 import az.shopery.repository.TaskRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.AdminService;
+import az.shopery.utils.enums.NotificationType;
 import az.shopery.utils.enums.OrderStatus;
 import az.shopery.utils.enums.RequestStatus;
 import az.shopery.utils.enums.TaskCategory;
 import az.shopery.utils.enums.TicketStatus;
 import az.shopery.utils.enums.UserRole;
 import az.shopery.utils.enums.UserStatus;
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -101,6 +104,7 @@ public class AdminServiceImpl implements AdminService {
             throw new IllegalRequestException("Task is not a support ticket!");
         }
         supportTicketEntity.setTicketStatus(TicketStatus.CLOSED);
+
         return SuccessResponseDto.of("Support ticket has been closed successfully!");
     }
 
@@ -119,12 +123,14 @@ public class AdminServiceImpl implements AdminService {
         shopRepository.save(shop);
         shopCreationRequestEntity.setRequestStatus(RequestStatus.APPROVED);
 
-        applicationEventPublisher.publishEvent(new ShopCreationRequestApprovedEvent(
-              shopCreationRequestEntity.getCreatedBy().getEmail(),
-              shopCreationRequestEntity.getCreatedBy().getName(),
-              shopCreationRequestEntity.getShopName()
+        applicationEventPublisher.publishEvent(new NotificationEvent<>(
+                NotificationType.SHOP_APPROVED,
+                new ShopCreationRequestApprovedEvent(
+                      shopCreationRequestEntity.getCreatedBy().getEmail(),
+                      shopCreationRequestEntity.getCreatedBy().getName(),
+                      shopCreationRequestEntity.getShopName()
+                )
         ));
-
         return SuccessResponseDto.of("Shop creation request has been approved successfully!");
     }
 
@@ -136,13 +142,15 @@ public class AdminServiceImpl implements AdminService {
         shopCreationRequestEntity.setRequestStatus(RequestStatus.REJECTED);
         shopCreationRequestEntity.setRejectionReason(shopCreationRequestRejectDto.getReason());
 
-        applicationEventPublisher.publishEvent(new ShopCreationRequestRejectedEvent(
-                shopCreationRequestEntity.getCreatedBy().getEmail(),
-                shopCreationRequestEntity.getCreatedBy().getName(),
-                shopCreationRequestEntity.getShopName(),
-                shopCreationRequestRejectDto.getReason()
+        applicationEventPublisher.publishEvent(new NotificationEvent<>(
+                NotificationType.SHOP_REJECTED,
+                new ShopCreationRequestRejectedEvent(
+                    shopCreationRequestEntity.getCreatedBy().getEmail(),
+                    shopCreationRequestEntity.getCreatedBy().getName(),
+                    shopCreationRequestEntity.getShopName(),
+                    shopCreationRequestRejectDto.getReason()
+                )
         ));
-
         return SuccessResponseDto.of("Shop creation request has been rejected successfully!");
     }
 
