@@ -6,5 +6,5 @@ public interface NotificationHandler<T> {
 
     NotificationType supports();
 
-    void handle(T payload);
+    void handle(T event);
 }

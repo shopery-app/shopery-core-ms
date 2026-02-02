@@ -22,6 +22,7 @@ import az.shopery.model.dto.response.UserProfileResponseDto;
 import az.shopery.model.entity.EmailUpdateTokenEntity;
 import az.shopery.model.entity.UserEntity;
 import az.shopery.model.entity.task.ShopCreationRequestEntity;
+import az.shopery.model.event.NotificationEvent;
 import az.shopery.model.event.PasswordChangedNotificationEvent;
 import az.shopery.model.event.VerificationCodeEvent;
 import az.shopery.repository.EmailUpdateTokenRepository;
@@ -30,6 +31,7 @@ import az.shopery.repository.TaskRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.UserService;
 import az.shopery.utils.common.AdminAssignmentHelper;
+import az.shopery.utils.enums.NotificationType;
 import az.shopery.utils.enums.UserRole;
 import az.shopery.utils.enums.UserStatus;
 import az.shopery.utils.security.JwtService;
@@ -155,9 +157,12 @@ public class UserServiceImpl implements UserService {
                 .userProfileResponseDto(mapToDto(userEntity))
                 .build();
 
-        applicationEventPublisher.publishEvent(new PasswordChangedNotificationEvent(
-                userEntity.getEmail(),
-                userEntity.getName()
+        applicationEventPublisher.publishEvent(new NotificationEvent<>(
+                NotificationType.PASSWORD_CHANGED,
+                new PasswordChangedNotificationEvent(
+                        userEntity.getEmail(),
+                        userEntity.getName()
+                )
         ));
         return SuccessResponseDto.of(userPasswordUpdateResponseDto, "Password has been updated successfully.");
     }
@@ -177,11 +182,14 @@ public class UserServiceImpl implements UserService {
         emailUpdateTokenEntity.setExpiryDate(LocalDateTime.now().plusMinutes(5));
         emailUpdateTokenRepository.save(emailUpdateTokenEntity);
 
-        applicationEventPublisher.publishEvent(new VerificationCodeEvent(
-                userEmailUpdateRequestDto.getEmail(),
-                userEntity.getName(),
-                code,
-                Boolean.FALSE
+        applicationEventPublisher.publishEvent(new NotificationEvent<>(
+                NotificationType.VERIFICATION_CODE,
+                new VerificationCodeEvent(
+                        userEmailUpdateRequestDto.getEmail(),
+                        userEntity.getName(),
+                        code,
+                        Boolean.FALSE
+                )
         ));
         return SuccessResponseDto.of("Verification code has been sent to your email address");
     }
