@@ -211,6 +211,11 @@ public class AuthServiceImpl implements AuthService {
         userRepository.save(user);
         passwordResetTokenRepository.delete(resetToken);
 
+        applicationEventPublisher.publishEvent(new PasswordChangedNotificationEvent(
+                user.getEmail(),
+                user.getName()
+        ));
+
         return SuccessResponseDto.of("Password reset successful.");
     }
 

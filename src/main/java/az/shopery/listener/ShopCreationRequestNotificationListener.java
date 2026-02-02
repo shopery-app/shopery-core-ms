@@ -29,7 +29,6 @@ public class ShopCreationRequestNotificationListener {
         } catch (Exception e) {
             log.error("Failed to send shop creation request approved notification to {}", event.creatorEmail(), e);
         }
-
     }
 
     @Async

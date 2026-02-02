@@ -112,10 +112,10 @@ public class UserServiceImpl implements UserService {
         UserEntity assignedAdmin = adminAssignmentHelper.assignRandomAdmin();
 
         if (shopRepository.existsByUser(userEntity)) {
-            throw new IllegalStateException("User already has a shop.");
+            throw new IllegalRequestException("User already has a shop.");
         }
         if (shopRepository.existsByShopName(shopCreateRequestDto.getShopName())) {
-            throw new IllegalStateException("Shop with name '" + shopCreateRequestDto.getShopName() + "' already exists.");
+            throw new IllegalRequestException("Shop with name '" + shopCreateRequestDto.getShopName() + "' already exists.");
         }
 
         ShopCreationRequestEntity shopCreationRequestEntity = ShopCreationRequestEntity.builder()
