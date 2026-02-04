@@ -161,7 +161,9 @@ public class UserServiceImpl implements UserService {
         applicationEventPublisher.publishEvent(new NotificationEvent(
                 userEmail,
                 NotificationType.PASSWORD_CHANGED,
-                Map.of()
+                Map.of(
+                        "userName",userEntity.getName()
+                )
         ));
         return SuccessResponse.of(userPasswordUpdateResponseDto, "Password has been updated successfully.");
     }
@@ -184,7 +186,11 @@ public class UserServiceImpl implements UserService {
         applicationEventPublisher.publishEvent(new NotificationEvent(
                 userEmail,
                 NotificationType.VERIFICATION_CODE,
-                Map.of()
+                Map.of(
+                        "userName", userEntity.getName(),
+                        "isRegistration", Boolean.FALSE,
+                        "verificationCode", code
+                )
         ));
         return SuccessResponse.of("Verification code has been sent to your email address");
     }

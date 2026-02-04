@@ -1,6 +1,7 @@
 build/
 .gradle/
 *.log
+*.gz
 *.jar
 *.war
 

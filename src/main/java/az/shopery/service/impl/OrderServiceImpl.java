@@ -158,7 +158,10 @@ public class OrderServiceImpl implements OrderService {
         applicationEventPublisher.publishEvent(new NotificationEvent(
                 userEmail,
                 NotificationType.ORDER_CONFIRMED,
-                Map.of()
+                Map.of(
+                        "userName", user.getName(),
+                        "orders", orderIds
+                )
         ));
 
         log.info("Created {} order(s) for user {} from cart.", dtos.size(), userEmail);

@@ -82,7 +82,11 @@ public class AuthServiceImpl implements AuthService {
         applicationEventPublisher.publishEvent(new NotificationEvent(
                 userRegisterRequestDto.getEmail(),
                 NotificationType.VERIFICATION_CODE,
-                Map.of()
+                Map.of(
+                        "userName", userRegisterRequestDto.getName(),
+                        "isRegistration", Boolean.TRUE,
+                        "verificationCode", code
+                )
         ));
         return SuccessResponse.of("Verification code sent to your email. Please verify to complete registration.");
     }
@@ -152,7 +156,11 @@ public class AuthServiceImpl implements AuthService {
         applicationEventPublisher.publishEvent(new NotificationEvent(
                 verificationTokenEntity.getUserEmail(),
                 NotificationType.VERIFICATION_CODE,
-                Map.of()
+                Map.of(
+                        "userName", verificationTokenEntity.getUserName(),
+                        "isRegistration", Boolean.TRUE,
+                        "verificationCode", newCode
+                )
         ));
         return SuccessResponse.of("A new verification code has been sent to your email.");
     }
@@ -174,7 +182,8 @@ public class AuthServiceImpl implements AuthService {
             }
         }
 
-        passwordResetTokenEntity.setToken(UUID.randomUUID().toString());
+        String token = UUID.randomUUID().toString();
+        passwordResetTokenEntity.setToken(token);
         passwordResetTokenEntity.setExpiryDate(LocalDateTime.now().plusMinutes(RESET_TOKEN_EXPIRY_MINUTES));
         passwordResetTokenEntity.setUserEmail(userEntity.getEmail());
         passwordResetTokenEntity.setLinkLastSentAt(LocalDateTime.now());
@@ -184,7 +193,10 @@ public class AuthServiceImpl implements AuthService {
         applicationEventPublisher.publishEvent(new NotificationEvent(
                 userEntity.getEmail(),
                 NotificationType.PASSWORD_RESET_LINK,
-                Map.of()
+                Map.of(
+                        "userName", userEntity.getName(),
+                        "token", token
+                )
         ));
         return SuccessResponse.of("A new password reset link has been sent to your email.");
     }
@@ -209,7 +221,9 @@ public class AuthServiceImpl implements AuthService {
         applicationEventPublisher.publishEvent(new NotificationEvent(
                 user.getEmail(),
                 NotificationType.PASSWORD_CHANGED,
-                Map.of()
+                Map.of(
+                        "userName", user.getName()
+                )
         ));
         return SuccessResponse.of("Password reset successful.");
     }

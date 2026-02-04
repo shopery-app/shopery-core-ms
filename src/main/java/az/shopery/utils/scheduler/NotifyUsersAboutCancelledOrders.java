@@ -1,7 +1,5 @@
 package az.shopery.utils.scheduler;
 
-import static az.shopery.utils.common.NameMapperHelper.first;
-
 import az.shopery.model.entity.OrderEntity;
 import az.shopery.model.event.NotificationEvent;
 import az.shopery.repository.OrderRepository;
@@ -33,9 +31,10 @@ public class NotifyUsersAboutCancelledOrders {
             applicationEventPublisher.publishEvent(new NotificationEvent(
                     order.getUser().getEmail(),
                     NotificationType.ORDER_CANCELLED,
-                    Map.of()
-//                    first(order.getUser().getName()),
-//                    order.getShop().getUser().getName()
+                    Map.of(
+                            "userName", order.getUser().getName(),
+                            "merchantName", order.getShop().getUser().getName()
+                    )
             ));
         }
         log.info("Marked {} orders as notified", orders.size());
