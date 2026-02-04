@@ -1,4 +1,4 @@
-package az.shopery.handler;
+package az.shopery.model.dto.shared;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;

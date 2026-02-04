@@ -2,7 +2,7 @@ package az.shopery.controller;
 
 import az.shopery.model.dto.request.BlogRequestDto;
 import az.shopery.model.dto.response.BlogResponseDto;
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.service.BlogLikeService;
 import az.shopery.service.BlogService;
 import jakarta.validation.Valid;
@@ -33,72 +33,72 @@ public class BlogController {
     private final BlogLikeService blogLikeService;
 
     @GetMapping
-    public ResponseEntity<SuccessResponseDto<Page<BlogResponseDto>>> getMyBlogs(Principal principal, Pageable pageable) {
+    public ResponseEntity<SuccessResponse<Page<BlogResponseDto>>> getMyBlogs(Principal principal, Pageable pageable) {
         return ResponseEntity.ok(blogService.getMyBlogs(principal.getName(), pageable));
     }
 
     @GetMapping("/{blogId}")
-    public ResponseEntity<SuccessResponseDto<BlogResponseDto>> getMyBlog(Principal principal, @PathVariable String blogId) {
+    public ResponseEntity<SuccessResponse<BlogResponseDto>> getMyBlog(Principal principal, @PathVariable String blogId) {
         return ResponseEntity.ok(blogService.getMyBlog(principal.getName(), blogId));
     }
 
     @PostMapping
-    public ResponseEntity<SuccessResponseDto<BlogResponseDto>> addMyBlog(Principal principal, @Valid @RequestBody BlogRequestDto blogRequestDto) {
+    public ResponseEntity<SuccessResponse<BlogResponseDto>> addMyBlog(Principal principal, @Valid @RequestBody BlogRequestDto blogRequestDto) {
         return ResponseEntity.ok(blogService.addMyBlog(principal.getName(), blogRequestDto));
     }
 
     @PostMapping(value = "/{blogId}/image", consumes = {"multipart/form-data"})
-    public ResponseEntity<SuccessResponseDto<String>> uploadBlogImage(Principal principal, @PathVariable String blogId, @RequestParam("image") MultipartFile imageFile){
+    public ResponseEntity<SuccessResponse<String>> uploadBlogImage(Principal principal, @PathVariable String blogId, @RequestParam("image") MultipartFile imageFile){
         return ResponseEntity.ok(blogService.updateBlogImage(principal.getName(), blogId, imageFile));
     }
 
     @DeleteMapping("/{blogId}/image" )
-    public ResponseEntity<SuccessResponseDto<String>> deleteBlogImage(Principal principal, @PathVariable String blogId) {
+    public ResponseEntity<SuccessResponse<String>> deleteBlogImage(Principal principal, @PathVariable String blogId) {
         return ResponseEntity.ok(blogService.deleteBlogImage(principal.getName(), blogId));
     }
 
     @DeleteMapping("/{blogId}")
-    public ResponseEntity<SuccessResponseDto<Void>> deleteMyBlog(Principal principal, @PathVariable String blogId) {
+    public ResponseEntity<SuccessResponse<Void>> deleteMyBlog(Principal principal, @PathVariable String blogId) {
         return ResponseEntity.ok(blogService.deleteMyBlog(principal.getName(), blogId));
     }
 
     @PutMapping("/{blogId}")
-    public ResponseEntity<SuccessResponseDto<BlogResponseDto>> updateMyBlog(Principal principal, @RequestBody @Valid BlogRequestDto blogRequestDto, @PathVariable String blogId) {
+    public ResponseEntity<SuccessResponse<BlogResponseDto>> updateMyBlog(Principal principal, @RequestBody @Valid BlogRequestDto blogRequestDto, @PathVariable String blogId) {
         return ResponseEntity.ok(blogService.updateMyBlog(principal.getName(), blogRequestDto, blogId));
     }
 
     @GetMapping("/like")
-    public ResponseEntity<SuccessResponseDto<Page<BlogResponseDto>>> getLikedBlogs(Principal principal, Pageable pageable) {
+    public ResponseEntity<SuccessResponse<Page<BlogResponseDto>>> getLikedBlogs(Principal principal, Pageable pageable) {
         return ResponseEntity.ok(blogLikeService.getLikedBlogs(principal.getName(), pageable));
     }
 
     @PostMapping("/{blogId}/like")
-    public ResponseEntity<SuccessResponseDto<Void>> likeBlog(Principal principal, @PathVariable String blogId) {
+    public ResponseEntity<SuccessResponse<Void>> likeBlog(Principal principal, @PathVariable String blogId) {
         return ResponseEntity.ok(blogLikeService.toggleBlogLike(principal.getName(), blogId));
     }
 
     @GetMapping("/save")
-    public ResponseEntity<SuccessResponseDto<Page<BlogResponseDto>>> getSavedBlogs(Principal principal, Pageable pageable){
+    public ResponseEntity<SuccessResponse<Page<BlogResponseDto>>> getSavedBlogs(Principal principal, Pageable pageable){
         return ResponseEntity.ok(blogService.getSavedBlogs(principal.getName(), pageable));
     }
 
     @PostMapping("/{blogId}/save")
-    public ResponseEntity<SuccessResponseDto<Void>> saveBlog(Principal principal, @PathVariable String blogId){
+    public ResponseEntity<SuccessResponse<Void>> saveBlog(Principal principal, @PathVariable String blogId){
         return ResponseEntity.ok(blogService.saveBlog(principal.getName(), blogId));
     }
 
     @DeleteMapping("/{blogId}/save")
-    public ResponseEntity<SuccessResponseDto<Void>> deleteSavedBlog(Principal principal, @PathVariable String blogId){
+    public ResponseEntity<SuccessResponse<Void>> deleteSavedBlog(Principal principal, @PathVariable String blogId){
         return ResponseEntity.ok(blogService.deleteSavedBlog(principal.getName(), blogId));
     }
 
     @GetMapping("/archive")
-    public ResponseEntity<SuccessResponseDto<Page<BlogResponseDto>>> getArchivedBlogs(Principal principal, Pageable pageable) {
+    public ResponseEntity<SuccessResponse<Page<BlogResponseDto>>> getArchivedBlogs(Principal principal, Pageable pageable) {
         return ResponseEntity.ok(blogService.getArchivedBlogs(principal.getName(), pageable));
     }
 
     @PostMapping("/{blogId}/archive")
-    public ResponseEntity<SuccessResponseDto<Void>> archiveBlog(Principal principal, @PathVariable String blogId) {
+    public ResponseEntity<SuccessResponse<Void>> archiveBlog(Principal principal, @PathVariable String blogId) {
         return ResponseEntity.ok(blogService.toggleBlogArchive(principal.getName(), blogId));
     }
 }

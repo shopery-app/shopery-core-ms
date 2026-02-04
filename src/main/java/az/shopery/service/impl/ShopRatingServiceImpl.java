@@ -6,7 +6,7 @@ import static az.shopery.utils.common.UuidUtils.parse;
 
 import az.shopery.handler.exception.IllegalRequestException;
 import az.shopery.handler.exception.ResourceNotFoundException;
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.entity.ShopEntity;
 import az.shopery.model.entity.ShopRatingEntity;
 import az.shopery.model.entity.UserEntity;
@@ -29,7 +29,7 @@ public class ShopRatingServiceImpl implements ShopRatingService {
     private final ShopRatingRepository shopRatingRepository;
 
     @Override
-    public SuccessResponseDto<Void> rateShop(String userEmail, String shopId, int ratingValue) {
+    public SuccessResponse<Void> rateShop(String userEmail, String shopId, int ratingValue) {
         if (ratingValue < MIN_RATING || ratingValue > MAX_RATING) {
             throw new IllegalRequestException("Rating must be between 1 and 5");
         }
@@ -58,6 +58,6 @@ public class ShopRatingServiceImpl implements ShopRatingService {
         shop.setRating(average);
         shopRepository.save(shop);
 
-        return SuccessResponseDto.of("Shop was rated successfully!");
+        return SuccessResponse.of("Shop was rated successfully!");
     }
 }

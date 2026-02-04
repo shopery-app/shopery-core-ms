@@ -4,7 +4,7 @@ import az.shopery.handler.exception.IllegalRequestException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.model.dto.response.OrderItemResponseDto;
 import az.shopery.model.dto.response.OrderResponseDto;
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.entity.CartEntity;
 import az.shopery.model.entity.CartItemEntity;
 import az.shopery.model.entity.OrderEntity;
@@ -14,7 +14,6 @@ import az.shopery.model.entity.ShopEntity;
 import az.shopery.model.entity.UserAddressEntity;
 import az.shopery.model.entity.UserEntity;
 import az.shopery.model.event.NotificationEvent;
-import az.shopery.model.event.OrderConfirmationNotificationEvent;
 import az.shopery.repository.CartRepository;
 import az.shopery.repository.OrderRepository;
 import az.shopery.repository.ProductRepository;
@@ -27,7 +26,12 @@ import az.shopery.utils.enums.OrderStatus;
 import az.shopery.utils.enums.UserStatus;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +54,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public SuccessResponseDto<List<OrderResponseDto>> checkoutFromCart(String userEmail) {
+    public SuccessResponse<List<OrderResponseDto>> checkoutFromCart(String userEmail) {
         UserEntity user = userRepository.findAndLockByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + userEmail));
 
@@ -151,27 +155,24 @@ public class OrderServiceImpl implements OrderService {
                         .map(String::valueOf)
                         .toList();
 
-        applicationEventPublisher.publishEvent(new NotificationEvent<>(
+        applicationEventPublisher.publishEvent(new NotificationEvent(
+                userEmail,
                 NotificationType.ORDER_CONFIRMED,
-                new OrderConfirmationNotificationEvent(
-                    user.getEmail(),
-                    user.getName(),
-                    orderIds
-                )
+                Map.of()
         ));
 
         log.info("Created {} order(s) for user {} from cart.", dtos.size(), userEmail);
-        return SuccessResponseDto.of(dtos, "Order(s) placed successfully.");
+        return SuccessResponse.of(dtos, "Order(s) placed successfully.");
     }
 
     @Override
     @Transactional(readOnly = true)
-    public SuccessResponseDto<List<OrderResponseDto>> getMyOrders(String userEmail) {
+    public SuccessResponse<List<OrderResponseDto>> getMyOrders(String userEmail) {
         UserEntity user = userRepository.findByEmailAndStatus(userEmail, UserStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + userEmail));
         List<OrderEntity> orders = orderRepository.findAllByUserOrderByCreatedAtDesc(user);
         List<OrderResponseDto> dtos = orders.stream().map(this::map).toList();
-        return SuccessResponseDto.of(dtos, "Orders retrieved successfully.");
+        return SuccessResponse.of(dtos, "Orders retrieved successfully.");
     }
 
     private OrderResponseDto map(OrderEntity order) {

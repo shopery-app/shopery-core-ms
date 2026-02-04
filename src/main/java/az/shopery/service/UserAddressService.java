@@ -2,13 +2,13 @@ package az.shopery.service;
 
 import az.shopery.model.dto.request.AddressRequestDto;
 import az.shopery.model.dto.response.AddressResponseDto;
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import java.util.List;
 
 public interface UserAddressService {
-    SuccessResponseDto<AddressResponseDto> add(String userEmail, AddressRequestDto dto);
-    SuccessResponseDto<AddressResponseDto> update(String userEmail, String addressId, AddressRequestDto dto);
-    SuccessResponseDto<Void> remove(String userEmail, String addressId);
-    SuccessResponseDto<Void> setDefault(String userEmail, String addressId);
-    SuccessResponseDto<List<AddressResponseDto>> getAll(String userEmail);
+    SuccessResponse<AddressResponseDto> add(String userEmail, AddressRequestDto dto);
+    SuccessResponse<AddressResponseDto> update(String userEmail, String addressId, AddressRequestDto dto);
+    SuccessResponse<Void> remove(String userEmail, String addressId);
+    SuccessResponse<Void> setDefault(String userEmail, String addressId);
+    SuccessResponse<List<AddressResponseDto>> getAll(String userEmail);
 }

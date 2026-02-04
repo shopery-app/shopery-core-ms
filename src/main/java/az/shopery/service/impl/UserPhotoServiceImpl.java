@@ -2,7 +2,7 @@ package az.shopery.service.impl;
 
 import az.shopery.handler.exception.FileStorageException;
 import az.shopery.handler.exception.ResourceNotFoundException;
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.entity.UserEntity;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.UserPhotoService;
@@ -35,18 +35,18 @@ public class UserPhotoServiceImpl implements UserPhotoService {
 
     @Override
     @Transactional
-    public SuccessResponseDto<String> uploadProfilePhoto(String userEmail, MultipartFile multipartFile) {
+    public SuccessResponse<String> uploadProfilePhoto(String userEmail, MultipartFile multipartFile) {
         String fileKey = fileStorageService.store(multipartFile);
         UserEntity userEntity = getUserByEmail(userEmail);
         userEntity.setProfilePhotoUrl(fileKey);
         userRepository.save(userEntity);
         log.info("Saved profile photo key for {}: {}", userEmail, fileKey);
-        return SuccessResponseDto.of(fileKey, "Profile photo uploaded successfully. User key to get presigned URL.");
+        return SuccessResponse.of(fileKey, "Profile photo uploaded successfully. User key to get presigned URL.");
     }
 
     @Override
     @Transactional(readOnly = true)
-    public SuccessResponseDto<String> generatePresignedUrlForPhoto(String userEmail) {
+    public SuccessResponse<String> generatePresignedUrlForPhoto(String userEmail) {
         UserEntity userEntity = getUserByEmail(userEmail);
         String fileKey = userEntity.getProfilePhotoUrl();
         if (Objects.isNull(fileKey) || fileKey.isBlank()) {
@@ -59,7 +59,7 @@ public class UserPhotoServiceImpl implements UserPhotoService {
                     .getObjectRequest(getObjectRequest)
                     .build();
             String url = s3Presigner.presignGetObject(getObjectPresignRequest).url().toString();
-            return SuccessResponseDto.of(url, "Presigned URL generated successfully.");
+            return SuccessResponse.of(url, "Presigned URL generated successfully.");
         } catch (Exception exception) {
             log.error("Failed to generate presigned URL for file: {}", fileKey, exception);
             throw new FileStorageException("Failed to generate presigned URL.", exception);
@@ -68,7 +68,7 @@ public class UserPhotoServiceImpl implements UserPhotoService {
 
     @Override
     @Transactional
-    public SuccessResponseDto<Void> deleteProfilePhoto(String userEmail) {
+    public SuccessResponse<Void> deleteProfilePhoto(String userEmail) {
         UserEntity userEntity = getUserByEmail(userEmail);
         String fileKey = userEntity.getProfilePhotoUrl();
         if (Objects.isNull(fileKey) || fileKey.isBlank()) {
@@ -78,7 +78,7 @@ public class UserPhotoServiceImpl implements UserPhotoService {
         userEntity.setProfilePhotoUrl(null);
         userRepository.save(userEntity);
         log.info("Deleted profile photo key for {}: {}", userEmail, fileKey);
-        return SuccessResponseDto.of(null, "Profile photo deleted successfully.");
+        return SuccessResponse.of(null, "Profile photo deleted successfully.");
     }
 
     private UserEntity getUserByEmail(String email) {

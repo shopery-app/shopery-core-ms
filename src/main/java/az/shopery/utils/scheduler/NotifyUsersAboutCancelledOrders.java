@@ -2,12 +2,14 @@ package az.shopery.utils.scheduler;
 
 import static az.shopery.utils.common.NameMapperHelper.first;
 
-import az.shopery.model.event.OrderCancelledNotificationEvent;
 import az.shopery.model.entity.OrderEntity;
+import az.shopery.model.event.NotificationEvent;
 import az.shopery.repository.OrderRepository;
+import az.shopery.utils.enums.NotificationType;
 import az.shopery.utils.enums.OrderStatus;
 import jakarta.transaction.Transactional;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -28,10 +30,12 @@ public class NotifyUsersAboutCancelledOrders {
         List<OrderEntity> orders = orderRepository.findAllByStatusAndIsUserNotifiedFalse(OrderStatus.CANCELLED);
         for (OrderEntity order : orders) {
             order.setIsUserNotified(Boolean.TRUE);
-            applicationEventPublisher.publishEvent(new OrderCancelledNotificationEvent(
+            applicationEventPublisher.publishEvent(new NotificationEvent(
                     order.getUser().getEmail(),
-                    first(order.getUser().getName()),
-                    order.getShop().getUser().getName()
+                    NotificationType.ORDER_CANCELLED,
+                    Map.of()
+//                    first(order.getUser().getName()),
+//                    order.getShop().getUser().getName()
             ));
         }
         log.info("Marked {} orders as notified", orders.size());

@@ -1,7 +1,7 @@
 package az.shopery.service;
 
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 
 public interface ShopRatingService {
-    SuccessResponseDto<Void> rateShop(String userEmail, String shopId, int ratingValue);
+    SuccessResponse<Void> rateShop(String userEmail, String shopId, int ratingValue);
 }

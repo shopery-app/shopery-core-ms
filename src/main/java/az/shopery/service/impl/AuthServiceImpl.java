@@ -19,15 +19,12 @@ import az.shopery.model.dto.request.ResetPasswordRequestDto;
 import az.shopery.model.dto.request.UserLoginRequestDto;
 import az.shopery.model.dto.request.UserRegisterRequestDto;
 import az.shopery.model.dto.request.UserVerificationRequestDto;
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.dto.response.UserAuthResponseDto;
 import az.shopery.model.entity.PasswordResetTokenEntity;
 import az.shopery.model.entity.UserEntity;
 import az.shopery.model.entity.VerificationTokenEntity;
 import az.shopery.model.event.NotificationEvent;
-import az.shopery.model.event.PasswordChangedNotificationEvent;
-import az.shopery.model.event.PasswordResetLinkEvent;
-import az.shopery.model.event.VerificationCodeEvent;
 import az.shopery.repository.PasswordResetTokenRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.repository.VerificationTokenRepository;
@@ -38,6 +35,7 @@ import az.shopery.utils.enums.VerificationProgress;
 import az.shopery.utils.security.JwtService;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -62,7 +60,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public SuccessResponseDto<Void> register(UserRegisterRequestDto userRegisterRequestDto) {
+    public SuccessResponse<Void> register(UserRegisterRequestDto userRegisterRequestDto) {
         if (userRepository.findByEmailAndStatus(userRegisterRequestDto.getEmail(), UserStatus.ACTIVE).isPresent()) {
             throw new EmailAlreadyExistsException("Email '" + userRegisterRequestDto.getEmail() + "' is already in use.");
         }
@@ -81,22 +79,18 @@ public class AuthServiceImpl implements AuthService {
         verificationTokenEntity.setCodeLastSentAt(LocalDateTime.now());
         verificationTokenRepository.save(verificationTokenEntity);
 
-        applicationEventPublisher.publishEvent(new NotificationEvent<>(
+        applicationEventPublisher.publishEvent(new NotificationEvent(
+                userRegisterRequestDto.getEmail(),
                 NotificationType.VERIFICATION_CODE,
-                new VerificationCodeEvent(
-                        userRegisterRequestDto.getEmail(),
-                        userRegisterRequestDto.getName(),
-                        code,
-                        Boolean.TRUE
-                )
+                Map.of()
         ));
-        return SuccessResponseDto.of("Verification code sent to your email. Please verify to complete registration.");
+        return SuccessResponse.of("Verification code sent to your email. Please verify to complete registration.");
     }
 
 
     @Override
     @Transactional(noRollbackFor = InvalidCredentialsException.class)
-    public SuccessResponseDto<UserAuthResponseDto> verifyAccount(UserVerificationRequestDto verificationRequestDto) {
+    public SuccessResponse<UserAuthResponseDto> verifyAccount(UserVerificationRequestDto verificationRequestDto) {
         VerificationTokenEntity verificationTokenEntity = verificationTokenRepository.findByUserEmailAndProgress(verificationRequestDto.getEmail(), VerificationProgress.PENDING)
                 .orElseThrow(() -> new ResourceNotFoundException("No pending verification found. It may have expired or been verified already."));
 
@@ -124,12 +118,12 @@ public class AuthServiceImpl implements AuthService {
         verificationTokenEntity.setProgress(VerificationProgress.VERIFIED);
         verificationTokenRepository.save(verificationTokenEntity);
 
-        return SuccessResponseDto.of(generateAuthResponse(user), "Account verified successfully. Welcome to Shopery!");
+        return SuccessResponse.of(generateAuthResponse(user), "Account verified successfully. Welcome to Shopery!");
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<Void> resendVerificationCode(ResendCodeRequestDto resendCodeRequestDto) {
+    public SuccessResponse<Void> resendVerificationCode(ResendCodeRequestDto resendCodeRequestDto) {
         VerificationTokenEntity verificationTokenEntity = verificationTokenRepository.findByUserEmail(resendCodeRequestDto.getEmail())
                 .orElseThrow(() -> new ResourceNotFoundException("No registration process found for this email. Please register first."));
 
@@ -155,21 +149,17 @@ public class AuthServiceImpl implements AuthService {
         verificationTokenEntity.setCodeLastSentAt(LocalDateTime.now());
         verificationTokenRepository.save(verificationTokenEntity);
 
-        applicationEventPublisher.publishEvent(new NotificationEvent<>(
+        applicationEventPublisher.publishEvent(new NotificationEvent(
+                verificationTokenEntity.getUserEmail(),
                 NotificationType.VERIFICATION_CODE,
-                new VerificationCodeEvent(
-                        verificationTokenEntity.getUserEmail(),
-                        verificationTokenEntity.getUserName(),
-                        newCode,
-                        Boolean.TRUE
-                )
+                Map.of()
         ));
-        return SuccessResponseDto.of("A new verification code has been sent to your email.");
+        return SuccessResponse.of("A new verification code has been sent to your email.");
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<Void> forgotPassword(ForgotPasswordRequestDto forgotPasswordRequestDto) {
+    public SuccessResponse<Void> forgotPassword(ForgotPasswordRequestDto forgotPasswordRequestDto) {
         var userEntity = userRepository.findByEmailAndStatus(forgotPasswordRequestDto.getEmail(), UserStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + forgotPasswordRequestDto.getEmail()));
 
@@ -191,20 +181,17 @@ public class AuthServiceImpl implements AuthService {
         passwordResetTokenRepository.save(passwordResetTokenEntity);
 
 
-        applicationEventPublisher.publishEvent(new NotificationEvent<>(
+        applicationEventPublisher.publishEvent(new NotificationEvent(
+                userEntity.getEmail(),
                 NotificationType.PASSWORD_RESET_LINK,
-                new PasswordResetLinkEvent(
-                        userEntity.getEmail(),
-                        userEntity.getName(),
-                        passwordResetTokenEntity.getToken()
-                )
+                Map.of()
         ));
-        return SuccessResponseDto.of("A new password reset link has been sent to your email.");
+        return SuccessResponse.of("A new password reset link has been sent to your email.");
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<Void> resetPassword(ResetPasswordRequestDto resetPasswordRequestDto) {
+    public SuccessResponse<Void> resetPassword(ResetPasswordRequestDto resetPasswordRequestDto) {
         var resetToken = passwordResetTokenRepository.findByToken(resetPasswordRequestDto.getToken())
                 .orElseThrow(() -> new ResourceNotFoundException("Invalid or expired password reset token."));
         if (resetToken.getExpiryDate().isBefore(LocalDateTime.now())) {
@@ -219,19 +206,17 @@ public class AuthServiceImpl implements AuthService {
         userRepository.save(user);
         passwordResetTokenRepository.delete(resetToken);
 
-        applicationEventPublisher.publishEvent(new NotificationEvent<>(
+        applicationEventPublisher.publishEvent(new NotificationEvent(
+                user.getEmail(),
                 NotificationType.PASSWORD_CHANGED,
-                new PasswordChangedNotificationEvent(
-                        user.getEmail(),
-                        user.getName()
-                )
+                Map.of()
         ));
-        return SuccessResponseDto.of("Password reset successful.");
+        return SuccessResponse.of("Password reset successful.");
     }
 
     @Override
     @Transactional(noRollbackFor = InvalidCredentialsException.class)
-    public SuccessResponseDto<UserAuthResponseDto> login(UserLoginRequestDto userLoginRequestDto) {
+    public SuccessResponse<UserAuthResponseDto> login(UserLoginRequestDto userLoginRequestDto) {
         UserEntity user = userRepository.findByEmailAndStatus(userLoginRequestDto.getEmail(), UserStatus.ACTIVE)
                 .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password."));
 
@@ -269,12 +254,12 @@ public class AuthServiceImpl implements AuthService {
             }
         }
 
-        return SuccessResponseDto.of(generateAuthResponse(user), "Login successful.");
+        return SuccessResponse.of(generateAuthResponse(user), "Login successful.");
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<UserAuthResponseDto> refreshToken(RefreshTokenRequestDto refreshTokenRequestDto) {
+    public SuccessResponse<UserAuthResponseDto> refreshToken(RefreshTokenRequestDto refreshTokenRequestDto) {
         String refreshToken = refreshTokenRequestDto.getRefreshToken();
         String userEmail;
         try {
@@ -306,7 +291,7 @@ public class AuthServiceImpl implements AuthService {
                 .refreshToken(refreshToken)
                 .build();
 
-        return SuccessResponseDto.of(userAuthResponseDto, "Refresh token refreshed successfully.");
+        return SuccessResponse.of(userAuthResponseDto, "Refresh token refreshed successfully.");
     }
 
     private UserAuthResponseDto generateAuthResponse(UserEntity userEntity) {

@@ -2,7 +2,7 @@ package az.shopery.controller;
 
 import az.shopery.model.dto.request.CloseMerchantRequestDto;
 import az.shopery.model.dto.request.ShopCreationRequestRejectDto;
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.dto.response.UserProfileResponseDto;
 import az.shopery.model.dto.response.task.TaskResponseDto;
 import az.shopery.service.AdminService;
@@ -32,37 +32,37 @@ public class AdminController {
     private final AdminService adminService;
 
     @GetMapping("/customers")
-    public ResponseEntity<SuccessResponseDto<Page<UserProfileResponseDto>>> getCustomers(Pageable pageable) {
+    public ResponseEntity<SuccessResponse<Page<UserProfileResponseDto>>> getCustomers(Pageable pageable) {
         return ResponseEntity.ok(adminService.getCustomers(pageable));
     }
 
     @GetMapping("/merchants")
-    public ResponseEntity<SuccessResponseDto<Page<UserProfileResponseDto>>> getMerchants(Pageable pageable) {
+    public ResponseEntity<SuccessResponse<Page<UserProfileResponseDto>>> getMerchants(Pageable pageable) {
         return ResponseEntity.ok(adminService.getMerchants(pageable));
     }
 
     @PatchMapping("/users/close")
-    public ResponseEntity<SuccessResponseDto<Void>> closeUser(@RequestBody @Valid CloseMerchantRequestDto closeMerchantRequestDto) {
+    public ResponseEntity<SuccessResponse<Void>> closeUser(@RequestBody @Valid CloseMerchantRequestDto closeMerchantRequestDto) {
         return ResponseEntity.ok(adminService.closeMerchant(closeMerchantRequestDto));
     }
 
     @GetMapping("/tasks")
-    public ResponseEntity<SuccessResponseDto<Page<TaskResponseDto>>> getTasks(@RequestParam(required = false) TaskCategory taskCategory, Pageable pageable, Principal principal) {
+    public ResponseEntity<SuccessResponse<Page<TaskResponseDto>>> getTasks(@RequestParam(required = false) TaskCategory taskCategory, Pageable pageable, Principal principal) {
         return ResponseEntity.ok(adminService.getTasks(taskCategory, pageable, principal.getName()));
     }
 
     @PatchMapping("/tasks/{id}/close")
-    public ResponseEntity<SuccessResponseDto<Void>> closeSupportTickets(@PathVariable String id, Principal principal) {
+    public ResponseEntity<SuccessResponse<Void>> closeSupportTickets(@PathVariable String id, Principal principal) {
         return ResponseEntity.ok(adminService.closeSupportTicket(id, principal.getName()));
     }
 
     @PostMapping("/tasks/{id}/approve")
-    public ResponseEntity<SuccessResponseDto<Void>> approve(@PathVariable String id, Principal principal) {
+    public ResponseEntity<SuccessResponse<Void>> approve(@PathVariable String id, Principal principal) {
         return ResponseEntity.ok(adminService.approve(id, principal.getName()));
     }
 
     @PostMapping("/tasks/{id}/reject")
-    public ResponseEntity<SuccessResponseDto<Void>> reject(@PathVariable String id, @Valid @RequestBody ShopCreationRequestRejectDto shopCreationRequestRejectDto, Principal principal) {
+    public ResponseEntity<SuccessResponse<Void>> reject(@PathVariable String id, @Valid @RequestBody ShopCreationRequestRejectDto shopCreationRequestRejectDto, Principal principal) {
         return ResponseEntity.ok(adminService.reject(id, principal.getName(), shopCreationRequestRejectDto));
     }
 }

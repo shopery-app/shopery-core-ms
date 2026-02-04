@@ -7,7 +7,7 @@ import az.shopery.handler.exception.AddressLimitExceededException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.model.dto.request.AddressRequestDto;
 import az.shopery.model.dto.response.AddressResponseDto;
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.entity.UserAddressEntity;
 import az.shopery.model.entity.UserEntity;
 import az.shopery.repository.UserAddressRepository;
@@ -31,7 +31,7 @@ public class UserAddressServiceImpl implements UserAddressService {
 
     @Override
     @Transactional
-    public SuccessResponseDto<AddressResponseDto> add(String userEmail, AddressRequestDto addressRequestDto) {
+    public SuccessResponse<AddressResponseDto> add(String userEmail, AddressRequestDto addressRequestDto) {
         UserEntity userEntity = userRepository.findAndLockByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + userEmail));
 
@@ -55,12 +55,12 @@ public class UserAddressServiceImpl implements UserAddressService {
 
         var savedUserAddressEntity = userAddressRepository.save(userAddressEntity);
         log.info("Address added successfully for user {}", userEmail);
-        return SuccessResponseDto.of(map(savedUserAddressEntity), "Address added successfully.");
+        return SuccessResponse.of(map(savedUserAddressEntity), "Address added successfully.");
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<AddressResponseDto> update(String userEmail, String addressId, AddressRequestDto addressRequestDto) {
+    public SuccessResponse<AddressResponseDto> update(String userEmail, String addressId, AddressRequestDto addressRequestDto) {
         UserAddressEntity userAddressEntity = getAddressForUser(userEmail, addressId);
 
         userAddressEntity.setAddressLine1(addressRequestDto.getAddressLine1());
@@ -72,12 +72,12 @@ public class UserAddressServiceImpl implements UserAddressService {
 
         var updatedUserAddressEntity = userAddressRepository.save(userAddressEntity);
         log.info("Address updated successfully for user {}", userEmail);
-        return SuccessResponseDto.of(map(updatedUserAddressEntity), "Address updated successfully.");
+        return SuccessResponse.of(map(updatedUserAddressEntity), "Address updated successfully.");
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<Void> remove(String userEmail, String addressId) {
+    public SuccessResponse<Void> remove(String userEmail, String addressId) {
         UserAddressEntity userAddressEntity = getAddressForUser(userEmail, addressId);
         boolean wasDefault = userAddressEntity.isDefault();
         UUID userId = userAddressEntity.getUser().getId();
@@ -90,12 +90,12 @@ public class UserAddressServiceImpl implements UserAddressService {
             userAddressRepository.save(first);
         }
 
-        return SuccessResponseDto.of(null, "Address removed successfully.");
+        return SuccessResponse.of(null, "Address removed successfully.");
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<Void> setDefault(String userEmail, String addressId) {
+    public SuccessResponse<Void> setDefault(String userEmail, String addressId) {
         UUID id = parse(addressId);
         UserEntity userEntity = getUserByEmail(userEmail);
 
@@ -111,16 +111,16 @@ public class UserAddressServiceImpl implements UserAddressService {
         newDefault.setDefault(true);
         userAddressRepository.saveAll(all);
 
-        return SuccessResponseDto.of(null, "Default address updated successfully.");
+        return SuccessResponse.of(null, "Default address updated successfully.");
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<List<AddressResponseDto>> getAll(String userEmail) {
+    public SuccessResponse<List<AddressResponseDto>> getAll(String userEmail) {
         UserEntity userEntity = getUserByEmail(userEmail);
         var list = userAddressRepository.findAllByUserId(userEntity.getId()).stream()
                 .map(this::map).toList();
-        return SuccessResponseDto.of(list, "Addresses retrieved successfully.");
+        return SuccessResponse.of(list, "Addresses retrieved successfully.");
     }
 
     private AddressResponseDto map(UserAddressEntity userAddressEntity) {

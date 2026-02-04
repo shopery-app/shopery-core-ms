@@ -4,7 +4,7 @@ import static az.shopery.utils.common.UuidUtils.parse;
 
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.model.dto.request.SupportTicketRequestDto;
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.dto.response.UserSupportTicketResponseDto;
 import az.shopery.model.entity.task.SupportTicketEntity;
 import az.shopery.model.entity.UserEntity;
@@ -32,7 +32,7 @@ public class SupportTicketServiceImpl implements SupportTicketService {
 
     @Override
     @Transactional
-    public SuccessResponseDto<Void> createMySupportTicket(SupportTicketRequestDto dto, String userEmail) {
+    public SuccessResponse<Void> createMySupportTicket(SupportTicketRequestDto dto, String userEmail) {
         UserEntity user = getUser(userEmail);
         UserEntity assignedAdmin = adminAssignmentHelper.assignRandomAdmin();
 
@@ -44,30 +44,30 @@ public class SupportTicketServiceImpl implements SupportTicketService {
                 .build();
 
         taskRepository.save(ticket);
-        return SuccessResponseDto.of("The support ticket created successfully!");
+        return SuccessResponse.of("The support ticket created successfully!");
     }
 
     @Override
-    public SuccessResponseDto<Page<UserSupportTicketResponseDto>> getMySupportTickets(String userEmail, Pageable pageable) {
+    public SuccessResponse<Page<UserSupportTicketResponseDto>> getMySupportTickets(String userEmail, Pageable pageable) {
         Page<SupportTicketEntity> tickets = taskRepository.getAllSupportTicketsByCreatedBy(getUser(userEmail), pageable);
-        return SuccessResponseDto.of(tickets.map(this::mapToDto), "Support tickets retrieved successfully!");
+        return SuccessResponse.of(tickets.map(this::mapToDto), "Support tickets retrieved successfully!");
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<Void> deleteMySupportTicket(String id, String userEmail) {
+    public SuccessResponse<Void> deleteMySupportTicket(String id, String userEmail) {
         SupportTicketEntity ticket = getSupportTicket(id, userEmail);
         taskRepository.delete(ticket);
-        return SuccessResponseDto.of("The support ticket deleted successfully!");
+        return SuccessResponse.of("The support ticket deleted successfully!");
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<UserSupportTicketResponseDto> updateMySupportTicket(SupportTicketRequestDto dto, String id, String userEmail) {
+    public SuccessResponse<UserSupportTicketResponseDto> updateMySupportTicket(SupportTicketRequestDto dto, String id, String userEmail) {
         SupportTicketEntity ticket = getSupportTicket(id, userEmail);
         ticket.setSubject(dto.getSubject());
         ticket.setDescription(dto.getDescription());
-        return SuccessResponseDto.of(mapToDto(ticket), "Support ticket updated successfully!");
+        return SuccessResponse.of(mapToDto(ticket), "Support ticket updated successfully!");
     }
 
     private UserEntity getUser(String email) {

@@ -15,7 +15,7 @@ import az.shopery.model.dto.request.UserEmailVerificationRequestDto;
 import az.shopery.model.dto.request.UserPasswordUpdateRequestDto;
 import az.shopery.model.dto.request.UserProfileUpdateRequestDto;
 import az.shopery.model.dto.response.BecomeMerchantResponseDto;
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.dto.response.UserEmailUpdateResponseDto;
 import az.shopery.model.dto.response.UserPasswordUpdateResponseDto;
 import az.shopery.model.dto.response.UserProfileResponseDto;
@@ -23,8 +23,6 @@ import az.shopery.model.entity.EmailUpdateTokenEntity;
 import az.shopery.model.entity.UserEntity;
 import az.shopery.model.entity.task.ShopCreationRequestEntity;
 import az.shopery.model.event.NotificationEvent;
-import az.shopery.model.event.PasswordChangedNotificationEvent;
-import az.shopery.model.event.VerificationCodeEvent;
 import az.shopery.repository.EmailUpdateTokenRepository;
 import az.shopery.repository.ShopRepository;
 import az.shopery.repository.TaskRepository;
@@ -37,6 +35,7 @@ import az.shopery.utils.enums.UserStatus;
 import az.shopery.utils.security.JwtService;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -60,14 +59,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public SuccessResponseDto<UserProfileResponseDto> getMyProfile(String userEmail) {
+    public SuccessResponse<UserProfileResponseDto> getMyProfile(String userEmail) {
         UserEntity userEntity = getUserByEmail(userEmail);
-        return SuccessResponseDto.of(mapToDto(userEntity), "User profile retrieved successfully.");
+        return SuccessResponse.of(mapToDto(userEntity), "User profile retrieved successfully.");
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<UserProfileResponseDto> updateMyProfile(String userEmail, UserProfileUpdateRequestDto userProfileUpdateRequestDto) {
+    public SuccessResponse<UserProfileResponseDto> updateMyProfile(String userEmail, UserProfileUpdateRequestDto userProfileUpdateRequestDto) {
         UserEntity userEntity = getUserByEmail(userEmail);
         userEntity.setName(userProfileUpdateRequestDto.getFirstName().trim() + " " + userProfileUpdateRequestDto.getLastName().trim());
         userEntity.setPhone(userProfileUpdateRequestDto.getPhone());
@@ -75,12 +74,12 @@ public class UserServiceImpl implements UserService {
 
         UserEntity updatedUserEntity = userRepository.save(userEntity);
         log.info("User profile updated successfully for user {}", userEmail);
-        return SuccessResponseDto.of(mapToDto(updatedUserEntity), "User profile updated successfully.");
+        return SuccessResponse.of(mapToDto(updatedUserEntity), "User profile updated successfully.");
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<BecomeMerchantResponseDto> becomeMerchant(String userEmail) {
+    public SuccessResponse<BecomeMerchantResponseDto> becomeMerchant(String userEmail) {
         UserEntity userEntity = getUserByEmail(userEmail);
 
         if (userEntity.getUserRole().equals(UserRole.MERCHANT)) {
@@ -104,12 +103,12 @@ public class UserServiceImpl implements UserService {
                 .userProfileResponseDto(mapToDto(userEntity))
                 .build();
         log.info("Become merchant successfully for user {}", userEmail);
-        return SuccessResponseDto.of(dto, "Become merchant successfully.");
+        return SuccessResponse.of(dto, "Become merchant successfully.");
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<Void> createMyShop(String userEmail, ShopCreateRequestDto shopCreateRequestDto) {
+    public SuccessResponse<Void> createMyShop(String userEmail, ShopCreateRequestDto shopCreateRequestDto) {
         UserEntity userEntity = getUserByEmail(userEmail);
         UserEntity assignedAdmin = adminAssignmentHelper.assignRandomAdmin();
 
@@ -128,11 +127,11 @@ public class UserServiceImpl implements UserService {
                 .build();
         taskRepository.save(shopCreationRequestEntity);
 
-        return SuccessResponseDto.of("Your request has been submitted and assigned to an admin for review.");
+        return SuccessResponse.of("Your request has been submitted and assigned to an admin for review.");
     }
 
     @Override
-    public SuccessResponseDto<UserPasswordUpdateResponseDto> updateMyPassword(String userEmail, UserPasswordUpdateRequestDto userPasswordUpdateRequestDto) {
+    public SuccessResponse<UserPasswordUpdateResponseDto> updateMyPassword(String userEmail, UserPasswordUpdateRequestDto userPasswordUpdateRequestDto) {
         UserEntity userEntity = getUserByEmail(userEmail);
         if (!passwordEncoder.matches(userPasswordUpdateRequestDto.getOldPassword(), userEntity.getPassword())) {
             throw new InvalidCredentialsException("Invalid credentials.");
@@ -157,18 +156,16 @@ public class UserServiceImpl implements UserService {
                 .userProfileResponseDto(mapToDto(userEntity))
                 .build();
 
-        applicationEventPublisher.publishEvent(new NotificationEvent<>(
+        applicationEventPublisher.publishEvent(new NotificationEvent(
+                userEmail,
                 NotificationType.PASSWORD_CHANGED,
-                new PasswordChangedNotificationEvent(
-                        userEntity.getEmail(),
-                        userEntity.getName()
-                )
+                Map.of()
         ));
-        return SuccessResponseDto.of(userPasswordUpdateResponseDto, "Password has been updated successfully.");
+        return SuccessResponse.of(userPasswordUpdateResponseDto, "Password has been updated successfully.");
     }
 
     @Override
-    public SuccessResponseDto<Void> changeMyEmail(String userEmail, UserEmailUpdateRequestDto userEmailUpdateRequestDto) {
+    public SuccessResponse<Void> changeMyEmail(String userEmail, UserEmailUpdateRequestDto userEmailUpdateRequestDto) {
         UserEntity userEntity = getUserByEmail(userEmail);
         if (userRepository.existsByEmail(userEmailUpdateRequestDto.getEmail())) {
             throw new EmailAlreadyExistsException("Email already exists");
@@ -182,20 +179,16 @@ public class UserServiceImpl implements UserService {
         emailUpdateTokenEntity.setExpiryDate(LocalDateTime.now().plusMinutes(5));
         emailUpdateTokenRepository.save(emailUpdateTokenEntity);
 
-        applicationEventPublisher.publishEvent(new NotificationEvent<>(
+        applicationEventPublisher.publishEvent(new NotificationEvent(
+                userEmail,
                 NotificationType.VERIFICATION_CODE,
-                new VerificationCodeEvent(
-                        userEmailUpdateRequestDto.getEmail(),
-                        userEntity.getName(),
-                        code,
-                        Boolean.FALSE
-                )
+                Map.of()
         ));
-        return SuccessResponseDto.of("Verification code has been sent to your email address");
+        return SuccessResponse.of("Verification code has been sent to your email address");
     }
 
     @Override
-    public SuccessResponseDto<UserEmailUpdateResponseDto> verifyMyEmail(String userEmail, UserEmailVerificationRequestDto userEmailVerificationRequestDto) {
+    public SuccessResponse<UserEmailUpdateResponseDto> verifyMyEmail(String userEmail, UserEmailVerificationRequestDto userEmailVerificationRequestDto) {
         UserEntity userEntity = getUserByEmail(userEmail);
         EmailUpdateTokenEntity emailUpdateTokenEntity = emailUpdateTokenRepository.findByEmail(userEmailVerificationRequestDto.getEmail())
                 .orElseThrow(() -> new ResourceNotFoundException("No pending verification found. It may have expired or been verified already"));
@@ -225,7 +218,7 @@ public class UserServiceImpl implements UserService {
                 .userProfileResponseDto(mapToDto(userEntity))
                 .build();
 
-        return SuccessResponseDto.of(userEmailUpdateResponseDto,"Email has been updated successfully");
+        return SuccessResponse.of(userEmailUpdateResponseDto,"Email has been updated successfully");
     }
 
     private UserEntity getUserByEmail(String userEmail) {

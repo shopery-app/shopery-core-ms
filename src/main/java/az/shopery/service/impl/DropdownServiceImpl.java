@@ -3,7 +3,7 @@ package az.shopery.service.impl;
 import static az.shopery.utils.common.CommonConstraints.DROPDOWN_MAP;
 
 import az.shopery.handler.exception.IllegalRequestException;
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.service.DropdownService;
 import java.util.Arrays;
 import java.util.List;
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 public class DropdownServiceImpl implements DropdownService {
 
     @Override
-    public SuccessResponseDto<List<String>> getDropdownOptions(String type) {
+    public SuccessResponse<List<String>> getDropdownOptions(String type) {
         Class<? extends Enum<?>> enumClass = DROPDOWN_MAP.get(type);
         if (Objects.isNull(enumClass)) {
             throw new IllegalRequestException("Unknown type!");
@@ -24,6 +24,6 @@ public class DropdownServiceImpl implements DropdownService {
                 .map(Enum::name)
                 .toList();
 
-        return SuccessResponseDto.of(result, "Dropdown options retrieved successfully!");
+        return SuccessResponse.of(result, "Dropdown options retrieved successfully!");
     }
 }

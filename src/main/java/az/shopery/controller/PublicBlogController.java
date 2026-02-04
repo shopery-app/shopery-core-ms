@@ -1,7 +1,7 @@
 package az.shopery.controller;
 
 import az.shopery.model.dto.response.BlogResponseDto;
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.service.BlogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -19,7 +19,7 @@ public class PublicBlogController {
     private final BlogService blogService;
 
     @GetMapping
-    public ResponseEntity<SuccessResponseDto<Page<BlogResponseDto>>> getAllBlogs(Pageable pageable) {
+    public ResponseEntity<SuccessResponse<Page<BlogResponseDto>>> getAllBlogs(Pageable pageable) {
         return ResponseEntity.ok(blogService.getAllBlogs(pageable));
     }
 }

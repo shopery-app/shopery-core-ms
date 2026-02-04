@@ -11,6 +11,7 @@ import az.shopery.handler.exception.InvalidUuidFormatException;
 import az.shopery.handler.exception.JwtAuthenticationException;
 import az.shopery.handler.exception.OwnProductInteractionException;
 import az.shopery.handler.exception.ResourceNotFoundException;
+import az.shopery.model.dto.shared.ErrorResponse;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import jakarta.servlet.http.HttpServletRequest;

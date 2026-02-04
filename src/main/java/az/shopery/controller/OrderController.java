@@ -1,7 +1,7 @@
 package az.shopery.controller;
 
 import az.shopery.model.dto.response.OrderResponseDto;
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.service.OrderService;
 import java.security.Principal;
 import java.util.List;
@@ -24,12 +24,12 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping("/checkout")
-    public ResponseEntity<SuccessResponseDto<List<OrderResponseDto>>> checkout(Principal principal) {
+    public ResponseEntity<SuccessResponse<List<OrderResponseDto>>> checkout(Principal principal) {
         return ResponseEntity.ok(orderService.checkoutFromCart(principal.getName()));
     }
 
     @GetMapping("/me")
-    public ResponseEntity<SuccessResponseDto<List<OrderResponseDto>>> getMyOrders(Principal principal) {
+    public ResponseEntity<SuccessResponse<List<OrderResponseDto>>> getMyOrders(Principal principal) {
         return ResponseEntity.ok(orderService.getMyOrders(principal.getName()));
     }
 }

@@ -1,6 +1,6 @@
 package az.shopery.controller;
 
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.dto.response.WishlistResponseDto;
 import az.shopery.service.WishlistService;
 import java.security.Principal;
@@ -23,22 +23,22 @@ public class WishlistController {
     private final WishlistService wishlistService;
 
     @GetMapping
-    public ResponseEntity<SuccessResponseDto<WishlistResponseDto>> getMyWishlist(Principal principal) {
+    public ResponseEntity<SuccessResponse<WishlistResponseDto>> getMyWishlist(Principal principal) {
         return ResponseEntity.ok(wishlistService.getMyWishlist(principal.getName()));
     }
 
     @PostMapping("/{productId}")
-    public ResponseEntity<SuccessResponseDto<WishlistResponseDto>> addProductToWishlist(Principal principal, @PathVariable String productId) {
+    public ResponseEntity<SuccessResponse<WishlistResponseDto>> addProductToWishlist(Principal principal, @PathVariable String productId) {
         return ResponseEntity.ok(wishlistService.addProductToWishlist(principal.getName(), productId));
     }
 
     @DeleteMapping("/{productId}")
-    public ResponseEntity<SuccessResponseDto<WishlistResponseDto>> removeProductFromWishlist(Principal principal, @PathVariable String productId) {
+    public ResponseEntity<SuccessResponse<WishlistResponseDto>> removeProductFromWishlist(Principal principal, @PathVariable String productId) {
         return ResponseEntity.ok(wishlistService.removeProductFromWishlist(principal.getName(), productId));
     }
 
     @DeleteMapping
-    public ResponseEntity<SuccessResponseDto<WishlistResponseDto>> removeAllProductsFromWishlist(Principal principal) {
+    public ResponseEntity<SuccessResponse<WishlistResponseDto>> removeAllProductsFromWishlist(Principal principal) {
         return ResponseEntity.ok(wishlistService.removeAllProductsFromWishlist(principal.getName()));
     }
 }

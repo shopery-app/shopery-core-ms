@@ -2,7 +2,7 @@ package az.shopery.controller;
 
 import az.shopery.model.dto.response.ProductDetailResponseDto;
 import az.shopery.model.dto.response.ProductResponseDto;
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.service.ProductService;
 import az.shopery.utils.enums.ProductCategory;
 import az.shopery.utils.enums.ProductCondition;
@@ -24,17 +24,17 @@ public class PublicProductController {
     private final ProductService productService;
 
     @GetMapping
-    public ResponseEntity<SuccessResponseDto<Page<ProductResponseDto>>> searchProducts(@RequestParam(required = false) ProductCategory category, @RequestParam(required = false) ProductCondition condition, Pageable pageable) {
+    public ResponseEntity<SuccessResponse<Page<ProductResponseDto>>> searchProducts(@RequestParam(required = false) ProductCategory category, @RequestParam(required = false) ProductCondition condition, Pageable pageable) {
         return ResponseEntity.ok(productService.searchPublicProducts(category, condition, pageable));
     }
 
     @GetMapping("/{productId}")
-    public ResponseEntity<SuccessResponseDto<ProductDetailResponseDto>> getProductById(@PathVariable String productId) {
+    public ResponseEntity<SuccessResponse<ProductDetailResponseDto>> getProductById(@PathVariable String productId) {
         return ResponseEntity.ok(productService.getPublicProductById(productId));
     }
 
     @GetMapping("/top-discounts")
-    public ResponseEntity<SuccessResponseDto<Page<ProductResponseDto>>> getTopDiscountedProducts(Pageable pageable) {
+    public ResponseEntity<SuccessResponse<Page<ProductResponseDto>>> getTopDiscountedProducts(Pageable pageable) {
         return ResponseEntity.ok(productService.getTopDiscountedProducts(pageable));
     }
 }

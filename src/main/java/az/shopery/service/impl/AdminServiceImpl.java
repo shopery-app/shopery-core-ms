@@ -9,7 +9,7 @@ import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.mapper.TaskMapper;
 import az.shopery.model.dto.request.CloseMerchantRequestDto;
 import az.shopery.model.dto.request.ShopCreationRequestRejectDto;
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.dto.response.UserProfileResponseDto;
 import az.shopery.model.dto.response.task.TaskResponseDto;
 import az.shopery.model.entity.OrderEntity;
@@ -19,8 +19,6 @@ import az.shopery.model.entity.task.ShopCreationRequestEntity;
 import az.shopery.model.entity.task.SupportTicketEntity;
 import az.shopery.model.entity.task.TaskEntity;
 import az.shopery.model.event.NotificationEvent;
-import az.shopery.model.event.ShopCreationRequestApprovedEvent;
-import az.shopery.model.event.ShopCreationRequestRejectedEvent;
 import az.shopery.repository.OrderRepository;
 import az.shopery.repository.ShopRepository;
 import az.shopery.repository.TaskRepository;
@@ -41,6 +39,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @Service
@@ -55,20 +54,20 @@ public class AdminServiceImpl implements AdminService {
     private final TaskMapper taskMapper;
 
     @Override
-    public SuccessResponseDto<Page<UserProfileResponseDto>> getCustomers(Pageable pageable) {
+    public SuccessResponse<Page<UserProfileResponseDto>> getCustomers(Pageable pageable) {
         Page<UserEntity> customers = userRepository.findAllByUserRoleAndStatus(UserRole.CUSTOMER, UserStatus.ACTIVE, pageable);
-        return SuccessResponseDto.of(customers.map(this::mapToDto), "Customers are retrieved successfully!");
+        return SuccessResponse.of(customers.map(this::mapToDto), "Customers are retrieved successfully!");
     }
 
     @Override
-    public SuccessResponseDto<Page<UserProfileResponseDto>> getMerchants(Pageable pageable) {
+    public SuccessResponse<Page<UserProfileResponseDto>> getMerchants(Pageable pageable) {
         Page<UserEntity> customers = userRepository.findAllByUserRoleAndStatus(UserRole.MERCHANT, UserStatus.ACTIVE, pageable);
-        return SuccessResponseDto.of(customers.map(this::mapToDto), "Merchants are retrieved successfully!");
+        return SuccessResponse.of(customers.map(this::mapToDto), "Merchants are retrieved successfully!");
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<Void> closeMerchant(CloseMerchantRequestDto closeMerchantRequestDto) {
+    public SuccessResponse<Void> closeMerchant(CloseMerchantRequestDto closeMerchantRequestDto) {
         String email = closeMerchantRequestDto.getEmail();
         UserEntity user = userRepository.findByEmailAndUserRoleAndStatus(email, UserRole.MERCHANT, UserStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("Merchant not found!"));
@@ -80,23 +79,23 @@ public class AdminServiceImpl implements AdminService {
             order.setStatus(OrderStatus.CANCELLED);
         }
 
-        return SuccessResponseDto.of("User deleted successfully!");
+        return SuccessResponse.of("User deleted successfully!");
     }
 
     @Override
     @Transactional(readOnly = true)
-    public SuccessResponseDto<Page<TaskResponseDto>> getTasks(TaskCategory taskCategory, Pageable pageable, String userEmail) {
+    public SuccessResponse<Page<TaskResponseDto>> getTasks(TaskCategory taskCategory, Pageable pageable, String userEmail) {
         UserEntity assignedAdmin = getAdmin(userEmail);
         Page<TaskEntity> tasks = (Objects.isNull(taskCategory))
                 ? taskRepository.findAllByAssignedAdmin(assignedAdmin, pageable)
                 : taskRepository.findAllByAssignedAdminAndTaskCategory(assignedAdmin, taskCategory, pageable);
 
-        return SuccessResponseDto.of(tasks.map(taskMapper::toDto), "Tasks are retrieved successfully!");
+        return SuccessResponse.of(tasks.map(taskMapper::toDto), "Tasks are retrieved successfully!");
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<Void> closeSupportTicket(String id, String userEmail) {
+    public SuccessResponse<Void> closeSupportTicket(String id, String userEmail) {
         TaskEntity taskEntity = taskRepository.findByIdAndAssignedAdmin(parse(id), getAdmin(userEmail))
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found!"));
 
@@ -105,12 +104,12 @@ public class AdminServiceImpl implements AdminService {
         }
         supportTicketEntity.setTicketStatus(TicketStatus.CLOSED);
 
-        return SuccessResponseDto.of("Support ticket has been closed successfully!");
+        return SuccessResponse.of("Support ticket has been closed successfully!");
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<Void> approve(String id, String userEmail) {
+    public SuccessResponse<Void> approve(String id, String userEmail) {
         ShopCreationRequestEntity shopCreationRequestEntity = getShopCreationRequestEntity(id, userEmail);
 
         ShopEntity shop = ShopEntity.builder()
@@ -123,35 +122,28 @@ public class AdminServiceImpl implements AdminService {
         shopRepository.save(shop);
         shopCreationRequestEntity.setRequestStatus(RequestStatus.APPROVED);
 
-        applicationEventPublisher.publishEvent(new NotificationEvent<>(
+        applicationEventPublisher.publishEvent(new NotificationEvent(
+                userEmail,
                 NotificationType.SHOP_APPROVED,
-                new ShopCreationRequestApprovedEvent(
-                      shopCreationRequestEntity.getCreatedBy().getEmail(),
-                      shopCreationRequestEntity.getCreatedBy().getName(),
-                      shopCreationRequestEntity.getShopName()
-                )
+                Map.of()
         ));
-        return SuccessResponseDto.of("Shop creation request has been approved successfully!");
+        return SuccessResponse.of("Shop creation request has been approved successfully!");
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<Void> reject(String id, String userEmail, ShopCreationRequestRejectDto shopCreationRequestRejectDto) {
+    public SuccessResponse<Void> reject(String id, String userEmail, ShopCreationRequestRejectDto shopCreationRequestRejectDto) {
         ShopCreationRequestEntity shopCreationRequestEntity = getShopCreationRequestEntity(id, userEmail);
 
         shopCreationRequestEntity.setRequestStatus(RequestStatus.REJECTED);
         shopCreationRequestEntity.setRejectionReason(shopCreationRequestRejectDto.getReason());
 
-        applicationEventPublisher.publishEvent(new NotificationEvent<>(
+        applicationEventPublisher.publishEvent(new NotificationEvent(
+                userEmail,
                 NotificationType.SHOP_REJECTED,
-                new ShopCreationRequestRejectedEvent(
-                    shopCreationRequestEntity.getCreatedBy().getEmail(),
-                    shopCreationRequestEntity.getCreatedBy().getName(),
-                    shopCreationRequestEntity.getShopName(),
-                    shopCreationRequestRejectDto.getReason()
-                )
+                Map.of()
         ));
-        return SuccessResponseDto.of("Shop creation request has been rejected successfully!");
+        return SuccessResponse.of("Shop creation request has been rejected successfully!");
     }
 
     private UserEntity getAdmin(String userEmail) {

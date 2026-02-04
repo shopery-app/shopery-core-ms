@@ -2,7 +2,7 @@ package az.shopery.controller;
 
 import az.shopery.model.dto.request.AddressRequestDto;
 import az.shopery.model.dto.response.AddressResponseDto;
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.service.UserAddressService;
 import jakarta.validation.Valid;
 import java.security.Principal;
@@ -28,27 +28,27 @@ public class UserAddressController {
     private final UserAddressService userAddressService;
 
     @GetMapping
-    public ResponseEntity<SuccessResponseDto<List<AddressResponseDto>>> getMyAddresses(Principal principal) {
+    public ResponseEntity<SuccessResponse<List<AddressResponseDto>>> getMyAddresses(Principal principal) {
         return ResponseEntity.ok(userAddressService.getAll(principal.getName()));
     }
 
     @PostMapping
-    public ResponseEntity<SuccessResponseDto<AddressResponseDto>> addMyAddress(Principal principal, @Valid @RequestBody AddressRequestDto addressRequestDto) {
+    public ResponseEntity<SuccessResponse<AddressResponseDto>> addMyAddress(Principal principal, @Valid @RequestBody AddressRequestDto addressRequestDto) {
         return ResponseEntity.ok(userAddressService.add(principal.getName(), addressRequestDto));
     }
 
     @PutMapping("/{addressId}")
-    public ResponseEntity<SuccessResponseDto<AddressResponseDto>> updateMyAddress(Principal principal, @PathVariable String addressId, @Valid @RequestBody AddressRequestDto addressRequestDto) {
+    public ResponseEntity<SuccessResponse<AddressResponseDto>> updateMyAddress(Principal principal, @PathVariable String addressId, @Valid @RequestBody AddressRequestDto addressRequestDto) {
         return ResponseEntity.ok(userAddressService.update(principal.getName(), addressId, addressRequestDto));
     }
 
     @DeleteMapping("/{addressId}")
-    public ResponseEntity<SuccessResponseDto<Void>> removeMyAddress(Principal principal, @PathVariable String addressId) {
+    public ResponseEntity<SuccessResponse<Void>> removeMyAddress(Principal principal, @PathVariable String addressId) {
         return ResponseEntity.ok(userAddressService.remove(principal.getName(), addressId));
     }
 
     @PutMapping("/{addressId}/default")
-    public ResponseEntity<SuccessResponseDto<Void>> setMyDefaultAddress(Principal principal, @PathVariable String addressId) {
+    public ResponseEntity<SuccessResponse<Void>> setMyDefaultAddress(Principal principal, @PathVariable String addressId) {
         return ResponseEntity.ok(userAddressService.setDefault(principal.getName(), addressId));
     }
 }

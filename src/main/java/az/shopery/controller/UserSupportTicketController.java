@@ -1,7 +1,7 @@
 package az.shopery.controller;
 
 import az.shopery.model.dto.request.SupportTicketRequestDto;
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.dto.response.UserSupportTicketResponseDto;
 import az.shopery.service.SupportTicketService;
 import jakarta.validation.Valid;
@@ -22,22 +22,22 @@ public class UserSupportTicketController {
     private final SupportTicketService supportTicketService;
 
     @PostMapping
-    public ResponseEntity<SuccessResponseDto<Void>> createMySupportTicket(@Valid @RequestBody SupportTicketRequestDto supportTicketRequestDto, Principal principal) {
+    public ResponseEntity<SuccessResponse<Void>> createMySupportTicket(@Valid @RequestBody SupportTicketRequestDto supportTicketRequestDto, Principal principal) {
         return ResponseEntity.ok(supportTicketService.createMySupportTicket(supportTicketRequestDto, principal.getName()));
     }
 
     @GetMapping
-    public ResponseEntity<SuccessResponseDto<Page<UserSupportTicketResponseDto>>> getMySupportTicket(Principal principal, Pageable pageable) {
+    public ResponseEntity<SuccessResponse<Page<UserSupportTicketResponseDto>>> getMySupportTicket(Principal principal, Pageable pageable) {
         return ResponseEntity.ok(supportTicketService.getMySupportTickets(principal.getName(), pageable));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<SuccessResponseDto<Void>> deleteMySupportTicket(@PathVariable String id, Principal principal) {
+    public ResponseEntity<SuccessResponse<Void>> deleteMySupportTicket(@PathVariable String id, Principal principal) {
         return ResponseEntity.ok(supportTicketService.deleteMySupportTicket(id, principal.getName()));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<SuccessResponseDto<UserSupportTicketResponseDto>> updateMySupportTicket(@Valid @RequestBody SupportTicketRequestDto supportTicketRequestDto, @PathVariable String id, Principal principal) {
+    public ResponseEntity<SuccessResponse<UserSupportTicketResponseDto>> updateMySupportTicket(@Valid @RequestBody SupportTicketRequestDto supportTicketRequestDto, @PathVariable String id, Principal principal) {
         return ResponseEntity.ok(supportTicketService.updateMySupportTicket(supportTicketRequestDto, id, principal.getName()));
     }
 }

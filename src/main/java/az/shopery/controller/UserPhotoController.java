@@ -1,6 +1,6 @@
 package az.shopery.controller;
 
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.service.UserPhotoService;
 import java.security.Principal;
 import lombok.RequiredArgsConstructor;
@@ -23,17 +23,17 @@ public class UserPhotoController {
     private final UserPhotoService userPhotoService;
 
     @PostMapping(consumes = {"multipart/form-data"})
-    public ResponseEntity<SuccessResponseDto<String>> uploadMyProfilePhoto(Principal principal, @RequestParam("file") MultipartFile multipartFile) {
+    public ResponseEntity<SuccessResponse<String>> uploadMyProfilePhoto(Principal principal, @RequestParam("file") MultipartFile multipartFile) {
         return ResponseEntity.ok(userPhotoService.uploadProfilePhoto(principal.getName(), multipartFile));
     }
 
     @GetMapping("/url")
-    public ResponseEntity<SuccessResponseDto<String>> getMyProfilePhotoUrl(Principal principal) {
+    public ResponseEntity<SuccessResponse<String>> getMyProfilePhotoUrl(Principal principal) {
         return ResponseEntity.ok(userPhotoService.generatePresignedUrlForPhoto(principal.getName()));
     }
 
     @DeleteMapping
-    public ResponseEntity<SuccessResponseDto<Void>> deleteMyProfilePhoto(Principal principal) {
+    public ResponseEntity<SuccessResponse<Void>> deleteMyProfilePhoto(Principal principal) {
         return ResponseEntity.ok(userPhotoService.deleteProfilePhoto(principal.getName()));
     }
 }

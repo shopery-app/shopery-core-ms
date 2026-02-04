@@ -1,6 +1,6 @@
 package az.shopery.controller;
 
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.dto.response.UserShopResponseDto;
 import az.shopery.service.ShopService;
 import java.security.Principal;
@@ -20,7 +20,7 @@ public class MerchantShopController {
     private final ShopService shopService;
 
     @GetMapping("/dashboard")
-    public ResponseEntity<SuccessResponseDto<UserShopResponseDto>> getMyShop(Principal principal) {
+    public ResponseEntity<SuccessResponse<UserShopResponseDto>> getMyShop(Principal principal) {
         return ResponseEntity.ok(shopService.getMyShop(principal.getName()));
     }
 }
