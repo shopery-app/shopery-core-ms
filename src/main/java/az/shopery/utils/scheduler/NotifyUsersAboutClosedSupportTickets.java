@@ -1,7 +1,5 @@
 package az.shopery.utils.scheduler;
 
-import static az.shopery.utils.common.NameMapperHelper.first;
-
 import az.shopery.model.entity.task.SupportTicketEntity;
 import az.shopery.model.event.NotificationEvent;
 import az.shopery.repository.TaskRepository;
@@ -34,10 +32,11 @@ public class NotifyUsersAboutClosedSupportTickets {
             applicationEventPublisher.publishEvent(new NotificationEvent(
                     ticket.getCreatedBy().getEmail(),
                     NotificationType.SUPPORT_TICKET_CLOSED,
-                    Map.of()
-//                    first(ticket.getCreatedBy().getName()),
-//                    ticket.getSubject(),
-//                    ticket.getId().toString()
+                    Map.of(
+                            "userName", ticket.getCreatedBy().getName(),
+                            "ticketId", ticket.getId(),
+                            "ticketSubject", ticket.getSubject()
+                    )
             ));
         }
         log.info("Marked {} support tickets as notified", tickets.size());

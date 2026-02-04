@@ -125,7 +125,10 @@ public class AdminServiceImpl implements AdminService {
         applicationEventPublisher.publishEvent(new NotificationEvent(
                 userEmail,
                 NotificationType.SHOP_APPROVED,
-                Map.of()
+                Map.of(
+                        "userName",shopCreationRequestEntity.getCreatedBy().getName(),
+                        "shopName",shopCreationRequestEntity.getShopName()
+                )
         ));
         return SuccessResponse.of("Shop creation request has been approved successfully!");
     }
@@ -141,7 +144,10 @@ public class AdminServiceImpl implements AdminService {
         applicationEventPublisher.publishEvent(new NotificationEvent(
                 userEmail,
                 NotificationType.SHOP_REJECTED,
-                Map.of()
+                Map.of(
+                        "userName",shopCreationRequestEntity.getCreatedBy().getName(),
+                        "shopName",shopCreationRequestEntity.getShopName()
+                )
         ));
         return SuccessResponse.of("Shop creation request has been rejected successfully!");
     }
