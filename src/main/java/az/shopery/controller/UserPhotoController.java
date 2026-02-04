@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -25,11 +24,6 @@ public class UserPhotoController {
     @PostMapping(consumes = {"multipart/form-data"})
     public ResponseEntity<SuccessResponse<String>> uploadMyProfilePhoto(Principal principal, @RequestParam("file") MultipartFile multipartFile) {
         return ResponseEntity.ok(userPhotoService.uploadProfilePhoto(principal.getName(), multipartFile));
-    }
-
-    @GetMapping("/url")
-    public ResponseEntity<SuccessResponse<String>> getMyProfilePhotoUrl(Principal principal) {
-        return ResponseEntity.ok(userPhotoService.generatePresignedUrlForPhoto(principal.getName()));
     }
 
     @DeleteMapping
