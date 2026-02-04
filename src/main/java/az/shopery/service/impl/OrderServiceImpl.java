@@ -160,7 +160,7 @@ public class OrderServiceImpl implements OrderService {
                 NotificationType.ORDER_CONFIRMED,
                 Map.of(
                         "userName", user.getName(),
-                        "orders", createdOrders
+                        "orders", orderIds
                 )
         ));
 
