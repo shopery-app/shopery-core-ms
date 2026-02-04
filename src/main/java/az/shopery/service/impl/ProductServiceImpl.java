@@ -7,7 +7,7 @@ import az.shopery.mapper.ProductMapper;
 import az.shopery.model.dto.request.ProductCreateRequestDto;
 import az.shopery.model.dto.response.ProductDetailResponseDto;
 import az.shopery.model.dto.response.ProductResponseDto;
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.entity.PriceHistoryEntity;
 import az.shopery.model.entity.ProductEntity;
 import az.shopery.model.entity.ShopEntity;
@@ -45,7 +45,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
-    public SuccessResponseDto<ProductDetailResponseDto> addProduct(String userEmail, ProductCreateRequestDto productCreateRequestDto) {
+    public SuccessResponse<ProductDetailResponseDto> addProduct(String userEmail, ProductCreateRequestDto productCreateRequestDto) {
         ShopEntity shopEntity = getShopForMerchant(userEmail);
 
         ProductEntity productEntity = ProductEntity.builder()
@@ -67,12 +67,12 @@ public class ProductServiceImpl implements ProductService {
 
         ProductEntity savedProductEntity = productRepository.save(productEntity);
         log.info("Product '{}' created for shop {}", savedProductEntity.getProductName(), shopEntity.getShopName());
-        return SuccessResponseDto.of(productMapper.toDetailDto(savedProductEntity), "Product created successfully.");
+        return SuccessResponse.of(productMapper.toDetailDto(savedProductEntity), "Product created successfully.");
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<ProductDetailResponseDto> updateProduct(String userEmail, String productId, ProductCreateRequestDto productCreateRequestDto) {
+    public SuccessResponse<ProductDetailResponseDto> updateProduct(String userEmail, String productId, ProductCreateRequestDto productCreateRequestDto) {
         ProductEntity productEntity = getProductForMerchant(userEmail, productId);
 
         if (productEntity.getCurrentPrice().compareTo(productCreateRequestDto.getPrice()) != 0) {
@@ -91,24 +91,24 @@ public class ProductServiceImpl implements ProductService {
         productEntity.setCondition(productCreateRequestDto.getCondition());
 
         ProductEntity updatedProductEntity = productRepository.save(productEntity);
-        return SuccessResponseDto.of(productMapper.toDetailDto(updatedProductEntity), "Product updated successfully.");
+        return SuccessResponse.of(productMapper.toDetailDto(updatedProductEntity), "Product updated successfully.");
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<String> updateProductImage(String userEmail, String productId, MultipartFile imageFile) {
+    public SuccessResponse<String> updateProductImage(String userEmail, String productId, MultipartFile imageFile) {
         ProductEntity productEntity = getProductForMerchant(userEmail, productId);
 
         String newImageUrlKey = s3FileUtil.uploadNewFile(productEntity.getImageUrl(), imageFile);
         productEntity.setImageUrl(newImageUrlKey);
         productRepository.save(productEntity);
 
-        return SuccessResponseDto.of(generateImageUrl(newImageUrlKey), "Product image updated successfully.");
+        return SuccessResponse.of(generateImageUrl(newImageUrlKey), "Product image updated successfully.");
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<Void> deleteProductImage(String userEmail, String productId) {
+    public SuccessResponse<Void> deleteProductImage(String userEmail, String productId) {
         ProductEntity productEntity = getProductForMerchant(userEmail, productId);
 
         String imageKey = productEntity.getImageUrl();
@@ -120,49 +120,49 @@ public class ProductServiceImpl implements ProductService {
         productEntity.setImageUrl(null);
         productRepository.save(productEntity);
 
-        return SuccessResponseDto.of("Product image deleted successfully.");
+        return SuccessResponse.of("Product image deleted successfully.");
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<Void> deleteProduct(String userEmail, String productId) {
+    public SuccessResponse<Void> deleteProduct(String userEmail, String productId) {
         ProductEntity productEntity = getProductForMerchant(userEmail, productId);
 
         String imageKey = productEntity.getImageUrl();
         productRepository.delete(productEntity);
         s3FileUtil.deleteFileIfExists(imageKey);
 
-        return SuccessResponseDto.of("Product deleted successfully.");
+        return SuccessResponse.of("Product deleted successfully.");
     }
 
     @Override
     @Transactional(readOnly = true)
-    public SuccessResponseDto<Page<ProductResponseDto>> getMyProducts(String userEmail, Pageable pageable) {
+    public SuccessResponse<Page<ProductResponseDto>> getMyProducts(String userEmail, Pageable pageable) {
         ShopEntity shopEntity = getShopForMerchant(userEmail);
         Page<ProductEntity> productEntityPage = productRepository.findByShopId(shopEntity.getId(), pageable);
-        return SuccessResponseDto.of(productEntityPage.map(productMapper::toBriefDto), "Your products retrieved successfully.");
+        return SuccessResponse.of(productEntityPage.map(productMapper::toBriefDto), "Your products retrieved successfully.");
     }
 
     @Override
     @Transactional(readOnly = true)
-    public SuccessResponseDto<Page<ProductResponseDto>> searchPublicProducts(ProductCategory category, ProductCondition condition, Pageable pageable) {
+    public SuccessResponse<Page<ProductResponseDto>> searchPublicProducts(ProductCategory category, ProductCondition condition, Pageable pageable) {
         Page<ProductEntity> products = productRepository.searchPublicProducts(category, condition, pageable);
-        return SuccessResponseDto.of(products.map(productMapper::toBriefDto), "Products retrieved successfully.");
+        return SuccessResponse.of(products.map(productMapper::toBriefDto), "Products retrieved successfully.");
     }
 
     @Override
     @Transactional(readOnly = true)
-    public SuccessResponseDto<ProductDetailResponseDto> getPublicProductById(String productId) {
+    public SuccessResponse<ProductDetailResponseDto> getPublicProductById(String productId) {
         ProductEntity productEntity = productRepository.findByIdWithPriceHistory(parse(productId))
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
-        return SuccessResponseDto.of(productMapper.toDetailDto(productEntity), "Product retrieved successfully.");
+        return SuccessResponse.of(productMapper.toDetailDto(productEntity), "Product retrieved successfully.");
     }
 
     @Override
     @Transactional(readOnly = true)
-    public SuccessResponseDto<Page<ProductResponseDto>> getTopDiscountedProducts(Pageable pageable) {
+    public SuccessResponse<Page<ProductResponseDto>> getTopDiscountedProducts(Pageable pageable) {
         Page<ProductEntity> productEntityPage = productRepository.findTopDiscountedProducts(pageable);
-        return SuccessResponseDto.of(productEntityPage.map(productMapper::toBriefDto), "Top discounted products retrieved successfully.");
+        return SuccessResponse.of(productEntityPage.map(productMapper::toBriefDto), "Top discounted products retrieved successfully.");
     }
 
     private ShopEntity getShopForMerchant(String userEmail) {

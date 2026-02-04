@@ -8,7 +8,7 @@ import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.mapper.ProductMapper;
 import az.shopery.model.dto.response.CartItemResponseDto;
 import az.shopery.model.dto.response.CartResponseDto;
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.entity.CartEntity;
 import az.shopery.model.entity.CartItemEntity;
 import az.shopery.model.entity.ProductEntity;
@@ -47,7 +47,7 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional(readOnly = true)
-    public SuccessResponseDto<CartResponseDto> getMyCart(String userEmail) {
+    public SuccessResponse<CartResponseDto> getMyCart(String userEmail) {
         UserEntity userEntity = findUser(userEmail);
 
         Optional<CartEntity> cartOpt = cartRepository.findByUserWithItems(userEntity);
@@ -56,15 +56,15 @@ public class CartServiceImpl implements CartService {
                     .items(Collections.emptyList())
                     .totalPrice(BigDecimal.ZERO)
                     .build();
-            return SuccessResponseDto.of(emptyCart, "Cart is empty.");
+            return SuccessResponse.of(emptyCart, "Cart is empty.");
         }
 
-        return SuccessResponseDto.of(mapToDto(cartOpt.get()), "Cart retrieved successfully.");
+        return SuccessResponse.of(mapToDto(cartOpt.get()), "Cart retrieved successfully.");
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<CartResponseDto> addProductToCart(String userEmail, String productId, int quantity) {
+    public SuccessResponse<CartResponseDto> addProductToCart(String userEmail, String productId, int quantity) {
         if (quantity <= 0) {
             throw new IllegalRequestException("Quantity must be greater than zero.");
         }
@@ -101,12 +101,12 @@ public class CartServiceImpl implements CartService {
         }
 
         CartEntity savedCart = cartRepository.save(cartEntity);
-        return SuccessResponseDto.of(mapToDto(savedCart), "Product added to cart successfully.");
+        return SuccessResponse.of(mapToDto(savedCart), "Product added to cart successfully.");
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<CartResponseDto> updateProductQuantity(String userEmail, String productId, int quantity) {
+    public SuccessResponse<CartResponseDto> updateProductQuantity(String userEmail, String productId, int quantity) {
         UserEntity userEntity = findUser(userEmail);
         CartEntity cartEntity = findOrCreateCart(userEntity);
 
@@ -127,12 +127,12 @@ public class CartServiceImpl implements CartService {
         itemToUpdate.setQuantity(quantity);
         CartEntity savedCart = cartRepository.save(cartEntity);
         log.info("Product '{}' quantity updated in cart for user {}", itemToUpdate.getProduct().getProductName(), userEmail);
-        return SuccessResponseDto.of(mapToDto(savedCart), "Product quantity updated successfully.");
+        return SuccessResponse.of(mapToDto(savedCart), "Product quantity updated successfully.");
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<CartResponseDto> removeProductFromCart(String userEmail, String productId) {
+    public SuccessResponse<CartResponseDto> removeProductFromCart(String userEmail, String productId) {
         UserEntity userEntity = findUser(userEmail);
         CartEntity cartEntity = findOrCreateCart(userEntity);
 
@@ -143,12 +143,12 @@ public class CartServiceImpl implements CartService {
 
         CartEntity savedCart = cartRepository.save(cartEntity);
         log.info("Product '{}' removed from cart for user {}", productId, userEmail);
-        return SuccessResponseDto.of(mapToDto(savedCart), "Product removed from cart successfully.");
+        return SuccessResponse.of(mapToDto(savedCart), "Product removed from cart successfully.");
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<CartResponseDto> removeAllProductsFromCart(String userEmail) {
+    public SuccessResponse<CartResponseDto> removeAllProductsFromCart(String userEmail) {
         UserEntity userEntity = findUser(userEmail);
         CartEntity cartEntity = findOrCreateCart(userEntity);
 
@@ -156,12 +156,12 @@ public class CartServiceImpl implements CartService {
 
         CartEntity savedCart = cartRepository.save(cartEntity);
         log.info("All products removed from cart for user {}", userEmail);
-        return SuccessResponseDto.of(mapToDto(savedCart), "All products removed from cart successfully.");
+        return SuccessResponse.of(mapToDto(savedCart), "All products removed from cart successfully.");
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<CartResponseDto> moveProductFromWishlistToCart(String userEmail, String productId) {
+    public SuccessResponse<CartResponseDto> moveProductFromWishlistToCart(String userEmail, String productId) {
         UserEntity userEntity = findUser(userEmail);
         ProductEntity productEntity = findProduct(parse(productId));
 
@@ -176,7 +176,7 @@ public class CartServiceImpl implements CartService {
         return addProductToCartInternal(userEntity, productEntity);
     }
 
-    private SuccessResponseDto<CartResponseDto> addProductToCartInternal(UserEntity userEntity, ProductEntity productEntity) {
+    private SuccessResponse<CartResponseDto> addProductToCartInternal(UserEntity userEntity, ProductEntity productEntity) {
         CartEntity cartEntity =  findOrCreateCart(userEntity);
         Optional<CartItemEntity> existingItemOpt = cartEntity.getItems().stream()
                 .filter(item -> item.getProduct().getId().equals(productEntity.getId()))
@@ -195,7 +195,7 @@ public class CartServiceImpl implements CartService {
 
         CartEntity savedCart = cartRepository.save(cartEntity);
         log.info("Product '{}' moved from wishlist to cart for user {}", productEntity.getProductName(), userEntity.getEmail());
-        return SuccessResponseDto.of(mapToDto(savedCart), "Product moved from cart successfully.");
+        return SuccessResponse.of(mapToDto(savedCart), "Product moved from cart successfully.");
     }
 
     private UserEntity findUser(String userEmail) {

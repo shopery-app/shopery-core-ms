@@ -5,7 +5,7 @@ import static az.shopery.utils.common.UuidUtils.parse;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.mapper.BlogMapper;
 import az.shopery.model.dto.response.BlogResponseDto;
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.entity.BlogEntity;
 import az.shopery.model.entity.BlogLikeEntity;
 import az.shopery.model.entity.UserEntity;
@@ -33,7 +33,7 @@ public class BlogLikeServiceImpl implements BlogLikeService {
 
     @Transactional
     @Override
-    public SuccessResponseDto<Void> toggleBlogLike(String userEmail, String blogId) {
+    public SuccessResponse<Void> toggleBlogLike(String userEmail, String blogId) {
         UUID id = parse(blogId);
         UserEntity user = userRepository.findByEmailAndStatus(userEmail, UserStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("User with email " + userEmail + " not found."));
@@ -42,7 +42,7 @@ public class BlogLikeServiceImpl implements BlogLikeService {
 
         if (blogLikeRepository.existsByUserEmailAndBlog(userEmail, blog)) {
             blogLikeRepository.deleteByUserEmailAndBlog(userEmail, blog);
-            return SuccessResponseDto.of("Blog unliked successfully!");
+            return SuccessResponse.of("Blog unliked successfully!");
         }
 
         try {
@@ -51,16 +51,16 @@ public class BlogLikeServiceImpl implements BlogLikeService {
                     .blog(blog)
                     .build();
             blogLikeRepository.save(blogLikeEntity);
-            return SuccessResponseDto.of("Blog liked successfully!");
+            return SuccessResponse.of("Blog liked successfully!");
         } catch (DataIntegrityViolationException e) {
-            return SuccessResponseDto.of("Blog is already liked!");
+            return SuccessResponse.of("Blog is already liked!");
         }
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<Page<BlogResponseDto>> getLikedBlogs(String userEmail, Pageable pageable) {
+    public SuccessResponse<Page<BlogResponseDto>> getLikedBlogs(String userEmail, Pageable pageable) {
        Page<BlogLikeEntity> blogLikeEntities = blogLikeRepository.findAllByUserEmailOrderByLikedAtDesc(userEmail, pageable);
-       return SuccessResponseDto.of(blogLikeEntities.map((blogLikeEntity) -> blogMapper.toDto(blogLikeEntity.getBlog())),"Liked blogs retrieved successfully!");
+       return SuccessResponse.of(blogLikeEntities.map((blogLikeEntity) -> blogMapper.toDto(blogLikeEntity.getBlog())),"Liked blogs retrieved successfully!");
     }
 }

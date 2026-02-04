@@ -5,7 +5,7 @@ import static az.shopery.utils.common.UuidUtils.parse;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.mapper.ProductMapper;
 import az.shopery.model.dto.response.ShopResponseDto;
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.dto.response.UserShopResponseDto;
 import az.shopery.model.entity.ShopEntity;
 import az.shopery.repository.ShopRepository;
@@ -31,7 +31,7 @@ public class ShopServiceImpl implements ShopService {
 
     @Override
     @Transactional(readOnly = true)
-    public SuccessResponseDto<UserShopResponseDto> getMyShop(String userEmail) {
+    public SuccessResponse<UserShopResponseDto> getMyShop(String userEmail) {
         userRepository.findByEmailAndStatus(userEmail, UserStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + userEmail));
 
@@ -46,39 +46,39 @@ public class ShopServiceImpl implements ShopService {
                 .createdAt(shopEntity.getCreatedAt())
                 .build();
 
-        return SuccessResponseDto.of(userShopResponseDto, "User shop retrieved successfully.");
+        return SuccessResponse.of(userShopResponseDto, "User shop retrieved successfully.");
     }
 
     @Override
     @Transactional(readOnly = true)
-    public SuccessResponseDto<Page<ShopResponseDto>> getAllShops(Pageable pageable) {
+    public SuccessResponse<Page<ShopResponseDto>> getAllShops(Pageable pageable) {
         Page<ShopEntity> shopPage = shopRepository.findAllWithActiveOwners(pageable);
         Page<ShopResponseDto> dtoPage = shopPage.map(this::mapToPublicShopDtoWithoutProducts);
 
         log.info("Retrieved {} shops for page {} of size {}", dtoPage.getTotalElements(), pageable.getPageNumber(), pageable.getPageSize());
-        return SuccessResponseDto.of(dtoPage, "Shops retrieved successfully.");
+        return SuccessResponse.of(dtoPage, "Shops retrieved successfully.");
     }
 
     @Override
     @Transactional(readOnly = true)
-    public SuccessResponseDto<ShopResponseDto> getShopById(String shopId) {
+    public SuccessResponse<ShopResponseDto> getShopById(String shopId) {
         ShopEntity shopEntity = shopRepository.findActiveShopByIdWithProducts(parse(shopId))
                 .orElseThrow(() -> new ResourceNotFoundException("Shop not found for id: " + shopId));
         var shopResponseDto = mapToPublicShopDtoWithProducts(shopEntity);
 
         log.info("Shop retrieved successfully for id {}", shopId);
-        return SuccessResponseDto.of(shopResponseDto, "Shop retrieved successfully.");
+        return SuccessResponse.of(shopResponseDto, "Shop retrieved successfully.");
     }
 
     @Override
     @Transactional(readOnly = true)
-    public SuccessResponseDto<ShopResponseDto> getShopByShopName(String shopName) {
+    public SuccessResponse<ShopResponseDto> getShopByShopName(String shopName) {
         ShopEntity shopEntity = shopRepository.findActiveShopByShopNameWithProducts(shopName)
                 .orElseThrow(() -> new ResourceNotFoundException("Shop not found for name: " + shopName));
         var shopResponseDto = mapToPublicShopDtoWithProducts(shopEntity);
 
         log.info("Shop retrieved successfully for name {}", shopName);
-        return SuccessResponseDto.of(shopResponseDto, "Shop retrieved successfully.");
+        return SuccessResponse.of(shopResponseDto, "Shop retrieved successfully.");
     }
 
     private ShopResponseDto mapToPublicShopDtoWithoutProducts(ShopEntity shopEntity) {

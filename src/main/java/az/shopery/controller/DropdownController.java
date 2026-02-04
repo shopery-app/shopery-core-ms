@@ -1,6 +1,6 @@
 package az.shopery.controller;
 
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.service.DropdownService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +18,7 @@ public class DropdownController {
     private final DropdownService dropdownService;
 
     @GetMapping("/{type}")
-    public ResponseEntity<SuccessResponseDto<List<String>>> getDropdownOptions(@PathVariable String type) {
+    public ResponseEntity<SuccessResponse<List<String>>> getDropdownOptions(@PathVariable String type) {
         return ResponseEntity.ok(dropdownService.getDropdownOptions(type));
     }
 }

@@ -2,7 +2,7 @@ package az.shopery.controller;
 
 import az.shopery.model.dto.request.ChatRequestDto;
 import az.shopery.model.dto.response.ChatResponseDto;
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.service.ClaudeService;
 import jakarta.validation.Valid;
 import java.security.Principal;
@@ -25,7 +25,7 @@ public class ChatController {
     private final ClaudeService claudeService;
 
     @PostMapping
-    public ResponseEntity<SuccessResponseDto<ChatResponseDto>> chat(Principal principal, @Valid @RequestBody ChatRequestDto chatRequestDto) {
+    public ResponseEntity<SuccessResponse<ChatResponseDto>> chat(Principal principal, @Valid @RequestBody ChatRequestDto chatRequestDto) {
         return ResponseEntity.ok(claudeService.chat(principal.getName(), chatRequestDto));
     }
 }

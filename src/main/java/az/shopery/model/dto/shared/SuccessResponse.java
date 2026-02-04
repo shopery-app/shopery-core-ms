@@ -1,4 +1,4 @@
-package az.shopery.model.dto.response;
+package az.shopery.model.dto.shared;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.LocalDateTime;
@@ -16,7 +16,7 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class SuccessResponseDto<T> {
+public class SuccessResponse<T> {
     @Builder.Default
     HttpStatus status = HttpStatus.OK;
     @Builder.Default
@@ -26,14 +26,14 @@ public class SuccessResponseDto<T> {
     String message;
     T data;
 
-    public static SuccessResponseDto<Void> of(String message) {
-        return SuccessResponseDto.<Void>builder()
+    public static SuccessResponse<Void> of(String message) {
+        return SuccessResponse.<Void>builder()
                 .message(message)
                 .build();
     }
 
-    public static <T> SuccessResponseDto<T> of(T data, String message) {
-        return SuccessResponseDto.<T>builder()
+    public static <T> SuccessResponse<T> of(T data, String message) {
+        return SuccessResponse.<T>builder()
                 .message(message)
                 .data(data)
                 .build();

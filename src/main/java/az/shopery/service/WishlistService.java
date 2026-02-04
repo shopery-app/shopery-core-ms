@@ -1,11 +1,11 @@
 package az.shopery.service;
 
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.dto.response.WishlistResponseDto;
 
 public interface WishlistService {
-    SuccessResponseDto<WishlistResponseDto> getMyWishlist(String userEmail);
-    SuccessResponseDto<WishlistResponseDto> addProductToWishlist(String userEmail, String productId);
-    SuccessResponseDto<WishlistResponseDto> removeProductFromWishlist(String userEmail, String productId);
-    SuccessResponseDto<WishlistResponseDto> removeAllProductsFromWishlist(String userEmail);
+    SuccessResponse<WishlistResponseDto> getMyWishlist(String userEmail);
+    SuccessResponse<WishlistResponseDto> addProductToWishlist(String userEmail, String productId);
+    SuccessResponse<WishlistResponseDto> removeProductFromWishlist(String userEmail, String productId);
+    SuccessResponse<WishlistResponseDto> removeAllProductsFromWishlist(String userEmail);
 }

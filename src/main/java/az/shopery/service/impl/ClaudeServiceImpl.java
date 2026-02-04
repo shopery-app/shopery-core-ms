@@ -6,7 +6,7 @@ import az.shopery.model.dto.request.ChatRequestDto;
 import az.shopery.model.dto.request.ClaudeRequestDto;
 import az.shopery.model.dto.response.ChatResponseDto;
 import az.shopery.model.dto.response.ClaudeResponseDto;
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.service.ClaudeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -35,7 +35,7 @@ public class ClaudeServiceImpl implements ClaudeService {
     }
 
     @Override
-    public SuccessResponseDto<ChatResponseDto> chat(String userEmail, ChatRequestDto request) {
+    public SuccessResponse<ChatResponseDto> chat(String userEmail, ChatRequestDto request) {
         log.info("Processing chat request from user: {}", userEmail);
 
         ClaudeRequestDto claudeRequest = ClaudeRequestDto.builder()
@@ -49,7 +49,7 @@ public class ClaudeServiceImpl implements ClaudeService {
                 ))
                 .build();
 
-        return SuccessResponseDto.of(callClaudeApi(claudeRequest), "Success");
+        return SuccessResponse.of(callClaudeApi(claudeRequest), "Success");
     }
 
     private ChatResponseDto callClaudeApi(ClaudeRequestDto request) {

@@ -1,8 +1,9 @@
 package az.shopery.service.impl;
 
+import az.shopery.model.event.NotificationEvent;
 import az.shopery.service.EmailService;
 import jakarta.mail.internet.MimeMessage;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,135 +24,38 @@ public class EmailServiceImpl implements EmailService {
 
     @Value("${app.mail.from}")
     private String from;
+
     @Value("${application.frontend.base-url}")
     private String frontendBaseUrl;
 
     @Override
-    public void sendVerificationCode(String to, String name, String code, Boolean isRegistration) {
-        sendEmail(
-                to,
-                "Your Shopery Verification Code",
-                "verification-email",
-                Map.of(
-                        "userName", name,
-                        "verificationCode", code,
-                        "isRegistration", isRegistration
-                )
-        );
-    }
-
-    @Override
-    public void sendPasswordResetLink(String to, String name, String token) {
-        String resetUrl = frontendBaseUrl + "/reset-password?token=" + token;
-
-        sendEmail(
-                to,
-                "Your Shopery Password Reset Link",
-                "password-reset-email",
-                Map.of(
-                        "userName", name,
-                        "resetUrl", resetUrl
-                )
-        );
-    }
-
-    @Override
-    public void sendOrderConfirmation(String to, String name, List<String> orderIds) {
-        sendEmail(
-                to,
-                "Your Shopery Order Confirmation",
-                "order-confirmation-email",
-                Map.of(
-                        "userName", name,
-                        "orders", orderIds
-                )
-        );
-    }
-
-    @Override
-    public void sendPasswordChangedNotification(String to, String name) {
-        sendEmail(
-                to,
-                "Shopery Password Update",
-                "change-password-email",
-                Map.of("userName", name)
-        );
-    }
-
-    @Override
-    public void sendMerchantClosedNotification(String to, String customerName, String merchantName) {
-        sendEmail(
-                to,
-                "Shopery Merchant Update",
-                "merchant-closed-notification-email",
-                Map.of(
-                        "userName", customerName,
-                        "merchantName", merchantName
-                )
-        );
-    }
-
-    @Override
-    public void sendSupportTicketClosedNotification(String to, String userName, String ticketSubject, String ticketId) {
-        sendEmail(
-                to,
-                "Your Support Ticket Has Been Closed",
-                "support-ticket-closed-email",
-                Map.of(
-                        "userName", userName,
-                        "ticketSubject", ticketSubject,
-                        "ticketId", ticketId
-                )
-        );
-    }
-
-    @Override
-    public void sendShopApprovedEmail(String to, String userName, String shopName) {
-        sendEmail(
-                to,
-                "Your Shop Creation Request Has Been Approved",
-                "shop-creation-approved-email",
-                Map.of(
-                        "userName", userName,
-                        "shopName", shopName
-                )
-        );
-    }
-
-    @Override
-    public void sendShopRejectedEmail(String to, String userName, String shopName, String rejectionReason) {
-        sendEmail(
-                to,
-                "Your Shop Creation Request Has Been Rejected",
-                "shop-creation-rejected-email",
-                Map.of(
-                        "userName", userName,
-                        "shopName", shopName,
-                        "rejectionReason", rejectionReason
-                )
-        );
-    }
-
-    private void sendEmail(String to, String subject, String templateName,  Map<String, Object> variables) {
+    public void sendNotification(NotificationEvent notificationEvent) {
         try {
-            Context context = new Context();
-            variables.forEach(context::setVariable);
+            Map<String, Object> variables = new HashMap<>(notificationEvent.params());
+            variables.put("frontendBaseUrl", frontendBaseUrl);
 
-            String htmlContent = templateEngine.process(templateName, context);
+            if (variables.containsKey("token")) {
+                variables.put("resetUrl", frontendBaseUrl + "/reset-password?token=" + variables.get("token"));
+            }
+
+            Context context = new Context();
+            context.setVariables(variables);
+
+            String htmlContent = templateEngine.process(notificationEvent.type().getTemplateName(), context);
 
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
             helper.setFrom(from);
-            helper.setTo(to);
-            helper.setSubject(subject);
+            helper.setTo(notificationEvent.to());
+            helper.setSubject(notificationEvent.type().getSubject());
             helper.setText(htmlContent, true);
 
             mailSender.send(message);
-            log.info("Email [{}] successfully sent to {}", subject, to);
+            log.info("Email [{}] successfully sent to {}", notificationEvent.type(), notificationEvent.to());
 
         } catch (Exception e) {
-            log.error("Failed to send email [{}] to {}", subject, to, e);
+            log.error("Failed to send email [{}] to {}", notificationEvent.type(), notificationEvent.to(), e);
         }
     }
 }

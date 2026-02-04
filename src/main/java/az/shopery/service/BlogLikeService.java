@@ -1,12 +1,11 @@
 package az.shopery.service;
 
 import az.shopery.model.dto.response.BlogResponseDto;
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
 
 public interface BlogLikeService {
-    SuccessResponseDto<Void> toggleBlogLike(String userEmail, String blogId);
-    SuccessResponseDto<Page<BlogResponseDto>> getLikedBlogs(String userEmail, Pageable pageable);
+    SuccessResponse<Void> toggleBlogLike(String userEmail, String blogId);
+    SuccessResponse<Page<BlogResponseDto>> getLikedBlogs(String userEmail, Pageable pageable);
 }

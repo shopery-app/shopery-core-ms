@@ -6,7 +6,7 @@ import az.shopery.handler.exception.OwnProductInteractionException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.mapper.ProductMapper;
 import az.shopery.model.dto.response.ProductResponseDto;
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.dto.response.WishlistResponseDto;
 import az.shopery.model.entity.ProductEntity;
 import az.shopery.model.entity.UserEntity;
@@ -40,21 +40,21 @@ public class WishlistServiceImpl implements WishlistService {
 
     @Override
     @Transactional(readOnly = true)
-    public SuccessResponseDto<WishlistResponseDto> getMyWishlist(String userEmail) {
+    public SuccessResponse<WishlistResponseDto> getMyWishlist(String userEmail) {
         UserEntity userEntity = findUser(userEmail);
 
         Optional<WishlistEntity> wishlistOpt = wishlistRepository.findByUserWithProducts(userEntity);
         if (wishlistOpt.isEmpty()) {
-            return SuccessResponseDto.of(WishlistResponseDto.builder()
+            return SuccessResponse.of(WishlistResponseDto.builder()
                     .products(Collections.emptySet())
                     .build(), "Wishlist is empty.");
         }
-        return SuccessResponseDto.of(mapToDto(wishlistOpt.get()), "Wishlist fetched successfully.");
+        return SuccessResponse.of(mapToDto(wishlistOpt.get()), "Wishlist fetched successfully.");
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<WishlistResponseDto> addProductToWishlist(String userEmail, String productId) {
+    public SuccessResponse<WishlistResponseDto> addProductToWishlist(String userEmail, String productId) {
         UserEntity userEntity = findUser(userEmail);
         ProductEntity productEntity = findProduct(parse(productId));
 
@@ -69,12 +69,12 @@ public class WishlistServiceImpl implements WishlistService {
             log.warn("Product '{}' was already in the wishlist for user {}", productEntity.getProductName(), userEmail);
         }
 
-        return SuccessResponseDto.of(mapToDto(wishlistEntity), "Product added to wishlist successfully.");
+        return SuccessResponse.of(mapToDto(wishlistEntity), "Product added to wishlist successfully.");
     }
 
     @Override
     @Transactional
-    public SuccessResponseDto<WishlistResponseDto> removeProductFromWishlist(String userEmail, String productId) {
+    public SuccessResponse<WishlistResponseDto> removeProductFromWishlist(String userEmail, String productId) {
         UserEntity userEntity = findUser(userEmail);
         WishlistEntity wishlistEntity = wishlistRepository.findByUserWithProducts(userEntity)
                 .orElseThrow(() -> new ResourceNotFoundException("Cannot remove from a non-existent wishlist."));
@@ -82,7 +82,7 @@ public class WishlistServiceImpl implements WishlistService {
 
         if (wishlistEntity.getProducts().remove(productEntity)) {
             log.info("Product '{}' removed from wishlist for user {}", productEntity.getProductName(), userEmail);
-            return SuccessResponseDto.of(mapToDto(wishlistEntity), "Product removed from wishlist successfully.");
+            return SuccessResponse.of(mapToDto(wishlistEntity), "Product removed from wishlist successfully.");
         } else {
             throw new ResourceNotFoundException("Product not found in wishlist.");
         }
@@ -90,7 +90,7 @@ public class WishlistServiceImpl implements WishlistService {
 
     @Override
     @Transactional
-    public SuccessResponseDto<WishlistResponseDto> removeAllProductsFromWishlist(String userEmail) {
+    public SuccessResponse<WishlistResponseDto> removeAllProductsFromWishlist(String userEmail) {
         UserEntity userEntity = findUser(userEmail);
         WishlistEntity wishlistEntity = wishlistRepository.findByUserWithProducts(userEntity)
                 .orElseThrow(() -> new ResourceNotFoundException("Cannot remove from a non-existent wishlist."));
@@ -99,7 +99,7 @@ public class WishlistServiceImpl implements WishlistService {
 
         WishlistEntity savedWishlist = wishlistRepository.save(wishlistEntity);
         log.info("Wishlist has been saved successfully for user {}", userEmail);
-        return SuccessResponseDto.of(mapToDto(savedWishlist), "All items removed from wishlist successfully.");
+        return SuccessResponse.of(mapToDto(savedWishlist), "All items removed from wishlist successfully.");
     }
 
     private UserEntity findUser(String email) {

@@ -1,7 +1,7 @@
 package az.shopery.controller;
 
 import az.shopery.model.dto.response.ShopResponseDto;
-import az.shopery.model.dto.response.SuccessResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.service.ShopRatingService;
 import az.shopery.service.ShopService;
 import java.security.Principal;
@@ -26,23 +26,23 @@ public class PublicShopController {
     private final ShopRatingService shopRatingService;
 
     @GetMapping
-    public ResponseEntity<SuccessResponseDto<Page<ShopResponseDto>>> getAllOrSearchShops(Pageable pageable) {
+    public ResponseEntity<SuccessResponse<Page<ShopResponseDto>>> getAllOrSearchShops(Pageable pageable) {
         return ResponseEntity.ok(shopService.getAllShops(pageable));
     }
 
     @GetMapping("/name/{shopName}")
-    public ResponseEntity<SuccessResponseDto<ShopResponseDto>> getShopByShopName(@PathVariable String shopName) {
+    public ResponseEntity<SuccessResponse<ShopResponseDto>> getShopByShopName(@PathVariable String shopName) {
         return ResponseEntity.ok(shopService.getShopByShopName(shopName));
     }
 
     @GetMapping("/id/{shopId}")
-    public ResponseEntity<SuccessResponseDto<ShopResponseDto>> getShopById(@PathVariable String shopId) {
+    public ResponseEntity<SuccessResponse<ShopResponseDto>> getShopById(@PathVariable String shopId) {
         return ResponseEntity.ok(shopService.getShopById(shopId));
     }
 
     @PostMapping("/{shopId}/rating")
     @PreAuthorize("hasAnyAuthority('CUSTOMER', 'MERCHANT')")
-    public ResponseEntity<SuccessResponseDto<Void>> rateShop(Principal principal, @PathVariable String shopId, @RequestParam int rating) {
+    public ResponseEntity<SuccessResponse<Void>> rateShop(Principal principal, @PathVariable String shopId, @RequestParam int rating) {
         return ResponseEntity.ok(shopRatingService.rateShop(principal.getName(), shopId, rating));
     }
 }
