@@ -1,6 +1,9 @@
 package az.shopery.model.dto.request;
 
+import az.shopery.utils.annotation.ValidEnum;
+import az.shopery.utils.enums.SubscriptionTier;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
@@ -23,4 +26,7 @@ public class ShopCreateRequestDto {
     @Size(max = 2000, message = "Description cannot exceed 2000 characters")
     @Pattern(regexp = "^[A-Za-z0-9\\s]+$", message = "Shop description cannot contain special characters!")
     String description;
+    @NotNull(message = "Subscription tier is required!")
+    @ValidEnum(enumClass = SubscriptionTier.class, excluded = {"NONE"})
+    SubscriptionTier subscriptionTier;
 }

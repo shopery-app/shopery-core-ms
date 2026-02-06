@@ -45,6 +45,7 @@ public class TaskMapper {
                     .updatedAt(shopCreationRequestEntity.getUpdatedAt())
                     .shopName(shopCreationRequestEntity.getShopName())
                     .shopDescription(shopCreationRequestEntity.getDescription())
+                    .subscriptionTier(shopCreationRequestEntity.getSubscriptionTier())
                     .requestStatus(shopCreationRequestEntity.getRequestStatus())
                     .rejectionReason(shopCreationRequestEntity.getRejectionReason())
                     .build();

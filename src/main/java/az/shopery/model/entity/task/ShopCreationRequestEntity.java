@@ -1,6 +1,7 @@
 package az.shopery.model.entity.task;
 
 import az.shopery.utils.enums.RequestStatus;
+import az.shopery.utils.enums.SubscriptionTier;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
@@ -28,6 +29,10 @@ public class ShopCreationRequestEntity extends TaskEntity {
     String shopName;
     @Column(name = "description")
     String description;
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    @Column(name = "subscription_tier")
+    SubscriptionTier subscriptionTier = SubscriptionTier.BASIC;
     @Enumerated(EnumType.STRING)
     @Builder.Default
     @Column(name = "request_status", nullable = false)

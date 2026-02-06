@@ -122,6 +122,9 @@ public class AdminServiceImpl implements AdminService {
         shopRepository.save(shop);
         shopCreationRequestEntity.setRequestStatus(RequestStatus.APPROVED);
 
+        UserEntity userEntity = userRepository.findByEmailAndUserRoleAndStatus(shopCreationRequestEntity.getCreatedBy().getEmail(), UserRole.MERCHANT, UserStatus.ACTIVE)
+                        .orElseThrow(() -> new ResourceNotFoundException("Merchant not found!"));
+        userEntity.setSubscriptionTier(shopCreationRequestEntity.getSubscriptionTier());
         applicationEventPublisher.publishEvent(new NotificationEvent(
                 userEmail,
                 NotificationType.SHOP_APPROVED,

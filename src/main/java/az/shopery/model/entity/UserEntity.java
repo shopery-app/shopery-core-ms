@@ -1,5 +1,6 @@
 package az.shopery.model.entity;
 
+import az.shopery.utils.enums.SubscriptionTier;
 import az.shopery.utils.enums.UserRole;
 import az.shopery.utils.enums.UserStatus;
 import jakarta.persistence.CascadeType;
@@ -68,6 +69,10 @@ public class UserEntity {
     @Builder.Default
     @Column(name = "user_role", nullable = false)
     UserRole userRole = UserRole.CUSTOMER;
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    @Column(name = "subscription_tier")
+    SubscriptionTier subscriptionTier = SubscriptionTier.NONE;
     @Column(name = "profile_photo_url")
     String profilePhotoUrl;
     @Column(name = "phone")
