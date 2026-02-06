@@ -14,13 +14,16 @@ public class EnumValidator implements ConstraintValidator<ValidEnum, Enum<?>> {
 
     @Override
     public void initialize(ValidEnum constraintAnnotation) {
+        Set<String> excluded = Set.of(constraintAnnotation.excluded());
+
         allowedValues = Stream.of(constraintAnnotation.enumClass().getEnumConstants())
                 .map(Enum::name)
+                .filter(v -> !excluded.contains(v))
                 .collect(Collectors.toSet());
     }
 
     @Override
     public boolean isValid(Enum<?> value, ConstraintValidatorContext context) {
-        return Objects.isNull(value) || allowedValues.contains(value.name());
+        return Objects.nonNull(value) && allowedValues.contains(value.name());
     }
 }

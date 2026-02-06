@@ -52,7 +52,7 @@ public class AdminController {
     }
 
     @PatchMapping("/tasks/{id}/close")
-    public ResponseEntity<SuccessResponse<Void>> closeSupportTickets(@PathVariable String id, Principal principal) {
+    public ResponseEntity<SuccessResponse<Void>> closeSupportTicket(@PathVariable String id, Principal principal) {
         return ResponseEntity.ok(adminService.closeSupportTicket(id, principal.getName()));
     }
 

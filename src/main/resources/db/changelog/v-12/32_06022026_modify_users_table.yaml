@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 32_06022026_modify_users_table
+      author: Jahangir Alisoy
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: subscription_tier
+                  type: varchar(255)
+                  defaultValue: 'NONE'

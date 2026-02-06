@@ -1,6 +1,7 @@
 package az.shopery.model.dto.response.task;
 
 import az.shopery.utils.enums.RequestStatus;
+import az.shopery.utils.enums.SubscriptionTier;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,6 +19,7 @@ import lombok.experimental.SuperBuilder;
 public class ShopCreationRequestResponseDto extends TaskResponseDto {
     String shopName;
     String shopDescription;
+    SubscriptionTier subscriptionTier;
     String rejectionReason;
     RequestStatus requestStatus;
 }

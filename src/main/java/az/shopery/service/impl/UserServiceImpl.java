@@ -126,6 +126,7 @@ public class UserServiceImpl implements UserService {
                 .assignedAdmin(assignedAdmin)
                 .shopName(shopCreateRequestDto.getShopName())
                 .description(shopCreateRequestDto.getDescription())
+                .subscriptionTier(shopCreateRequestDto.getSubscriptionTier())
                 .build();
         taskRepository.save(shopCreationRequestEntity);
 

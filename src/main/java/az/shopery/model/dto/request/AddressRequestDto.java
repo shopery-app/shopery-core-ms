@@ -34,5 +34,5 @@ public class AddressRequestDto {
     String postalCode;
     @NotNull(message = "Address type is required!")
     @ValidEnum(enumClass = AddressType.class)
-    private AddressType addressType;
+    AddressType addressType;
 }

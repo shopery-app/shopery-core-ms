@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 33_06022026_modify_tasks_table
+      author: Jahangir Alisoy
+      changes:
+        - addColumn:
+            tableName: tasks
+            columns:
+              - column:
+                  name: subscription_tier
+                  type: varchar(255)
+                  defaultValue: 'BASIC'
