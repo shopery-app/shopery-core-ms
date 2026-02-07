@@ -1,6 +1,8 @@
 package az.shopery.service.impl;
 
 import static az.shopery.utils.common.UuidUtils.parse;
+import static az.shopery.utils.enums.UserRole.MERCHANT;
+import static az.shopery.utils.enums.UserStatus.ACTIVE;
 
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.mapper.ProductMapper;
@@ -8,11 +10,11 @@ import az.shopery.model.dto.response.ShopResponseDto;
 import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.dto.response.UserShopResponseDto;
 import az.shopery.model.entity.ShopEntity;
+import az.shopery.model.entity.UserEntity;
 import az.shopery.repository.ShopRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.ShopService;
 import java.util.Collections;
-import az.shopery.utils.enums.UserStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -32,18 +34,20 @@ public class ShopServiceImpl implements ShopService {
     @Override
     @Transactional(readOnly = true)
     public SuccessResponse<UserShopResponseDto> getMyShop(String userEmail) {
-        userRepository.findByEmailAndStatus(userEmail, UserStatus.ACTIVE)
+        UserEntity userEntity = userRepository.findByEmailAndUserRoleAndStatus(userEmail, MERCHANT, ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + userEmail));
 
         ShopEntity shopEntity = shopRepository.findByUserEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("Shop not found for user: " + userEmail));
 
         var userShopResponseDto = UserShopResponseDto.builder()
+                .id(shopEntity.getId())
                 .shopName(shopEntity.getShopName())
                 .description(shopEntity.getDescription())
                 .totalIncome(shopEntity.getTotalIncome())
                 .rating(shopEntity.getRating())
                 .createdAt(shopEntity.getCreatedAt())
+                .subscriptionTier(userEntity.getSubscriptionTier())
                 .build();
 
         return SuccessResponse.of(userShopResponseDto, "User shop retrieved successfully.");
