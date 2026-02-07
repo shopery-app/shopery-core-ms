@@ -28,7 +28,6 @@ public class ProductCreateRequestDto {
     @Pattern(regexp = "^[A-Za-z0-9\\s]+$", message = "Product name cannot contain special characters!")
     String productName;
     @Size(max = 2000, message = "Maximum product description length exceeded!")
-    @Pattern(regexp = "^[A-Za-z0-9\\s]+$", message = "Product description cannot contain special characters!")
     String description;
     @NotNull(message = "Product condition is required!")
     @ValidEnum(enumClass = ProductCondition.class)
