@@ -24,6 +24,7 @@ import az.shopery.repository.ShopRepository;
 import az.shopery.repository.TaskRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.AdminService;
+import az.shopery.utils.aws.S3FileUtil;
 import az.shopery.utils.enums.NotificationType;
 import az.shopery.utils.enums.OrderStatus;
 import az.shopery.utils.enums.RequestStatus;
@@ -52,6 +53,7 @@ public class AdminServiceImpl implements AdminService {
     private final ShopRepository shopRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final TaskMapper taskMapper;
+    private final S3FileUtil s3FileUtil;
 
     @Override
     public SuccessResponse<Page<UserProfileResponseDto>> getCustomers(Pageable pageable) {
@@ -184,7 +186,7 @@ public class AdminServiceImpl implements AdminService {
                 .email(userEntity.getEmail())
                 .phone(userEntity.getPhone())
                 .dateOfBirth(userEntity.getDateOfBirth())
-                .profilePhotoUrl(userEntity.getProfilePhotoUrl())
+                .profilePhotoUrl(s3FileUtil.generatePresignedUrl(userEntity.getProfilePhotoUrl()))
                 .createdAt(userEntity.getCreatedAt())
                 .build();
     }
