@@ -252,9 +252,8 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public SuccessResponse<UserAuthResponseDto> adminLogin(UserLoginRequestDto userLoginRequestDto) {
-        UserEntity user = userRepository.findByEmailAndUserRoleAndStatus(userLoginRequestDto.getEmail(), UserRole.ADMIN, UserStatus.ACTIVE).orElseThrow(
-                () -> new ResourceNotFoundException("User not found with email: " + userLoginRequestDto.getEmail())
-        );
+        UserEntity user = userRepository.findByEmailAndUserRoleAndStatus(userLoginRequestDto.getEmail(), UserRole.ADMIN, UserStatus.ACTIVE)
+                .orElseThrow(() -> new ResourceNotFoundException("Admin not found!"));
 
         checkIfAccountLocked(user);
 
@@ -311,26 +310,17 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private void checkIfAccountLocked(UserEntity user) {
-        if (user.getAccountLockedUntil() != null &&
-                user.getAccountLockedUntil().isAfter(LocalDateTime.now())) {
-
-            throw new InvalidCredentialsException(
-                    "Your account has been locked due to too many failed login attempts. Please try again later."
-            );
+        if (Objects.nonNull(user.getAccountLockedUntil()) && user.getAccountLockedUntil().isAfter(LocalDateTime.now())) {
+            throw new InvalidCredentialsException("Your account has been locked due to too many failed login attempts. Please try again later.");
         }
     }
 
     private void authenticate(UserLoginRequestDto dto) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        dto.getEmail(),
-                        dto.getPassword()
-                )
-        );
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(dto.getEmail(), dto.getPassword()));
     }
 
     private void resetFailedAttempts(UserEntity user) {
-        if (user.getFailedLoginAttempts() > 0 || user.getAccountLockedUntil() != null) {
+        if (user.getFailedLoginAttempts() > 0 || Objects.nonNull(user.getAccountLockedUntil())) {
             user.setFailedLoginAttempts(0);
             user.setAccountLockedUntil(null);
             userRepository.save(user);
