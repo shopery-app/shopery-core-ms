@@ -18,4 +18,5 @@ public interface AuthService {
     SuccessResponse<Void> forgotPassword(ForgotPasswordRequestDto forgotPasswordRequestDto);
     SuccessResponse<Void> resetPassword(ResetPasswordRequestDto resetPasswordRequestDto);
     SuccessResponse<UserAuthResponseDto> refreshToken(RefreshTokenRequestDto refreshTokenRequestDto);
+    SuccessResponse<UserAuthResponseDto> adminLogin(UserLoginRequestDto userLoginRequestDto);
 }

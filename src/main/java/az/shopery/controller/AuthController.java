@@ -39,6 +39,12 @@ public class AuthController {
     }
 
     @RateLimiter(name = "auth-rate-limiter")
+    @PostMapping("/admin/login")
+    public ResponseEntity<SuccessResponse<UserAuthResponseDto>>  adminLogin(@Valid @RequestBody UserLoginRequestDto userLoginRequestDto) {
+        return ResponseEntity.ok(authService.adminLogin(userLoginRequestDto));
+    }
+
+    @RateLimiter(name = "auth-rate-limiter")
     @PostMapping("/verify")
     public ResponseEntity<SuccessResponse<UserAuthResponseDto>> verifyAccount(@Valid @RequestBody UserVerificationRequestDto userVerificationRequestDto) {
         return ResponseEntity.ok(authService.verifyAccount(userVerificationRequestDto));
