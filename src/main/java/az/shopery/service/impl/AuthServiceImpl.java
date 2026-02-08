@@ -30,6 +30,7 @@ import az.shopery.repository.UserRepository;
 import az.shopery.repository.VerificationTokenRepository;
 import az.shopery.service.AuthService;
 import az.shopery.utils.enums.NotificationType;
+import az.shopery.utils.enums.UserRole;
 import az.shopery.utils.enums.UserStatus;
 import az.shopery.utils.enums.VerificationProgress;
 import az.shopery.utils.security.JwtService;
@@ -231,41 +232,37 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional(noRollbackFor = InvalidCredentialsException.class)
     public SuccessResponse<UserAuthResponseDto> login(UserLoginRequestDto userLoginRequestDto) {
-        UserEntity user = userRepository.findByEmailAndStatus(userLoginRequestDto.getEmail(), UserStatus.ACTIVE)
-                .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password."));
+        UserEntity user = getActiveUser(userLoginRequestDto.getEmail());
 
-        if (Objects.nonNull(user.getAccountLockedUntil()) && user.getAccountLockedUntil().isAfter(LocalDateTime.now())) {
-            throw new InvalidCredentialsException("Your account has been locked due to too many failed login attempts. Please try again later.");
+        if (user.getUserRole() == UserRole.ADMIN) {
+            throw new InvalidCredentialsException("Invalid email or password.");
         }
 
-        try {
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            userLoginRequestDto.getEmail(),
-                            userLoginRequestDto.getPassword()
-                    )
-            );
-            if (user.getFailedLoginAttempts() > 0 || Objects.nonNull(user.getAccountLockedUntil())) {
-                user.setFailedLoginAttempts(0);
-                user.setAccountLockedUntil(null);
-                userRepository.save(user);
-            }
-        } catch (Exception exception) {
-            if (Objects.nonNull(user.getAccountLockedUntil()) && user.getAccountLockedUntil().isBefore(LocalDateTime.now())) {
-                user.setFailedLoginAttempts(0);
-                user.setAccountLockedUntil(null);
-            }
-            user.setFailedLoginAttempts(user.getFailedLoginAttempts() + 1);
-            if (user.getFailedLoginAttempts() >= MAX_FAILED_ATTEMPTS) {
-                user.setAccountLockedUntil(LocalDateTime.now().plusMinutes(LOCK_DURATION_MINUTES));
-            }
-            userRepository.save(user);
+        checkIfAccountLocked(user);
 
-            if (Objects.nonNull(user.getAccountLockedUntil())) {
-                throw new InvalidCredentialsException("Too many failed login attempts. Your account has been locked for " + LOCK_DURATION_MINUTES + " minutes.");
-            } else {
-                throw new InvalidCredentialsException("Invalid email or password.");
-            }
+        try {
+            authenticate(userLoginRequestDto);
+            resetFailedAttempts(user);
+        } catch (Exception exception) {
+            handleFailedLogin(user);
+        }
+
+        return SuccessResponse.of(generateAuthResponse(user), "Login successful.");
+    }
+
+    @Override
+    public SuccessResponse<UserAuthResponseDto> adminLogin(UserLoginRequestDto userLoginRequestDto) {
+        UserEntity user = userRepository.findByEmailAndUserRoleAndStatus(userLoginRequestDto.getEmail(), UserRole.ADMIN, UserStatus.ACTIVE).orElseThrow(
+                () -> new ResourceNotFoundException("User not found with email: " + userLoginRequestDto.getEmail())
+        );
+
+        checkIfAccountLocked(user);
+
+        try {
+            authenticate(userLoginRequestDto);
+            resetFailedAttempts(user);
+        } catch (Exception exception) {
+            handleFailedLogin(user);
         }
 
         return SuccessResponse.of(generateAuthResponse(user), "Login successful.");
@@ -306,6 +303,56 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         return SuccessResponse.of(userAuthResponseDto, "Refresh token refreshed successfully.");
+    }
+
+    private UserEntity getActiveUser(String email) {
+        return userRepository.findByEmailAndStatus(email, UserStatus.ACTIVE)
+                .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password."));
+    }
+
+    private void checkIfAccountLocked(UserEntity user) {
+        if (user.getAccountLockedUntil() != null &&
+                user.getAccountLockedUntil().isAfter(LocalDateTime.now())) {
+
+            throw new InvalidCredentialsException(
+                    "Your account has been locked due to too many failed login attempts. Please try again later."
+            );
+        }
+    }
+
+    private void authenticate(UserLoginRequestDto dto) {
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        dto.getEmail(),
+                        dto.getPassword()
+                )
+        );
+    }
+
+    private void resetFailedAttempts(UserEntity user) {
+        if (user.getFailedLoginAttempts() > 0 || user.getAccountLockedUntil() != null) {
+            user.setFailedLoginAttempts(0);
+            user.setAccountLockedUntil(null);
+            userRepository.save(user);
+        }
+    }
+
+    private void handleFailedLogin(UserEntity user) {
+        if (Objects.nonNull(user.getAccountLockedUntil()) && user.getAccountLockedUntil().isBefore(LocalDateTime.now())) {
+            user.setFailedLoginAttempts(0);
+            user.setAccountLockedUntil(null);
+        }
+        user.setFailedLoginAttempts(user.getFailedLoginAttempts() + 1);
+        if (user.getFailedLoginAttempts() >= MAX_FAILED_ATTEMPTS) {
+            user.setAccountLockedUntil(LocalDateTime.now().plusMinutes(LOCK_DURATION_MINUTES));
+        }
+        userRepository.save(user);
+
+        if (Objects.nonNull(user.getAccountLockedUntil())) {
+            throw new InvalidCredentialsException("Too many failed login attempts. Your account has been locked for " + LOCK_DURATION_MINUTES + " minutes.");
+        }
+
+        throw new InvalidCredentialsException("Invalid email or password.");
     }
 
     private UserAuthResponseDto generateAuthResponse(UserEntity userEntity) {
