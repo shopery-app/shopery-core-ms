@@ -16,9 +16,8 @@ public interface BlogService {
     SuccessResponse<Void> deleteMyBlog(String userEmail, String blogId);
     SuccessResponse<BlogResponseDto> updateMyBlog(String userEmail, BlogRequestDto blogRequestDto, String blogId);
     SuccessResponse<BlogResponseDto> getMyBlog(String userEmail, String blogId);
-    SuccessResponse<Void> saveBlog(String userEmail, String blogId);
+    SuccessResponse<Void> toggleBlogSave(String userEmail, String blogId);
     SuccessResponse<Page<BlogResponseDto>> getSavedBlogs(String userEmail, Pageable pageable);
-    SuccessResponse<Void> deleteSavedBlog(String userEmail, String blogId);
     SuccessResponse<Void> toggleBlogArchive(String userEmail, String blogId);
     SuccessResponse<Page<BlogResponseDto>> getArchivedBlogs(String userEmail, Pageable pageable);
 }

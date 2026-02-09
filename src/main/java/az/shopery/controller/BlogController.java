@@ -84,12 +84,7 @@ public class BlogController {
 
     @PostMapping("/{blogId}/save")
     public ResponseEntity<SuccessResponse<Void>> saveBlog(Principal principal, @PathVariable String blogId){
-        return ResponseEntity.ok(blogService.saveBlog(principal.getName(), blogId));
-    }
-
-    @DeleteMapping("/{blogId}/save")
-    public ResponseEntity<SuccessResponse<Void>> deleteSavedBlog(Principal principal, @PathVariable String blogId){
-        return ResponseEntity.ok(blogService.deleteSavedBlog(principal.getName(), blogId));
+        return ResponseEntity.ok(blogService.toggleBlogSave(principal.getName(), blogId));
     }
 
     @GetMapping("/archive")
