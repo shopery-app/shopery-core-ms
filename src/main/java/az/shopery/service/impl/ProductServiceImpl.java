@@ -145,8 +145,8 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public SuccessResponse<Page<ProductResponseDto>> searchPublicProducts(ProductCategory category, ProductCondition condition, Pageable pageable) {
-        Page<ProductEntity> products = productRepository.searchPublicProducts(category, condition, pageable);
+    public SuccessResponse<Page<ProductResponseDto>> searchPublicProducts(ProductCategory category, ProductCondition condition, Double minPrice, Double maxPrice, Pageable pageable) {
+        Page<ProductEntity> products = productRepository.searchPublicProducts(category, condition, minPrice, maxPrice, pageable);
         return SuccessResponse.of(products.map(productMapper::toBriefDto), "Products retrieved successfully.");
     }
 

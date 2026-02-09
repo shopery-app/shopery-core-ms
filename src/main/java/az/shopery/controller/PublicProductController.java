@@ -24,8 +24,13 @@ public class PublicProductController {
     private final ProductService productService;
 
     @GetMapping
-    public ResponseEntity<SuccessResponse<Page<ProductResponseDto>>> searchProducts(@RequestParam(required = false) ProductCategory category, @RequestParam(required = false) ProductCondition condition, Pageable pageable) {
-        return ResponseEntity.ok(productService.searchPublicProducts(category, condition, pageable));
+    public ResponseEntity<SuccessResponse<Page<ProductResponseDto>>> searchProducts(
+            @RequestParam(required = false) ProductCategory category,
+            @RequestParam(required = false) ProductCondition condition,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            Pageable pageable) {
+        return ResponseEntity.ok(productService.searchPublicProducts(category, condition, minPrice, maxPrice, pageable));
     }
 
     @GetMapping("/{productId}")

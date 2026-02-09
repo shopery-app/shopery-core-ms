@@ -16,7 +16,7 @@ public interface ProductService {
     SuccessResponse<String> updateProductImage(String userEmail, String productId, MultipartFile imageFile);
     SuccessResponse<Void> deleteProduct(String userEmail, String productId);
     SuccessResponse<Page<ProductResponseDto>> getMyProducts(String userEmail, Pageable pageable);
-    SuccessResponse<Page<ProductResponseDto>> searchPublicProducts(ProductCategory category, ProductCondition condition, Pageable pageable);
+    SuccessResponse<Page<ProductResponseDto>> searchPublicProducts(ProductCategory category, ProductCondition condition, Double minPrice, Double maxPrice, Pageable pageable);
     SuccessResponse<ProductDetailResponseDto> getPublicProductById(String productId);
     SuccessResponse<Void> deleteProductImage(String userEmail, String productId);
     SuccessResponse<Page<ProductResponseDto>> getTopDiscountedProducts(Pageable pageable);
