@@ -30,12 +30,14 @@ public interface ProductRepository extends JpaRepository<ProductEntity, UUID> {
         AND (:condition IS NULL OR p.condition = :condition)
         AND (:minPrice IS NULL OR p.currentPrice >= :minPrice)
         AND (:maxPrice IS NULL OR p.currentPrice <= :maxPrice)
+        AND (:keyword IS NULL OR LOWER(p.productName) LIKE LOWER(CONCAT('%', :keyword, '%')))
     """)
     Page<ProductEntity> searchPublicProducts(
             @Param("category") ProductCategory category,
             @Param("condition") ProductCondition condition,
             @Param("minPrice") Double minPrice,
             @Param("maxPrice") Double maxPrice,
+            @Param("keyword") String keyword,
             Pageable pageable
     );
 }

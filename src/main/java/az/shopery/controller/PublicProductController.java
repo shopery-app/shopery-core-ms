@@ -29,8 +29,9 @@ public class PublicProductController {
             @RequestParam(required = false) ProductCondition condition,
             @RequestParam(required = false) Double minPrice,
             @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) String keyword,
             Pageable pageable) {
-        return ResponseEntity.ok(productService.searchPublicProducts(category, condition, minPrice, maxPrice, pageable));
+        return ResponseEntity.ok(productService.searchPublicProducts(category, condition, minPrice, maxPrice, keyword, pageable));
     }
 
     @GetMapping("/{productId}")
