@@ -3,6 +3,7 @@ package az.shopery.repository;
 import az.shopery.model.entity.UserEntity;
 import az.shopery.model.entity.task.SupportTicketEntity;
 import az.shopery.model.entity.task.TaskEntity;
+import az.shopery.utils.enums.RequestStatus;
 import az.shopery.utils.enums.TaskCategory;
 import az.shopery.utils.enums.TicketStatus;
 import java.util.List;
@@ -28,4 +29,9 @@ public interface TaskRepository extends JpaRepository<TaskEntity, UUID> {
     Optional<SupportTicketEntity> findSupportTicketByIdAndCreatedBy(UUID id, UserEntity user);
     @Query("SELECT t FROM SupportTicketEntity t JOIN FETCH t.createdBy WHERE t.ticketStatus = :status AND t.isUserNotified = false")
     List<SupportTicketEntity> findAllByTicketStatusAndIsUserNotifiedFalse(TicketStatus status);
+    @Query("SELECT COUNT(t) FROM SupportTicketEntity t WHERE t.ticketStatus = :status AND t.assignedAdmin.id = :adminId")
+    Integer countSupportTicketsByStatusAndAdmin(TicketStatus status, UUID adminId);
+    @Query("SELECT COUNT(sr) FROM ShopCreationRequestEntity sr WHERE sr.requestStatus = :status AND sr.assignedAdmin.id = :adminId")
+    Integer countShopRequestsByStatusAndAdmin(RequestStatus status, UUID adminId);
+
 }

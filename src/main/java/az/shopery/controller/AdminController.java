@@ -9,6 +9,7 @@ import az.shopery.service.AdminService;
 import az.shopery.utils.enums.TaskCategory;
 import jakarta.validation.Valid;
 import java.security.Principal;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -64,5 +65,10 @@ public class AdminController {
     @PostMapping("/tasks/{id}/reject")
     public ResponseEntity<SuccessResponse<Void>> reject(@PathVariable String id, @Valid @RequestBody ShopCreationRequestRejectDto shopCreationRequestRejectDto, Principal principal) {
         return ResponseEntity.ok(adminService.reject(id, principal.getName(), shopCreationRequestRejectDto));
+    }
+
+    @GetMapping("/application/info")
+    public ResponseEntity<SuccessResponse<Map<String, Integer>>> getApplicationInfo(Principal principal) {
+        return ResponseEntity.ok((adminService.getApplicationInfo(principal.getName())));
     }
 }

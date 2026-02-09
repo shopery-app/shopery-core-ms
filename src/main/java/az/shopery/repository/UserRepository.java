@@ -24,4 +24,5 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     Optional<UserEntity> findByEmailAndUserRoleAndStatus(String email, UserRole userRole, UserStatus status);
     Page<UserEntity> findAllByUserRoleAndStatus(UserRole userRole, UserStatus status, Pageable pageable);
     List<UserEntity> findAllByUserRoleAndStatus(UserRole userRole, UserStatus status);
+    Integer countAllByUserRoleAndStatus(UserRole userRole, UserStatus status);
 }
