@@ -1,6 +1,7 @@
 package az.shopery.repository;
 
 import az.shopery.model.entity.UserEntity;
+import az.shopery.utils.enums.SubscriptionTier;
 import az.shopery.utils.enums.UserRole;
 import az.shopery.utils.enums.UserStatus;
 import jakarta.persistence.LockModeType;
