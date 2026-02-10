@@ -2,6 +2,7 @@ package az.shopery.controller;
 
 import az.shopery.model.dto.request.CloseMerchantRequestDto;
 import az.shopery.model.dto.request.ShopCreationRequestRejectDto;
+import az.shopery.model.dto.response.ApplicationInfoResponseDto;
 import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.dto.response.UserProfileResponseDto;
 import az.shopery.model.dto.response.task.TaskResponseDto;
@@ -9,7 +10,6 @@ import az.shopery.service.AdminService;
 import az.shopery.utils.enums.TaskCategory;
 import jakarta.validation.Valid;
 import java.security.Principal;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -68,7 +68,7 @@ public class AdminController {
     }
 
     @GetMapping("/application/info")
-    public ResponseEntity<SuccessResponse<Map<String, Integer>>> getApplicationInfo(Principal principal) {
+    public ResponseEntity<SuccessResponse<ApplicationInfoResponseDto>> getApplicationInfo(Principal principal) {
         return ResponseEntity.ok((adminService.getApplicationInfo(principal.getName())));
     }
 }

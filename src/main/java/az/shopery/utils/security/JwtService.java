@@ -37,24 +37,13 @@ public class JwtService {
     }
 
     public String generateToken(UserDetails userDetails) {
-        Map<String, Object> extraClaims = new HashMap<>();
-        var authorities = userDetails.getAuthorities()
-                .stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toList());
-        extraClaims.put("authorities", authorities);
-
-        return Jwts.builder()
-                .claims(extraClaims)
-                .subject(userDetails.getUsername())
-                .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + accessTokenExpiration))
-                .signWith(getSignInKey(), Jwts.SIG.HS256)
-                .compact();
+        Map<String, Object> extraClaims = buildAuthorityClaims(userDetails);
+        return buildToken(extraClaims, userDetails, accessTokenExpiration);
     }
 
     public String generateRefreshToken(UserDetails userDetails) {
-        return buildToken(new HashMap<>(), userDetails, refreshTokenExpiration);
+        Map<String, Object> extraClaims = buildAuthorityClaims(userDetails);
+        return buildToken(extraClaims, userDetails, refreshTokenExpiration);
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
@@ -64,6 +53,17 @@ public class JwtService {
 
     public Date extractIssuedAt(String token) {
         return extractClaim(token, Claims::getIssuedAt);
+    }
+
+    private Map<String, Object> buildAuthorityClaims(UserDetails userDetails){
+        Map<String, Object> extraClaims = new HashMap<>();
+        var authorities = userDetails.getAuthorities()
+                .stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
+        extraClaims.put("authorities", authorities);
+
+        return extraClaims;
     }
 
     private String buildToken(Map<String, Object> extraClaims, UserDetails userDetails, long expiration) {

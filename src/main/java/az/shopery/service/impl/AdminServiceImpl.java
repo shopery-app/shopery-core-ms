@@ -9,6 +9,7 @@ import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.mapper.TaskMapper;
 import az.shopery.model.dto.request.CloseMerchantRequestDto;
 import az.shopery.model.dto.request.ShopCreationRequestRejectDto;
+import az.shopery.model.dto.response.ApplicationInfoResponseDto;
 import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.dto.response.UserProfileResponseDto;
 import az.shopery.model.dto.response.task.TaskResponseDto;
@@ -39,7 +40,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -97,20 +97,20 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public SuccessResponse<Map<String, Integer>> getApplicationInfo(String userEmail) {
+    public SuccessResponse<ApplicationInfoResponseDto> getApplicationInfo(String userEmail) {
         UserEntity assignedAdmin = getAdmin(userEmail);
-        Map<String, Integer> applicationInfo = new HashMap<>();
 
         Integer totalCustomers = userRepository.countAllByUserRoleAndStatus(UserRole.CUSTOMER, UserStatus.ACTIVE);
         Integer totalMerchants = userRepository.countAllByUserRoleAndStatus(UserRole.MERCHANT, UserStatus.ACTIVE);
         Integer pendingSupportTickets = taskRepository.countSupportTicketsByStatusAndAdmin(TicketStatus.OPEN, assignedAdmin.getId());
         Integer pendingShopCreationRequests = taskRepository.countShopRequestsByStatusAndAdmin(RequestStatus.PENDING, assignedAdmin.getId());
 
-        applicationInfo.put("totalCustomers", totalCustomers);
-        applicationInfo.put("totalMerchants", totalMerchants);
-        applicationInfo.put("pendingSupportTickets", pendingSupportTickets);
-        applicationInfo.put("pendingShopCreationRequests", pendingShopCreationRequests);
-        applicationInfo.put("totalTasks", pendingShopCreationRequests + pendingSupportTickets);
+        ApplicationInfoResponseDto applicationInfo = ApplicationInfoResponseDto.builder()
+                .totalCustomers(totalCustomers)
+                .totalMerchants(totalMerchants)
+                .pendingSupportTickets(pendingSupportTickets)
+                .pendingShopCreationRequests(pendingShopCreationRequests)
+                .build();
 
         return SuccessResponse.of(applicationInfo, "Application info retrieved successfully!");
     }
