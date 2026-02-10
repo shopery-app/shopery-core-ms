@@ -1,6 +1,7 @@
 package az.shopery.repository;
 
 import az.shopery.model.entity.UserEntity;
+import az.shopery.utils.enums.SubscriptionTier;
 import az.shopery.utils.enums.UserRole;
 import az.shopery.utils.enums.UserStatus;
 import jakarta.persistence.LockModeType;
@@ -24,4 +25,5 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     Optional<UserEntity> findByEmailAndUserRoleAndStatus(String email, UserRole userRole, UserStatus status);
     Page<UserEntity> findAllByUserRoleAndStatus(UserRole userRole, UserStatus status, Pageable pageable);
     List<UserEntity> findAllByUserRoleAndStatus(UserRole userRole, UserStatus status);
+    Optional<UserEntity> findByEmailAndUserRoleAndStatusAndSubscriptionTier(String email, UserRole userRole, UserStatus status, SubscriptionTier subscriptionTier);
 }
