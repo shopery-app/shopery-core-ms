@@ -7,6 +7,7 @@ import az.shopery.handler.exception.ExternalServiceException;
 import az.shopery.handler.exception.FileStorageException;
 import az.shopery.handler.exception.IllegalRequestException;
 import az.shopery.handler.exception.InvalidCredentialsException;
+import az.shopery.handler.exception.InvalidSearchException;
 import az.shopery.handler.exception.InvalidUuidFormatException;
 import az.shopery.handler.exception.JwtAuthenticationException;
 import az.shopery.handler.exception.OwnProductInteractionException;
@@ -40,7 +41,7 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(ex, HttpStatus.NOT_FOUND, request);
     }
 
-    @ExceptionHandler({IllegalRequestException.class, InvalidUuidFormatException.class, AddressLimitExceededException.class,})
+    @ExceptionHandler({IllegalRequestException.class, InvalidUuidFormatException.class, AddressLimitExceededException.class, InvalidSearchException.class})
     public ResponseEntity<ErrorResponse> handleBadRequest(Exception ex, HttpServletRequest request) {
         log.debug("Bad request: {}", ex.getMessage());
         return buildErrorResponse(ex, HttpStatus.BAD_REQUEST, request);

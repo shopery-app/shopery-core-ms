@@ -1,12 +1,16 @@
 package az.shopery.controller;
 
 import az.shopery.model.dto.request.CloseMerchantRequestDto;
+import az.shopery.model.dto.request.SearchRequestDto;
 import az.shopery.model.dto.request.ShopCreationRequestRejectDto;
 import az.shopery.model.dto.response.ApplicationInfoResponseDto;
+import az.shopery.model.dto.response.SearchMetadataResponseDto;
+import az.shopery.model.dto.response.SearchResponseDto;
 import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.dto.response.UserProfileResponseDto;
 import az.shopery.model.dto.response.task.TaskResponseDto;
 import az.shopery.service.AdminService;
+import az.shopery.service.GlobalSearchService;
 import az.shopery.utils.enums.TaskCategory;
 import jakarta.validation.Valid;
 import java.security.Principal;
@@ -31,6 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminController {
 
     private final AdminService adminService;
+    private final GlobalSearchService globalSearchService;
 
     @GetMapping("/customers")
     public ResponseEntity<SuccessResponse<Page<UserProfileResponseDto>>> getCustomers(Pageable pageable) {
@@ -70,5 +75,15 @@ public class AdminController {
     @GetMapping("/application/info")
     public ResponseEntity<SuccessResponse<ApplicationInfoResponseDto>> getApplicationInfo(Principal principal) {
         return ResponseEntity.ok((adminService.getApplicationInfo(principal.getName())));
+    }
+
+    @GetMapping("/search/metadata")
+    public ResponseEntity<SuccessResponse<SearchMetadataResponseDto>> getSearchMetadata() {
+        return ResponseEntity.ok(globalSearchService.getSearchMetadata());
+    }
+
+    @PostMapping("/search")
+    public ResponseEntity<SuccessResponse<SearchResponseDto>> search(@RequestBody @Valid SearchRequestDto searchRequest) {
+        return ResponseEntity.ok(globalSearchService.search(searchRequest));
     }
 }
