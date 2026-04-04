@@ -19,25 +19,17 @@ import az.shopery.model.entity.task.SupportTicketEntity;
 import az.shopery.model.entity.task.TaskEntity;
 import az.shopery.model.event.NotificationEvent;
 import az.shopery.repository.OrderRepository;
-import az.shopery.repository.ShopRepository;
 import az.shopery.repository.TaskRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.AdminService;
 import az.shopery.utils.aws.S3FileUtil;
-import az.shopery.utils.enums.NotificationType;
-import az.shopery.utils.enums.OrderStatus;
-import az.shopery.utils.enums.RequestStatus;
-import az.shopery.utils.enums.TaskCategory;
-import az.shopery.utils.enums.TicketStatus;
-import az.shopery.utils.enums.UserRole;
-import az.shopery.utils.enums.UserStatus;
+import az.shopery.utils.enums.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -49,7 +41,6 @@ public class AdminServiceImpl implements AdminService {
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
     private final TaskRepository taskRepository;
-    private final ShopRepository shopRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final TaskMapper taskMapper;
     private final S3FileUtil s3FileUtil;
@@ -68,6 +59,7 @@ public class AdminServiceImpl implements AdminService {
         user.setStatus(UserStatus.CLOSED);
 
         ShopEntity shop = user.getShop();
+        shop.setStatus(ShopStatus.CLOSED);
         List<OrderEntity> orders = orderRepository.findAllByShopId(shop.getId());
         for (OrderEntity order : orders) {
             order.setStatus(OrderStatus.CANCELLED);
@@ -111,20 +103,12 @@ public class AdminServiceImpl implements AdminService {
         if (!shopCreationRequestEntity.getRequestStatus().equals(RequestStatus.PENDING)) {
             throw new IllegalRequestException("Shop creation request is not pending!");
         }
-
-        ShopEntity shop = ShopEntity.builder()
-                .user(shopCreationRequestEntity.getCreatedBy())
-                .shopName(shopCreationRequestEntity.getShopName())
-                .description(shopCreationRequestEntity.getDescription())
-                .totalIncome(BigDecimal.ZERO)
-                .rating(0.0)
-                .build();
-        shopRepository.save(shop);
         shopCreationRequestEntity.setRequestStatus(RequestStatus.APPROVED);
 
         UserEntity userEntity = userRepository.findByEmailAndUserRoleAndStatus(shopCreationRequestEntity.getCreatedBy().getEmail(), UserRole.USER, UserStatus.ACTIVE)
                         .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
         userEntity.setSubscriptionTier(shopCreationRequestEntity.getSubscriptionTier());
+        userEntity.getShop().setStatus(ShopStatus.ACTIVE);
         applicationEventPublisher.publishEvent(new NotificationEvent(
                 userEmail,
                 NotificationType.SHOP_APPROVED,
@@ -143,6 +127,10 @@ public class AdminServiceImpl implements AdminService {
 
         shopCreationRequestEntity.setRequestStatus(RequestStatus.REJECTED);
         shopCreationRequestEntity.setRejectionReason(shopCreationRequestRejectDto.getReason());
+
+        UserEntity userEntity = userRepository.findByEmailAndUserRoleAndStatus(shopCreationRequestEntity.getCreatedBy().getEmail(), UserRole.USER, UserStatus.ACTIVE)
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
+        userEntity.getShop().setStatus(ShopStatus.CLOSED);
 
         applicationEventPublisher.publishEvent(new NotificationEvent(
                 userEmail,

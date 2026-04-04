@@ -1,5 +1,6 @@
 package az.shopery.model.dto.response;
 
+import az.shopery.model.dto.shared.ShopSummaryDto;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -24,4 +25,5 @@ public class UserProfileResponseDto {
     LocalDate dateOfBirth;
     Instant createdAt;
     String profilePhotoUrl;
+    ShopSummaryDto shop;
 }

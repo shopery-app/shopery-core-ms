@@ -15,6 +15,8 @@ import az.shopery.repository.ShopRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.ShopService;
 import java.util.Collections;
+
+import az.shopery.utils.enums.ShopStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -37,7 +39,7 @@ public class ShopServiceImpl implements ShopService {
         UserEntity userEntity = userRepository.findByEmailAndUserRoleAndStatus(userEmail, USER, ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + userEmail));
 
-        ShopEntity shopEntity = shopRepository.findByUserEmail(userEmail)
+        ShopEntity shopEntity = shopRepository.findByUserEmailAndStatus(userEmail, ShopStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("Shop not found for user: " + userEmail));
 
         var userShopResponseDto = UserShopResponseDto.builder()
