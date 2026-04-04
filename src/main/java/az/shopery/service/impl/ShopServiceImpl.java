@@ -1,7 +1,7 @@
 package az.shopery.service.impl;
 
 import static az.shopery.utils.common.UuidUtils.parse;
-import static az.shopery.utils.enums.UserRole.MERCHANT;
+import static az.shopery.utils.enums.UserRole.USER;
 import static az.shopery.utils.enums.UserStatus.ACTIVE;
 
 import az.shopery.handler.exception.ResourceNotFoundException;
@@ -34,7 +34,7 @@ public class ShopServiceImpl implements ShopService {
     @Override
     @Transactional(readOnly = true)
     public SuccessResponse<UserShopResponseDto> getMyShop(String userEmail) {
-        UserEntity userEntity = userRepository.findByEmailAndUserRoleAndStatus(userEmail, MERCHANT, ACTIVE)
+        UserEntity userEntity = userRepository.findByEmailAndUserRoleAndStatus(userEmail, USER, ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + userEmail));
 
         ShopEntity shopEntity = shopRepository.findByUserEmail(userEmail)

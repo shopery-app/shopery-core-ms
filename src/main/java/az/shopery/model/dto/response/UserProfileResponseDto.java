@@ -2,6 +2,7 @@ package az.shopery.model.dto.response;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,6 +16,7 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserProfileResponseDto {
+    UUID id;
     String firstName;
     String lastName;
     String email;

@@ -33,7 +33,7 @@ public class NotifyUsersAboutCancelledOrders {
                     NotificationType.ORDER_CANCELLED,
                     Map.of(
                             "userName", order.getUser().getName(),
-                            "merchantName", order.getShop().getUser().getName()
+                            "shopOwnerName", order.getShop().getUser().getName()
                     )
             ));
         }

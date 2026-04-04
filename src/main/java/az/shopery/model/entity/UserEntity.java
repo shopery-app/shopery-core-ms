@@ -66,7 +66,7 @@ public class UserEntity {
     @Enumerated(EnumType.STRING)
     @Builder.Default
     @Column(name = "user_role", nullable = false)
-    UserRole userRole = UserRole.CUSTOMER;
+    UserRole userRole = UserRole.USER;
     @Enumerated(EnumType.STRING)
     @Builder.Default
     @Column(name = "subscription_tier")
@@ -97,8 +97,8 @@ public class UserEntity {
     List<BlogLikeEntity> blogLikes;
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     List<UserAddressEntity> userAddresses;
-    @OneToMany(mappedBy = "user", orphanRemoval = true)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     List<OrderEntity> orders;
-    @OneToMany(mappedBy = "user", orphanRemoval = true, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     List<SavedBlogEntity> savedBlogs;
 }

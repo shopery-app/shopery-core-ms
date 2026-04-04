@@ -39,11 +39,8 @@ public class ShopRatingServiceImpl implements ShopRatingService {
         ShopEntity shop = shopRepository.findById(parse(shopId))
                 .orElseThrow(() -> new ResourceNotFoundException("Shop not found!"));
 
-        if (shop.getUser().getId().equals(user.getId())) {
-            throw new IllegalRequestException("You cannot rate your own shop!");
-        }
         if (shop.getUser().getStatus().equals(UserStatus.CLOSED)) {
-            throw new IllegalRequestException("Shop is owned by a closed merchant and cannot be rated!");
+            throw new IllegalRequestException("Shop is owned by a closed user and cannot be rated!");
         }
         ShopRatingEntity shopRatingEntity = shopRatingRepository.findByUserIdAndShopId(user.getId(), shop.getId())
                 .orElse(ShopRatingEntity.builder()

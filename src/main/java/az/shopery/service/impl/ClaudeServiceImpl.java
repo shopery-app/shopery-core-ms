@@ -45,8 +45,8 @@ public class ClaudeServiceImpl implements ClaudeService {
     public SuccessResponse<ChatResponseDto> chat(String userEmail, ChatRequestDto request) {
         log.info("Processing chat request from user: {}", userEmail);
 
-        userRepository.findByEmailAndUserRoleAndStatusAndSubscriptionTier(userEmail, UserRole.MERCHANT, UserStatus.ACTIVE, SubscriptionTier.PREMIUM)
-                .orElseThrow(() -> new ResourceNotFoundException("Merchant not found!"));
+        userRepository.findByEmailAndUserRoleAndStatusAndSubscriptionTier(userEmail, UserRole.USER, UserStatus.ACTIVE, SubscriptionTier.PREMIUM)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
 
         ClaudeRequestDto claudeRequest = ClaudeRequestDto.builder()
                 .model(config.getModel())

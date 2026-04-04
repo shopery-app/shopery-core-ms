@@ -7,9 +7,7 @@ import static az.shopery.utils.common.UuidUtils.parse;
 import az.shopery.handler.exception.IllegalRequestException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.mapper.TaskMapper;
-import az.shopery.model.dto.request.CloseMerchantRequestDto;
 import az.shopery.model.dto.request.ShopCreationRequestRejectDto;
-import az.shopery.model.dto.response.ApplicationInfoResponseDto;
 import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.dto.response.UserProfileResponseDto;
 import az.shopery.model.dto.response.task.TaskResponseDto;
@@ -57,23 +55,16 @@ public class AdminServiceImpl implements AdminService {
     private final S3FileUtil s3FileUtil;
 
     @Override
-    public SuccessResponse<Page<UserProfileResponseDto>> getCustomers(Pageable pageable) {
-        Page<UserEntity> customers = userRepository.findAllByUserRoleAndStatus(UserRole.CUSTOMER, UserStatus.ACTIVE, pageable);
-        return SuccessResponse.of(customers.map(this::mapToDto), "Customers are retrieved successfully!");
-    }
-
-    @Override
-    public SuccessResponse<Page<UserProfileResponseDto>> getMerchants(Pageable pageable) {
-        Page<UserEntity> customers = userRepository.findAllByUserRoleAndStatus(UserRole.MERCHANT, UserStatus.ACTIVE, pageable);
-        return SuccessResponse.of(customers.map(this::mapToDto), "Merchants are retrieved successfully!");
+    public SuccessResponse<Page<UserProfileResponseDto>> getUsers(Pageable pageable) {
+        Page<UserEntity> users = userRepository.findAllByUserRoleAndStatus(UserRole.USER, UserStatus.ACTIVE, pageable);
+        return SuccessResponse.of(users.map(this::mapToDto), "Users are retrieved successfully!");
     }
 
     @Override
     @Transactional
-    public SuccessResponse<Void> closeMerchant(CloseMerchantRequestDto closeMerchantRequestDto) {
-        String email = closeMerchantRequestDto.getEmail();
-        UserEntity user = userRepository.findByEmailAndUserRoleAndStatus(email, UserRole.MERCHANT, UserStatus.ACTIVE)
-                .orElseThrow(() -> new ResourceNotFoundException("Merchant not found!"));
+    public SuccessResponse<Void> closeUser(String id) {
+        UserEntity user = userRepository.findById(parse(id))
+                .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
         user.setStatus(UserStatus.CLOSED);
 
         ShopEntity shop = user.getShop();
@@ -94,25 +85,6 @@ public class AdminServiceImpl implements AdminService {
                 : taskRepository.findAllByAssignedAdminAndTaskCategory(assignedAdmin, taskCategory, pageable);
 
         return SuccessResponse.of(tasks.map(taskMapper::toDto), "Tasks are retrieved successfully!");
-    }
-
-    @Override
-    public SuccessResponse<ApplicationInfoResponseDto> getApplicationInfo(String userEmail) {
-        UserEntity assignedAdmin = getAdmin(userEmail);
-
-        Integer totalCustomers = userRepository.countAllByUserRoleAndStatus(UserRole.CUSTOMER, UserStatus.ACTIVE);
-        Integer totalMerchants = userRepository.countAllByUserRoleAndStatus(UserRole.MERCHANT, UserStatus.ACTIVE);
-        Integer pendingSupportTickets = taskRepository.countSupportTicketsByStatusAndAdmin(TicketStatus.OPEN, assignedAdmin.getId());
-        Integer pendingShopCreationRequests = taskRepository.countShopRequestsByStatusAndAdmin(RequestStatus.PENDING, assignedAdmin.getId());
-
-        ApplicationInfoResponseDto applicationInfo = ApplicationInfoResponseDto.builder()
-                .totalCustomers(totalCustomers)
-                .totalMerchants(totalMerchants)
-                .pendingSupportTickets(pendingSupportTickets)
-                .pendingShopCreationRequests(pendingShopCreationRequests)
-                .build();
-
-        return SuccessResponse.of(applicationInfo, "Application info retrieved successfully!");
     }
 
     @Override
@@ -150,8 +122,8 @@ public class AdminServiceImpl implements AdminService {
         shopRepository.save(shop);
         shopCreationRequestEntity.setRequestStatus(RequestStatus.APPROVED);
 
-        UserEntity userEntity = userRepository.findByEmailAndUserRoleAndStatus(shopCreationRequestEntity.getCreatedBy().getEmail(), UserRole.MERCHANT, UserStatus.ACTIVE)
-                        .orElseThrow(() -> new ResourceNotFoundException("Merchant not found!"));
+        UserEntity userEntity = userRepository.findByEmailAndUserRoleAndStatus(shopCreationRequestEntity.getCreatedBy().getEmail(), UserRole.USER, UserStatus.ACTIVE)
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
         userEntity.setSubscriptionTier(shopCreationRequestEntity.getSubscriptionTier());
         applicationEventPublisher.publishEvent(new NotificationEvent(
                 userEmail,
@@ -201,6 +173,7 @@ public class AdminServiceImpl implements AdminService {
 
     private UserProfileResponseDto mapToDto(UserEntity userEntity) {
         return UserProfileResponseDto.builder()
+                .id(userEntity.getId())
                 .firstName(first(userEntity.getName()))
                 .lastName(last(userEntity.getName()))
                 .email(userEntity.getEmail())
