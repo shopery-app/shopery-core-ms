@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import java.util.Date;
+import java.time.LocalDate;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -31,5 +31,5 @@ public class UserProfileUpdateRequestDto {
     @ValidPhone
     String phone;
     @Past(message = "Date of birth must be a past date")
-    Date dateOfBirth;
+    LocalDate dateOfBirth;
 }

@@ -1,7 +1,7 @@
 package az.shopery.model.dto.response;
 
 import java.time.Instant;
-import java.util.Date;
+import java.time.LocalDate;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,7 +19,7 @@ public class UserProfileResponseDto {
     String lastName;
     String email;
     String phone;
-    Date dateOfBirth;
+    LocalDate dateOfBirth;
     Instant createdAt;
     String profilePhotoUrl;
 }

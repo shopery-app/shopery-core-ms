@@ -15,8 +15,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.Temporal;
-import jakarta.persistence.TemporalType;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,8 +27,8 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -77,9 +75,8 @@ public class UserEntity {
     String profilePhotoUrl;
     @Column(name = "phone")
     String phone;
-    @Temporal(TemporalType.DATE)
     @Column(name = "date_of_birth")
-    Date dateOfBirth;
+    LocalDate dateOfBirth;
     @Column(name = "last_role_change_at")
     Instant lastRoleChangeAt;
     @Column(name = "password_changed_at")
