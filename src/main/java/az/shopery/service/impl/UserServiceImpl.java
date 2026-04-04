@@ -14,7 +14,6 @@ import az.shopery.model.dto.request.UserEmailUpdateRequestDto;
 import az.shopery.model.dto.request.UserEmailVerificationRequestDto;
 import az.shopery.model.dto.request.UserPasswordUpdateRequestDto;
 import az.shopery.model.dto.request.UserProfileUpdateRequestDto;
-import az.shopery.model.dto.response.BecomeMerchantResponseDto;
 import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.dto.response.UserEmailUpdateResponseDto;
 import az.shopery.model.dto.response.UserPasswordUpdateResponseDto;
@@ -31,7 +30,6 @@ import az.shopery.service.UserService;
 import az.shopery.utils.aws.S3FileUtil;
 import az.shopery.utils.common.AdminAssignmentHelper;
 import az.shopery.utils.enums.NotificationType;
-import az.shopery.utils.enums.UserRole;
 import az.shopery.utils.enums.UserStatus;
 import az.shopery.utils.security.JwtService;
 import java.time.Instant;
@@ -77,35 +75,6 @@ public class UserServiceImpl implements UserService {
         UserEntity updatedUserEntity = userRepository.save(userEntity);
         log.info("User profile updated successfully for user {}", userEmail);
         return SuccessResponse.of(mapToDto(updatedUserEntity), "User profile updated successfully.");
-    }
-
-    @Override
-    @Transactional
-    public SuccessResponse<BecomeMerchantResponseDto> becomeMerchant(String userEmail) {
-        UserEntity userEntity = getUserByEmail(userEmail);
-
-        if (userEntity.getUserRole().equals(UserRole.MERCHANT)) {
-            throw new IllegalRequestException("User is already registered as a merchant.");
-        }
-
-        userEntity.setUserRole(UserRole.MERCHANT);
-        userEntity.setLastRoleChangeAt(Instant.now());
-        userRepository.save(userEntity);
-
-        var userDetails = withUsername(userEmail)
-                .password(userEntity.getPassword())
-                .authorities(userEntity.getUserRole().name())
-                .build();
-        String accessToken = jwtService.generateToken(userDetails);
-        String refreshToken = jwtService.generateRefreshToken(userDetails);
-
-        var dto = BecomeMerchantResponseDto.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .userProfileResponseDto(mapToDto(userEntity))
-                .build();
-        log.info("Become merchant successfully for user {}", userEmail);
-        return SuccessResponse.of(dto, "Become merchant successfully.");
     }
 
     @Override

@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - changeSet:
+      id: 34_04042026_update_users_role
+      author: Jahangir Alisoy
+      changes:
+        - modifyDataType:
+            tableName: users
+            columnName: user_role
+            newDataType: varchar(255)
+        - update:
+            tableName: users
+            columns:
+              - column:
+                  name: user_role
+                  value: USER
+            where: user_role IN ('CUSTOMER', 'MERCHANT')
