@@ -14,9 +14,8 @@ import az.shopery.model.entity.UserEntity;
 import az.shopery.repository.ShopRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.ShopService;
-import java.util.Collections;
-
 import az.shopery.utils.enums.ShopStatus;
+import java.util.Collections;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;

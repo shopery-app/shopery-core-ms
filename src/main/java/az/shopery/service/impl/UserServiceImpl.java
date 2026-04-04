@@ -222,6 +222,7 @@ public class UserServiceImpl implements UserService {
 
     private UserProfileResponseDto mapToDto(UserEntity userEntity) {
         return UserProfileResponseDto.builder()
+                .id(userEntity.getId())
                 .firstName(first(userEntity.getName()))
                 .lastName(last(userEntity.getName()))
                 .email(userEntity.getEmail())
