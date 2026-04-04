@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 35_04042026_add_status_to_shops_table
+      author: Jahangir Alisoy
+      changes:
+        - addColumn:
+            tableName: shops
+            columns:
+              - column:
+                  name: status
+                  type: varchar(255)
+                  defaultValue: 'PENDING'
