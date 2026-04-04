@@ -2,19 +2,14 @@ package az.shopery.controller;
 
 import az.shopery.model.dto.response.ShopResponseDto;
 import az.shopery.model.dto.shared.SuccessResponse;
-import az.shopery.service.ShopRatingService;
 import az.shopery.service.ShopService;
-import java.security.Principal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -23,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class PublicShopController {
 
     private final ShopService shopService;
-    private final ShopRatingService shopRatingService;
 
     @GetMapping
     public ResponseEntity<SuccessResponse<Page<ShopResponseDto>>> getAllOrSearchShops(Pageable pageable) {
@@ -38,11 +32,5 @@ public class PublicShopController {
     @GetMapping("/id/{shopId}")
     public ResponseEntity<SuccessResponse<ShopResponseDto>> getShopById(@PathVariable String shopId) {
         return ResponseEntity.ok(shopService.getShopById(shopId));
-    }
-
-    @PostMapping("/{shopId}/rating")
-    @PreAuthorize("hasAnyAuthority('CUSTOMER', 'MERCHANT')")
-    public ResponseEntity<SuccessResponse<Void>> rateShop(Principal principal, @PathVariable String shopId, @RequestParam int rating) {
-        return ResponseEntity.ok(shopRatingService.rateShop(principal.getName(), shopId, rating));
     }
 }

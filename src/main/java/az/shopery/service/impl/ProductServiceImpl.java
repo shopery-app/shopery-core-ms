@@ -46,7 +46,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public SuccessResponse<ProductDetailResponseDto> addProduct(String userEmail, ProductCreateRequestDto productCreateRequestDto) {
-        ShopEntity shopEntity = getShopForMerchant(userEmail);
+        ShopEntity shopEntity = getShopForUser(userEmail);
 
         ProductEntity productEntity = ProductEntity.builder()
                 .shop(shopEntity)
@@ -73,7 +73,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public SuccessResponse<ProductDetailResponseDto> updateProduct(String userEmail, String productId, ProductCreateRequestDto productCreateRequestDto) {
-        ProductEntity productEntity = getProductForMerchant(userEmail, productId);
+        ProductEntity productEntity = getProductForUser(userEmail, productId);
 
         if (productEntity.getCurrentPrice().compareTo(productCreateRequestDto.getPrice()) != 0) {
             PriceHistoryEntity oldPrice = PriceHistoryEntity.builder()
@@ -97,7 +97,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public SuccessResponse<String> updateProductImage(String userEmail, String productId, MultipartFile imageFile) {
-        ProductEntity productEntity = getProductForMerchant(userEmail, productId);
+        ProductEntity productEntity = getProductForUser(userEmail, productId);
 
         String newImageUrlKey = s3FileUtil.uploadNewFile(productEntity.getImageUrl(), imageFile);
         productEntity.setImageUrl(newImageUrlKey);
@@ -109,7 +109,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public SuccessResponse<Void> deleteProductImage(String userEmail, String productId) {
-        ProductEntity productEntity = getProductForMerchant(userEmail, productId);
+        ProductEntity productEntity = getProductForUser(userEmail, productId);
 
         String imageKey = productEntity.getImageUrl();
         if (StringUtils.isBlank(imageKey)) {
@@ -126,7 +126,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public SuccessResponse<Void> deleteProduct(String userEmail, String productId) {
-        ProductEntity productEntity = getProductForMerchant(userEmail, productId);
+        ProductEntity productEntity = getProductForUser(userEmail, productId);
 
         String imageKey = productEntity.getImageUrl();
         productRepository.delete(productEntity);
@@ -138,7 +138,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public SuccessResponse<Page<ProductResponseDto>> getMyProducts(String userEmail, Pageable pageable) {
-        ShopEntity shopEntity = getShopForMerchant(userEmail);
+        ShopEntity shopEntity = getShopForUser(userEmail);
         Page<ProductEntity> productEntityPage = productRepository.findByShopId(shopEntity.getId(), pageable);
         return SuccessResponse.of(productEntityPage.map(productMapper::toBriefDto), "Your products retrieved successfully.");
     }
@@ -165,11 +165,11 @@ public class ProductServiceImpl implements ProductService {
         return SuccessResponse.of(productEntityPage.map(productMapper::toBriefDto), "Top discounted products retrieved successfully.");
     }
 
-    private ShopEntity getShopForMerchant(String userEmail) {
+    private ShopEntity getShopForUser(String userEmail) {
         UserEntity userEntity = userRepository.findByEmailAndStatus(userEmail, UserStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         return shopRepository.findByUser(userEntity)
-                .orElseThrow(() -> new ResourceNotFoundException("Shop not found for this merchant. Please create a shop first."));
+                .orElseThrow(() -> new ResourceNotFoundException("Shop not found for this user. Please create a shop first."));
     }
 
     private ProductEntity getProductForShop(UUID productId, UUID shopId) {
@@ -182,8 +182,8 @@ public class ProductServiceImpl implements ProductService {
         return product;
     }
 
-    private ProductEntity getProductForMerchant(String userEmail, String productId) {
-        return getProductForShop(parse(productId), getShopForMerchant(userEmail).getId());
+    private ProductEntity getProductForUser(String userEmail, String productId) {
+        return getProductForShop(parse(productId), getShopForUser(userEmail).getId());
     }
 
     private String generateImageUrl(String key) {

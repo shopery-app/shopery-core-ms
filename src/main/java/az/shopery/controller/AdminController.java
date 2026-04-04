@@ -1,16 +1,10 @@
 package az.shopery.controller;
 
-import az.shopery.model.dto.request.CloseMerchantRequestDto;
-import az.shopery.model.dto.request.SearchRequestDto;
 import az.shopery.model.dto.request.ShopCreationRequestRejectDto;
-import az.shopery.model.dto.response.ApplicationInfoResponseDto;
-import az.shopery.model.dto.response.SearchMetadataResponseDto;
-import az.shopery.model.dto.response.SearchResponseDto;
 import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.dto.response.UserProfileResponseDto;
 import az.shopery.model.dto.response.task.TaskResponseDto;
 import az.shopery.service.AdminService;
-import az.shopery.service.GlobalSearchService;
 import az.shopery.utils.enums.TaskCategory;
 import jakarta.validation.Valid;
 import java.security.Principal;
@@ -18,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,26 +23,19 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/admin")
-@PreAuthorize("hasAuthority('ADMIN')")
+@RequestMapping("/api/v1/admins")
 public class AdminController {
 
     private final AdminService adminService;
-    private final GlobalSearchService globalSearchService;
 
-    @GetMapping("/customers")
-    public ResponseEntity<SuccessResponse<Page<UserProfileResponseDto>>> getCustomers(Pageable pageable) {
-        return ResponseEntity.ok(adminService.getCustomers(pageable));
+    @GetMapping("/users")
+    public ResponseEntity<SuccessResponse<Page<UserProfileResponseDto>>> getUsers(Pageable pageable) {
+        return ResponseEntity.ok(adminService.getUsers(pageable));
     }
 
-    @GetMapping("/merchants")
-    public ResponseEntity<SuccessResponse<Page<UserProfileResponseDto>>> getMerchants(Pageable pageable) {
-        return ResponseEntity.ok(adminService.getMerchants(pageable));
-    }
-
-    @PatchMapping("/users/close")
-    public ResponseEntity<SuccessResponse<Void>> closeUser(@RequestBody @Valid CloseMerchantRequestDto closeMerchantRequestDto) {
-        return ResponseEntity.ok(adminService.closeMerchant(closeMerchantRequestDto));
+    @PatchMapping("/users/{id}/close")
+    public ResponseEntity<SuccessResponse<Void>> closeUser(@PathVariable String id) {
+        return ResponseEntity.ok(adminService.closeUser(id));
     }
 
     @GetMapping("/tasks")
@@ -70,20 +56,5 @@ public class AdminController {
     @PostMapping("/tasks/{id}/reject")
     public ResponseEntity<SuccessResponse<Void>> reject(@PathVariable String id, @Valid @RequestBody ShopCreationRequestRejectDto shopCreationRequestRejectDto, Principal principal) {
         return ResponseEntity.ok(adminService.reject(id, principal.getName(), shopCreationRequestRejectDto));
-    }
-
-    @GetMapping("/application/info")
-    public ResponseEntity<SuccessResponse<ApplicationInfoResponseDto>> getApplicationInfo(Principal principal) {
-        return ResponseEntity.ok((adminService.getApplicationInfo(principal.getName())));
-    }
-
-    @GetMapping("/search/metadata")
-    public ResponseEntity<SuccessResponse<SearchMetadataResponseDto>> getSearchMetadata() {
-        return ResponseEntity.ok(globalSearchService.getSearchMetadata());
-    }
-
-    @PostMapping("/search")
-    public ResponseEntity<SuccessResponse<SearchResponseDto>> search(@RequestBody @Valid SearchRequestDto searchRequest) {
-        return ResponseEntity.ok(globalSearchService.search(searchRequest));
     }
 }

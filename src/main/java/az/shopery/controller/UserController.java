@@ -5,7 +5,6 @@ import az.shopery.model.dto.request.UserEmailUpdateRequestDto;
 import az.shopery.model.dto.request.UserEmailVerificationRequestDto;
 import az.shopery.model.dto.request.UserPasswordUpdateRequestDto;
 import az.shopery.model.dto.request.UserProfileUpdateRequestDto;
-import az.shopery.model.dto.response.BecomeMerchantResponseDto;
 import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.dto.response.UserEmailUpdateResponseDto;
 import az.shopery.model.dto.response.UserPasswordUpdateResponseDto;
@@ -16,7 +15,6 @@ import jakarta.validation.Valid;
 import java.security.Principal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -27,7 +25,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/users/me")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyAuthority('CUSTOMER', 'MERCHANT')")
 public class UserController {
 
     private final UserService userService;
@@ -42,14 +39,7 @@ public class UserController {
         return ResponseEntity.ok(userService.updateMyProfile(principal.getName(), userProfileUpdateRequestDto));
     }
 
-    @PostMapping("/be-merchant")
-    @PreAuthorize("hasAuthority('CUSTOMER')")
-    public ResponseEntity<SuccessResponse<BecomeMerchantResponseDto>> becomeMerchant(Principal principal) {
-        return ResponseEntity.ok(userService.becomeMerchant(principal.getName()));
-    }
-
     @PostMapping("/shop")
-    @PreAuthorize("hasAuthority('MERCHANT')")
     public ResponseEntity<SuccessResponse<Void>> createMyShop(Principal principal, @Valid @RequestBody ShopCreateRequestDto shopCreateRequestDto) {
         return ResponseEntity.ok(userService.createMyShop(principal.getName(), shopCreateRequestDto));
     }

@@ -62,7 +62,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) {
         http
                 .cors(withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
@@ -73,6 +73,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/blogs/**").permitAll()
                         .requestMatchers("/api/v1/dropdowns/**").permitAll()
                         .requestMatchers(SWAGGER_WHITELIST).permitAll()
+                        .requestMatchers("/api/v1/admins/**").hasAuthority("ADMIN")
+                        .requestMatchers("/api/v1/users/me/**").hasAuthority("USER")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session ->
@@ -84,7 +86,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
