@@ -14,11 +14,13 @@ import az.shopery.model.dto.request.UserEmailUpdateRequestDto;
 import az.shopery.model.dto.request.UserEmailVerificationRequestDto;
 import az.shopery.model.dto.request.UserPasswordUpdateRequestDto;
 import az.shopery.model.dto.request.UserProfileUpdateRequestDto;
+import az.shopery.model.dto.shared.ShopSummaryDto;
 import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.dto.response.UserEmailUpdateResponseDto;
 import az.shopery.model.dto.response.UserPasswordUpdateResponseDto;
 import az.shopery.model.dto.response.UserProfileResponseDto;
 import az.shopery.model.entity.EmailUpdateTokenEntity;
+import az.shopery.model.entity.ShopEntity;
 import az.shopery.model.entity.UserEntity;
 import az.shopery.model.entity.task.ShopCreationRequestEntity;
 import az.shopery.model.event.NotificationEvent;
@@ -30,11 +32,14 @@ import az.shopery.service.UserService;
 import az.shopery.utils.aws.S3FileUtil;
 import az.shopery.utils.common.AdminAssignmentHelper;
 import az.shopery.utils.enums.NotificationType;
+import az.shopery.utils.enums.ShopStatus;
 import az.shopery.utils.enums.UserStatus;
 import az.shopery.utils.security.JwtService;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -83,8 +88,8 @@ public class UserServiceImpl implements UserService {
         UserEntity userEntity = getUserByEmail(userEmail);
         UserEntity assignedAdmin = adminAssignmentHelper.assignRandomAdmin();
 
-        if (shopRepository.existsByUser(userEntity)) {
-            throw new IllegalRequestException("User already has a shop.");
+        if (shopRepository.existsByUserAndStatus(userEntity, ShopStatus.ACTIVE)) {
+            throw new IllegalRequestException("User already has an active shop.");
         }
 
         if (shopRepository.existsByShopName(shopCreateRequestDto.getShopName())) {
@@ -99,6 +104,16 @@ public class UserServiceImpl implements UserService {
                 .subscriptionTier(shopCreateRequestDto.getSubscriptionTier())
                 .build();
         taskRepository.save(shopCreationRequestEntity);
+
+        ShopEntity shop = ShopEntity.builder()
+                .user(shopCreationRequestEntity.getCreatedBy())
+                .shopName(shopCreationRequestEntity.getShopName())
+                .description(shopCreationRequestEntity.getDescription())
+                .totalIncome(BigDecimal.ZERO)
+                .rating(0.0)
+                .status(ShopStatus.PENDING)
+                .build();
+        shopRepository.save(shop);
 
         return SuccessResponse.of("Your request has been submitted and assigned to an admin for review.");
     }
@@ -214,6 +229,19 @@ public class UserServiceImpl implements UserService {
                 .dateOfBirth(userEntity.getDateOfBirth())
                 .profilePhotoUrl(s3FileUtil.generatePresignedUrl(userEntity.getProfilePhotoUrl()))
                 .createdAt(userEntity.getCreatedAt())
+                .shop(mapShop(userEntity.getShop()))
+                .build();
+    }
+
+    private ShopSummaryDto mapShop(ShopEntity shopEntity) {
+        if (Objects.isNull(shopEntity)) {
+            return null;
+        }
+
+        return ShopSummaryDto.builder()
+                .id(shopEntity.getId())
+                .shopName(shopEntity.getShopName())
+                .status(shopEntity.getStatus())
                 .build();
     }
 }
