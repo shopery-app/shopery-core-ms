@@ -1,6 +1,7 @@
 package az.shopery.controller;
 
 import az.shopery.model.dto.request.ShopCreationRequestRejectDto;
+import az.shopery.model.dto.response.AdminShopResponseDto;
 import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.dto.response.UserProfileResponseDto;
 import az.shopery.model.dto.response.task.TaskResponseDto;
@@ -36,6 +37,11 @@ public class AdminController {
     @PatchMapping("/users/{id}/close")
     public ResponseEntity<SuccessResponse<Void>> closeUser(@PathVariable String id) {
         return ResponseEntity.ok(adminService.closeUser(id));
+    }
+
+    @GetMapping("/shops")
+    public ResponseEntity<SuccessResponse<Page<AdminShopResponseDto>>> getShops(Pageable pageable) {
+        return ResponseEntity.ok(adminService.getShops(pageable));
     }
 
     @GetMapping("/tasks")

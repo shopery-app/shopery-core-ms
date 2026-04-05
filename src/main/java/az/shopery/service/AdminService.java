@@ -1,6 +1,7 @@
 package az.shopery.service;
 
 import az.shopery.model.dto.request.ShopCreationRequestRejectDto;
+import az.shopery.model.dto.response.AdminShopResponseDto;
 import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.dto.response.UserProfileResponseDto;
 import az.shopery.model.dto.response.task.TaskResponseDto;
@@ -15,4 +16,5 @@ public interface AdminService {
     SuccessResponse<Void> approve(String id, String userEmail);
     SuccessResponse<Void> reject(String id, String userEmail, ShopCreationRequestRejectDto shopCreationRequestRejectDto);
     SuccessResponse<Page<TaskResponseDto>> getTasks(TaskCategory taskCategory, Pageable pageable, String userEmail);
+    SuccessResponse<Page<AdminShopResponseDto>> getShops(Pageable pageable);
 }

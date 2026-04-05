@@ -7,7 +7,9 @@ import static az.shopery.utils.common.UuidUtils.parse;
 import az.shopery.handler.exception.IllegalRequestException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.mapper.TaskMapper;
+import az.shopery.model.dto.projection.AdminShopProjection;
 import az.shopery.model.dto.request.ShopCreationRequestRejectDto;
+import az.shopery.model.dto.response.AdminShopResponseDto;
 import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.dto.response.UserProfileResponseDto;
 import az.shopery.model.dto.response.task.TaskResponseDto;
@@ -19,11 +21,19 @@ import az.shopery.model.entity.task.SupportTicketEntity;
 import az.shopery.model.entity.task.TaskEntity;
 import az.shopery.model.event.NotificationEvent;
 import az.shopery.repository.OrderRepository;
+import az.shopery.repository.ShopRepository;
 import az.shopery.repository.TaskRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.AdminService;
 import az.shopery.utils.aws.S3FileUtil;
-import az.shopery.utils.enums.*;
+import az.shopery.utils.enums.NotificationType;
+import az.shopery.utils.enums.OrderStatus;
+import az.shopery.utils.enums.RequestStatus;
+import az.shopery.utils.enums.ShopStatus;
+import az.shopery.utils.enums.TaskCategory;
+import az.shopery.utils.enums.TicketStatus;
+import az.shopery.utils.enums.UserRole;
+import az.shopery.utils.enums.UserStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -40,6 +50,7 @@ public class AdminServiceImpl implements AdminService {
 
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
+    private final ShopRepository shopRepository;
     private final TaskRepository taskRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final TaskMapper taskMapper;
@@ -143,6 +154,13 @@ public class AdminServiceImpl implements AdminService {
         return SuccessResponse.of("Shop creation request has been rejected successfully!");
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public SuccessResponse<Page<AdminShopResponseDto>> getShops(Pageable pageable) {
+        Page<AdminShopProjection> shops = shopRepository.findAllWithProductCount(pageable);
+        return SuccessResponse.of(shops.map(this::mapToAdminShopDto), "All shops are retrieved successfully!");
+    }
+
     private UserEntity getAdmin(String userEmail) {
         return userRepository.findByEmailAndUserRoleAndStatus(userEmail, UserRole.ADMIN, UserStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("Admin not found!"));
@@ -169,6 +187,22 @@ public class AdminServiceImpl implements AdminService {
                 .dateOfBirth(userEntity.getDateOfBirth())
                 .profilePhotoUrl(s3FileUtil.generatePresignedUrl(userEntity.getProfilePhotoUrl()))
                 .createdAt(userEntity.getCreatedAt())
+                .build();
+    }
+
+    private AdminShopResponseDto mapToAdminShopDto(AdminShopProjection adminShopProjection) {
+        return AdminShopResponseDto.builder()
+                .id(adminShopProjection.getId())
+                .shopName(adminShopProjection.getShopName())
+                .description(adminShopProjection.getDescription())
+                .totalIncome(adminShopProjection.getTotalIncome())
+                .rating(adminShopProjection.getRating())
+                .createdAt(adminShopProjection.getCreatedAt())
+                .totalProducts(adminShopProjection.getTotalProducts())
+                .subscriptionTier(adminShopProjection.getSubscriptionTier())
+                .shopStatus(adminShopProjection.getShopStatus())
+                .userEmail(adminShopProjection.getUserEmail())
+                .userStatus(adminShopProjection.getUserStatus())
                 .build();
     }
 }
