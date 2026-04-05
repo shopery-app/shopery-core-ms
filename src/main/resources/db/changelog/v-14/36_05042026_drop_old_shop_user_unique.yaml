@@ -1,0 +1,13 @@
+databaseChangeLog:
+    - changeSet:
+        id: 36_05042026_drop_old_shop_user_unique
+        author: Jahangir Alisoy
+        preConditions:
+          - onFail: MARK_RAN
+          - uniqueConstraintExists:
+              tableName: shops
+              constraintName: shops_user_id_key
+        changes:
+          - dropUniqueConstraint:
+              tableName: shops
+              constraintName: shops_user_id_key
