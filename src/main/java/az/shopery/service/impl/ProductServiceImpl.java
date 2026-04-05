@@ -19,16 +19,17 @@ import az.shopery.repository.ShopRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.ProductService;
 import az.shopery.utils.aws.S3FileUtil;
-import az.shopery.utils.enums.ProductCategory;
-import az.shopery.utils.enums.ProductCondition;
-import az.shopery.utils.enums.SubscriptionTier;
-import az.shopery.utils.enums.UserStatus;
 import java.time.Instant;
 import java.time.YearMonth;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.UUID;
+import az.shopery.utils.enums.ProductCategory;
+import az.shopery.utils.enums.ProductCondition;
+import az.shopery.utils.enums.ShopStatus;
+import az.shopery.utils.enums.SubscriptionTier;
+import az.shopery.utils.enums.UserStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -175,7 +176,7 @@ public class ProductServiceImpl implements ProductService {
     private ShopEntity getShopForUser(String userEmail) {
         UserEntity userEntity = userRepository.findByEmailAndStatus(userEmail, UserStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        return shopRepository.findByUser(userEntity)
+        return shopRepository.findByUserAndStatus(userEntity, ShopStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("Shop not found for this user. Please create a shop first."));
     }
 
