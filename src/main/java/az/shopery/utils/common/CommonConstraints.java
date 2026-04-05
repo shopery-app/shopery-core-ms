@@ -26,6 +26,16 @@ public final class CommonConstraints {
 
     public static final int MAX_ADDRESSES_PER_USER = 6;
 
+    public static final int BASIC_MAX_PRODUCTS_PER_MONTH = 5;
+    public static final int STANDARD_MAX_PRODUCTS_PER_MONTH = 20;
+    public static final int PREMIUM_MAX_PRODUCTS_PER_MONTH = Integer.MAX_VALUE;
+
+    public static final Map<SubscriptionTier, Integer> MAX_PRODUCTS_PER_MONTH_BY_TIER = Map.of(
+            SubscriptionTier.BASIC, BASIC_MAX_PRODUCTS_PER_MONTH,
+            SubscriptionTier.STANDARD, STANDARD_MAX_PRODUCTS_PER_MONTH,
+            SubscriptionTier.PREMIUM, PREMIUM_MAX_PRODUCTS_PER_MONTH
+    );
+
     public static final Map<String, Class<? extends Enum<?>>> DROPDOWN_MAP = Map.of(
             "product-categories", ProductCategory.class,
             "product-conditions", ProductCondition.class,

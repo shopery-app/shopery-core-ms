@@ -4,6 +4,7 @@ import az.shopery.model.entity.ProductEntity;
 import az.shopery.model.entity.UserEntity;
 import az.shopery.utils.enums.ProductCategory;
 import az.shopery.utils.enums.ProductCondition;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -39,5 +40,18 @@ public interface ProductRepository extends JpaRepository<ProductEntity, UUID> {
             @Param("maxPrice") Double maxPrice,
             @Param("keyword") String keyword,
             Pageable pageable
+    );
+
+    @Query("""
+        SELECT COUNT(p)
+        FROM ProductEntity p
+        WHERE p.shop.id = :shopId
+          AND p.createdAt >= :startOfMonth
+          AND p.createdAt < :startOfNextMonth
+    """)
+    long countProductsCreatedInMonth(
+            @Param("shopId") UUID shopId,
+            @Param("startOfMonth") Instant startOfMonth,
+            @Param("startOfNextMonth") Instant startOfNextMonth
     );
 }
