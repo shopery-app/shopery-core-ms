@@ -1,22 +1,22 @@
 databaseChangeLog:
   - includeAll:
-      path: db/changelog/v-1
+      path: db/changelog/v-01
   - includeAll:
-      path: db/changelog/v-2
+      path: db/changelog/v-02
   - includeAll:
-      path: db/changelog/v-3
+      path: db/changelog/v-03
   - includeAll:
-      path: db/changelog/v-4
+      path: db/changelog/v-04
   - includeAll:
-      path: db/changelog/v-5
+      path: db/changelog/v-05
   - includeAll:
-      path: db/changelog/v-6
+      path: db/changelog/v-06
   - includeAll:
-      path: db/changelog/v-7
+      path: db/changelog/v-07
   - includeAll:
-      path: db/changelog/v-8
+      path: db/changelog/v-08
   - includeAll:
-      path: db/changelog/v-9
+      path: db/changelog/v-09
   - includeAll:
       path: db/changelog/v-10
   - includeAll:
