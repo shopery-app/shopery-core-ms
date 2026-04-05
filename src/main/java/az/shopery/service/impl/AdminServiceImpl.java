@@ -69,11 +69,13 @@ public class AdminServiceImpl implements AdminService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
         user.setStatus(UserStatus.CLOSED);
 
-        ShopEntity shop = user.getShop();
-        shop.setStatus(ShopStatus.CLOSED);
-        List<OrderEntity> orders = orderRepository.findAllByShopId(shop.getId());
-        for (OrderEntity order : orders) {
-            order.setStatus(OrderStatus.CANCELLED);
+        List<ShopEntity> shops = user.getShops();
+        for (ShopEntity shop : shops) {
+            shop.setStatus(ShopStatus.CLOSED);
+            List<OrderEntity> orders = orderRepository.findAllByShopId(shop.getId());
+            for (OrderEntity order : orders) {
+                order.setStatus(OrderStatus.CANCELLED);
+            }
         }
 
         return SuccessResponse.of("User deleted successfully!");
@@ -117,9 +119,11 @@ public class AdminServiceImpl implements AdminService {
         shopCreationRequestEntity.setRequestStatus(RequestStatus.APPROVED);
 
         UserEntity userEntity = userRepository.findByEmailAndUserRoleAndStatus(shopCreationRequestEntity.getCreatedBy().getEmail(), UserRole.USER, UserStatus.ACTIVE)
-                        .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
         userEntity.setSubscriptionTier(shopCreationRequestEntity.getSubscriptionTier());
-        userEntity.getShop().setStatus(ShopStatus.ACTIVE);
+        ShopEntity shopEntity = shopRepository.findByShopName(shopCreationRequestEntity.getShopName())
+                .orElseThrow(() -> new ResourceNotFoundException("Shop not found!"));
+        shopEntity.setStatus(ShopStatus.ACTIVE);
         applicationEventPublisher.publishEvent(new NotificationEvent(
                 userEmail,
                 NotificationType.SHOP_APPROVED,
@@ -139,9 +143,9 @@ public class AdminServiceImpl implements AdminService {
         shopCreationRequestEntity.setRequestStatus(RequestStatus.REJECTED);
         shopCreationRequestEntity.setRejectionReason(shopCreationRequestRejectDto.getReason());
 
-        UserEntity userEntity = userRepository.findByEmailAndUserRoleAndStatus(shopCreationRequestEntity.getCreatedBy().getEmail(), UserRole.USER, UserStatus.ACTIVE)
-                        .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
-        userEntity.getShop().setStatus(ShopStatus.CLOSED);
+        ShopEntity shopEntity = shopRepository.findByShopName(shopCreationRequestEntity.getShopName())
+                        .orElseThrow(() -> new ResourceNotFoundException("Shop not found!"));
+        shopEntity.setStatus(ShopStatus.CLOSED);
 
         applicationEventPublisher.publishEvent(new NotificationEvent(
                 userEmail,
