@@ -39,7 +39,6 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Map;
-import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -90,6 +89,10 @@ public class UserServiceImpl implements UserService {
 
         if (shopRepository.existsByUserAndStatus(userEntity, ShopStatus.ACTIVE)) {
             throw new IllegalRequestException("User already has an active shop.");
+        }
+
+        if (shopRepository.existsByUserAndStatus(userEntity, ShopStatus.PENDING)) {
+            throw new IllegalRequestException("User already has a pending shop.");
         }
 
         if (shopRepository.existsByShopName(shopCreateRequestDto.getShopName())) {
@@ -230,19 +233,18 @@ public class UserServiceImpl implements UserService {
                 .dateOfBirth(userEntity.getDateOfBirth())
                 .profilePhotoUrl(s3FileUtil.generatePresignedUrl(userEntity.getProfilePhotoUrl()))
                 .createdAt(userEntity.getCreatedAt())
-                .shop(mapShop(userEntity.getShop()))
+                .shop(mapShop(userEntity))
                 .build();
     }
 
-    private ShopSummaryDto mapShop(ShopEntity shopEntity) {
-        if (Objects.isNull(shopEntity)) {
-            return null;
-        }
-
-        return ShopSummaryDto.builder()
-                .id(shopEntity.getId())
-                .shopName(shopEntity.getShopName())
-                .status(shopEntity.getStatus())
-                .build();
+    private ShopSummaryDto mapShop(UserEntity userEntity) {
+        return shopRepository
+                .findByUserAndStatus(userEntity, ShopStatus.ACTIVE)
+                .map(shop -> ShopSummaryDto.builder()
+                        .id(shop.getId())
+                        .shopName(shop.getShopName())
+                        .status(shop.getStatus())
+                        .build())
+                .orElse(null);
     }
 }

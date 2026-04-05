@@ -25,3 +25,5 @@ databaseChangeLog:
       path: db/changelog/v-12
   - includeAll:
       path: db/changelog/v-13
+  - include:
+      file: db/changelog/v-14/36_05042026_shop_user_constraint.sql
