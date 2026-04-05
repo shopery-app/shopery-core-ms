@@ -1,7 +1,9 @@
 package az.shopery.service.impl;
 
+import static az.shopery.utils.common.CommonConstraints.MAX_PRODUCTS_PER_MONTH_BY_TIER;
 import static az.shopery.utils.common.UuidUtils.parse;
 
+import az.shopery.handler.exception.IllegalRequestException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.mapper.ProductMapper;
 import az.shopery.model.dto.request.ProductCreateRequestDto;
@@ -19,7 +21,11 @@ import az.shopery.service.ProductService;
 import az.shopery.utils.aws.S3FileUtil;
 import az.shopery.utils.enums.ProductCategory;
 import az.shopery.utils.enums.ProductCondition;
+import az.shopery.utils.enums.SubscriptionTier;
 import az.shopery.utils.enums.UserStatus;
+import java.time.Instant;
+import java.time.YearMonth;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.UUID;
@@ -47,6 +53,7 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public SuccessResponse<ProductDetailResponseDto> addProduct(String userEmail, ProductCreateRequestDto productCreateRequestDto) {
         ShopEntity shopEntity = getShopForUser(userEmail);
+        validateMonthlyProductLimit(shopEntity);
 
         ProductEntity productEntity = ProductEntity.builder()
                 .shop(shopEntity)
@@ -188,5 +195,23 @@ public class ProductServiceImpl implements ProductService {
 
     private String generateImageUrl(String key) {
         return Objects.isNull(key) ? null : s3FileUtil.generatePresignedUrl(key);
+    }
+
+    private void validateMonthlyProductLimit(ShopEntity shopEntity) {
+        SubscriptionTier subscriptionTier = shopEntity.getUser().getSubscriptionTier();
+        int maxProductsPerMonth = MAX_PRODUCTS_PER_MONTH_BY_TIER.getOrDefault(subscriptionTier, 0);
+
+        if (maxProductsPerMonth == Integer.MAX_VALUE) {
+            return;
+        }
+
+        YearMonth currentMonth = YearMonth.now(ZoneOffset.UTC);
+        Instant startOfMonth = currentMonth.atDay(1).atStartOfDay().toInstant(ZoneOffset.UTC);
+        Instant startOfNextMonth = currentMonth.plusMonths(1).atDay(1).atStartOfDay().toInstant(ZoneOffset.UTC);
+
+        long createdThisMonth = productRepository.countProductsCreatedInMonth(shopEntity.getId(), startOfMonth, startOfNextMonth);
+        if (createdThisMonth >= maxProductsPerMonth) {
+            throw new IllegalRequestException("Monthly product limit exceeded for " + subscriptionTier + " tier. Allowed: " + maxProductsPerMonth + " products per month.");
+        }
     }
 }
