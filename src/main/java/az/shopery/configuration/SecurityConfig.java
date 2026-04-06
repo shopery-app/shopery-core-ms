@@ -72,6 +72,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/products/**").permitAll()
                         .requestMatchers("/api/v1/blogs/**").permitAll()
                         .requestMatchers("/api/v1/dropdowns/**").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
                         .requestMatchers(SWAGGER_WHITELIST).permitAll()
                         .requestMatchers("/api/v1/admins/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/v1/users/me/**").hasAuthority("USER")
