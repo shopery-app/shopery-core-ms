@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ChatService {
-    SuccessResponse<ChatMessageResponseDto> sendMessage(String userEmail, ChatSendRequestDto chatSendRequestDto);
+    void sendMessage(String userEmail, ChatSendRequestDto chatSendRequestDto);
     SuccessResponse<List<ChatMessageResponseDto>> getConversation(String userEmail, UUID otherUserId);
     SuccessResponse<List<ConversationResponseDto>> getConversations(String userEmail);
 }

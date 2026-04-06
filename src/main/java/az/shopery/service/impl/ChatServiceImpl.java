@@ -32,7 +32,7 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     @Transactional
-    public SuccessResponse<ChatMessageResponseDto> sendMessage(String senderEmail, ChatSendRequestDto request) {
+    public void sendMessage(String senderEmail, ChatSendRequestDto request) {
         UserEntity sender = userRepository.findByEmailAndStatus(senderEmail, UserStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("Sender not found"));
 
@@ -61,8 +61,6 @@ public class ChatServiceImpl implements ChatService {
                 "/queue/messages",
                 response
         );
-
-        return SuccessResponse.of(response, "message sent successfully!");
     }
 
     @Override
@@ -78,24 +76,24 @@ public class ChatServiceImpl implements ChatService {
     @Override
     @Transactional(readOnly = true)
     public SuccessResponse<List<ConversationResponseDto>> getConversations(String userEmail) {
-        UserEntity seller = userRepository.findByEmailAndStatus(userEmail, UserStatus.ACTIVE)
+        UserEntity me = userRepository.findByEmailAndStatus(userEmail, UserStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        List<UUID> buyerIds = chatMessageRepository.findDistinctSendersByReceiverId(seller.getId());
+        List<UUID> contactIds = chatMessageRepository.findDistinctContactsByUserId(me.getId());
 
-        List<ConversationResponseDto> conversations = buyerIds.stream()
-                .map(buyerId -> {
-                    UserEntity buyer = userRepository.findById(buyerId).orElse(null);
-                    if (Objects.isNull(buyer)){
-                        return null;
-                    }
+        List<ConversationResponseDto> conversations = contactIds.stream()
+                .map(contactId -> {
+                    UserEntity contact = userRepository.findById(contactId).orElse(null);
+                    if (Objects.isNull(contact)) return null;
+
                     ChatMessageEntity lastMsg = chatMessageRepository
-                            .findTopBySenderIdAndReceiverIdOrSenderIdAndReceiverIdOrderByCreatedAtDesc(buyerId, seller.getId(), seller.getId(), buyerId)
+                            .findTopBySenderIdAndReceiverIdOrSenderIdAndReceiverIdOrderByCreatedAtDesc(
+                                    me.getId(), contactId, contactId, me.getId())
                             .orElse(null);
 
                     return ConversationResponseDto.builder()
-                            .buyerId(buyerId)
-                            .buyerName(buyer.getName())
+                            .buyerId(contactId)
+                            .buyerName(contact.getName())
                             .lastMessage(Objects.nonNull(lastMsg) ? map(lastMsg) : null)
                             .build();
                 }).filter(Objects::nonNull).toList();
