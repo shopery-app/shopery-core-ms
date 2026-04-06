@@ -1,0 +1,87 @@
+databaseChangeLog:
+  - changeSet:
+      id: 37_07042026_create_chat_messages_table
+      author: Jahangir Alisoy
+      changes:
+        - createTable:
+            tableName: chat_messages
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_chat_messages
+                    nullable: false
+
+              - column:
+                  name: sender_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: receiver_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: content
+                  type: VARCHAR(4000)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  defaultValue: SENT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: read_at
+                  type: TIMESTAMP
+
+        - addForeignKeyConstraint:
+            baseTableName: chat_messages
+            baseColumnNames: sender_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_chat_messages_sender
+
+        - addForeignKeyConstraint:
+            baseTableName: chat_messages
+            baseColumnNames: receiver_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_chat_messages_receiver
+
+        - createIndex:
+            tableName: chat_messages
+            indexName: idx_chat_messages_sender_id
+            columns:
+              - column:
+                  name: sender_id
+
+        - createIndex:
+            tableName: chat_messages
+            indexName: idx_chat_messages_receiver_id
+            columns:
+              - column:
+                  name: receiver_id
+
+        - createIndex:
+            tableName: chat_messages
+            indexName: idx_chat_messages_created_at
+            columns:
+              - column:
+                  name: created_at
+

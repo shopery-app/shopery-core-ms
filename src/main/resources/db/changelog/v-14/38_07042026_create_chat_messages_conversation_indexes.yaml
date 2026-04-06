@@ -1,0 +1,25 @@
+databaseChangeLog:
+  - changeSet:
+      id: 38_07042026_create_chat_messages_conversation_indexes
+      author: Jahangir Alisoy
+      changes:
+        - createIndex:
+            tableName: chat_messages
+            indexName: idx_chat_messages_sender_receiver_created
+            columns:
+              - column:
+                  name: sender_id
+              - column:
+                  name: receiver_id
+              - column:
+                  name: created_at
+        - createIndex:
+            tableName: chat_messages
+            indexName: idx_chat_messages_receiver_sender_created
+            columns:
+              - column:
+                  name: receiver_id
+              - column:
+                  name: sender_id
+              - column:
+                  name: created_at

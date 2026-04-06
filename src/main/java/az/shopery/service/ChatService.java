@@ -1,0 +1,12 @@
+package az.shopery.service;
+
+import az.shopery.model.dto.request.ChatSendRequestDto;
+import az.shopery.model.dto.response.ChatMessageResponseDto;
+import az.shopery.model.dto.shared.SuccessResponse;
+import java.util.List;
+import java.util.UUID;
+
+public interface ChatService {
+    SuccessResponse<ChatMessageResponseDto> sendMessage(String userEmail, ChatSendRequestDto chatSendRequestDto);
+    SuccessResponse<List<ChatMessageResponseDto>> getConversation(String userEmail, UUID otherUserId);
+}
