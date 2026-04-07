@@ -1,11 +1,15 @@
 package az.shopery.configuration;
 
 import az.shopery.utils.websocket.JwtHandshakeInterceptor;
+import az.shopery.utils.websocket.StompAuthChannelInterceptor;
 import az.shopery.utils.websocket.WebSocketUserHandshakeHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
-import org.springframework.web.socket.config.annotation.*;
+import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
+import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
+import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
 @Configuration
 @EnableWebSocketMessageBroker
@@ -14,6 +18,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final JwtHandshakeInterceptor jwtHandshakeInterceptor;
     private final WebSocketUserHandshakeHandler webSocketUserHandshakeHandler;
+    private final StompAuthChannelInterceptor stompAuthChannelInterceptor;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
@@ -28,5 +33,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .addInterceptors(jwtHandshakeInterceptor)
                 .setHandshakeHandler(webSocketUserHandshakeHandler)
                 .setAllowedOriginPatterns("*");
+    }
+
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(stompAuthChannelInterceptor);
     }
 }

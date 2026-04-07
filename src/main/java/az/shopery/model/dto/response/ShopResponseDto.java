@@ -21,5 +21,6 @@ public class ShopResponseDto {
     String description;
     Double rating;
     Instant createdAt;
+    UUID sellerId;
     List<ProductResponseDto> products;
 }

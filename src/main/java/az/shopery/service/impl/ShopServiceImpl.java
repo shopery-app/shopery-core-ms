@@ -93,6 +93,7 @@ public class ShopServiceImpl implements ShopService {
                 .description(shopEntity.getDescription())
                 .rating(shopEntity.getRating())
                 .createdAt(shopEntity.getCreatedAt())
+                .sellerId(shopEntity.getUser().getId())
                 .products(Collections.emptyList())
                 .build();
     }
@@ -104,6 +105,7 @@ public class ShopServiceImpl implements ShopService {
                 .description(shopEntity.getDescription())
                 .rating(shopEntity.getRating())
                 .createdAt(shopEntity.getCreatedAt())
+                .sellerId(shopEntity.getUser().getId())
                 .products(shopEntity.getProducts().stream()
                         .map(productMapper::toBriefDto)
                         .toList())

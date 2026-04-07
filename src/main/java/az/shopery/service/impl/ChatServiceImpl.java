@@ -33,6 +33,8 @@ public class ChatServiceImpl implements ChatService {
     @Override
     @Transactional
     public void sendMessage(String senderEmail, ChatSendRequestDto request) {
+        log.info("sendMessage called: sender={}, receiver={}, content={}",
+                senderEmail, request.getReceiverId(), request.getContent());
         UserEntity sender = userRepository.findByEmailAndStatus(senderEmail, UserStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("Sender not found"));
 
