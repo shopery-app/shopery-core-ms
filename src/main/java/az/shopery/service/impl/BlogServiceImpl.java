@@ -17,13 +17,13 @@ import az.shopery.repository.UserRepository;
 import az.shopery.service.BlogService;
 import az.shopery.utils.aws.S3FileUtil;
 import az.shopery.utils.enums.UserStatus;
-import jakarta.transaction.Transactional;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
@@ -118,6 +118,13 @@ public class BlogServiceImpl implements BlogService {
     public SuccessResponse<Page<BlogResponseDto>> getAllBlogs(Pageable pageable) {
         Page<BlogEntity> blogs = blogRepository.findAllByIsArchived(Boolean.FALSE, pageable);
         return SuccessResponse.of(blogs.map(blogMapper::toDto), "All blogs retrieved successfully!");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SuccessResponse<Page<BlogResponseDto>> search(String query, Pageable pageable) {
+        Page<BlogEntity> blogs = blogRepository.searchBlogs(query.trim(), pageable);
+        return SuccessResponse.of(blogs.map(blogMapper::toDto), "Search results retrieved successfully!");
     }
 
     @Override

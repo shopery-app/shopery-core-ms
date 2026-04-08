@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -21,5 +22,10 @@ public class PublicBlogController {
     @GetMapping
     public ResponseEntity<SuccessResponse<Page<BlogResponseDto>>> getAllBlogs(Pageable pageable) {
         return ResponseEntity.ok(blogService.getAllBlogs(pageable));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<SuccessResponse<Page<BlogResponseDto>>> search(@RequestParam String query, Pageable pageable) {
+        return ResponseEntity.ok(blogService.search(query, pageable));
     }
 }

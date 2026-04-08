@@ -13,6 +13,7 @@ public interface BlogService {
     SuccessResponse<String> updateBlogImage(String userEmail, String blogId, MultipartFile imageFile);
     SuccessResponse<String> deleteBlogImage(String userEmail, String blogId);
     SuccessResponse<Page<BlogResponseDto>> getAllBlogs(Pageable pageable);
+    SuccessResponse<Page<BlogResponseDto>> search(String query, Pageable pageable);
     SuccessResponse<Void> deleteMyBlog(String userEmail, String blogId);
     SuccessResponse<BlogResponseDto> updateMyBlog(String userEmail, BlogRequestDto blogRequestDto, String blogId);
     SuccessResponse<BlogResponseDto> getMyBlog(String userEmail, String blogId);

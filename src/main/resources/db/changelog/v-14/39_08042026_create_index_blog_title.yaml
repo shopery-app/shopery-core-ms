@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 39_08042026_create_index_blog_title
+      author: Jahangir Alisoy
+      changes:
+        - sql:
+            sql: CREATE INDEX IF NOT EXISTS idx_blogs_blog_title ON blogs (blog_title);
+      rollback:
+        - sql:
+            sql: DROP INDEX IF EXISTS idx_blogs_blog_title;
