@@ -155,6 +155,15 @@ public class AuthServiceImpl implements AuthService {
 
         String newCode = generateSixDigitVerificationCode();
 
+        boolean cooldownSet = redisService.setIfAbsent(
+                RedisUtils.registerCooldownKey(email),
+                "1",
+                Duration.ofSeconds(COOLDOWN_SECONDS)
+        );
+        if (!cooldownSet) {
+            throw new CooldownNotMetException("Please wait before resending the verification code!");
+        }
+
         CachedVerificationData cachedVerificationData = CachedVerificationData.builder()
                 .hashedToken(passwordEncoder.encode(newCode))
                 .userName(existing.getUserName())
@@ -171,15 +180,6 @@ public class AuthServiceImpl implements AuthService {
                 cachedVerificationData,
                 Duration.ofMinutes(VERIFICATION_CODE_EXPIRY_MINUTES)
         );
-
-        boolean cooldownSet = redisService.setIfAbsent(
-                RedisUtils.registerCooldownKey(email),
-                "1",
-                Duration.ofSeconds(COOLDOWN_SECONDS)
-        );
-        if (!cooldownSet) {
-            throw new CooldownNotMetException("Please wait before resending the verification code!");
-        }
 
         applicationEventPublisher.publishEvent(new NotificationEvent(
                 email,
@@ -200,6 +200,15 @@ public class AuthServiceImpl implements AuthService {
         var userEntity = userRepository.findByEmailAndStatus(email, UserStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
 
+        boolean cooldownSet = redisService.setIfAbsent(
+                RedisUtils.resetCooldownKey(email),
+                "1",
+                Duration.ofSeconds(COOLDOWN_SECONDS)
+        );
+        if (!cooldownSet) {
+            throw new CooldownNotMetException("Please wait before requesting a new password reset link!");
+        }
+
         String token = UUID.randomUUID().toString();
         LocalDateTime expiry = LocalDateTime.now().plusMinutes(RESET_TOKEN_EXPIRY_MINUTES);
 
@@ -215,15 +224,6 @@ public class AuthServiceImpl implements AuthService {
                 cachedPasswordResetData,
                 Duration.ofMinutes(RESET_TOKEN_EXPIRY_MINUTES)
         );
-
-        boolean cooldownSet = redisService.setIfAbsent(
-                RedisUtils.resetCooldownKey(email),
-                "1",
-                Duration.ofSeconds(COOLDOWN_SECONDS)
-        );
-        if (!cooldownSet) {
-            throw new CooldownNotMetException("Please wait before requesting a new password reset link!");
-        }
 
         applicationEventPublisher.publishEvent(new NotificationEvent(
                 email,
