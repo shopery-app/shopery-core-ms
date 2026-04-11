@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: 41_11042026_drop_unused_tables_after_redis
+      author: Jahangir Alisoy
+      changes:
+        - dropTable:
+            tableName: verification_tokens
+        - dropTable:
+            tableName: password_reset_tokens
+        - dropTable:
+            tableName: email_update_tokens
