@@ -48,23 +48,19 @@ public class RedisServiceImpl implements RedisService {
     }
 
     @Override
-    public void delete(String key) {
-        redisTemplate.delete(key);
-    }
-
-    @Override
-    public boolean exists(String key) {
-        return Boolean.TRUE.equals(redisTemplate.hasKey(key));
-    }
-
-    @Override
-    public void setIfAbsent(String key, Object value, Duration ttl) {
+    public boolean setIfAbsent(String key, Object value, Duration ttl) {
         try {
             String json = objectMapper.writeValueAsString(value);
-            redisTemplate.opsForValue().setIfAbsent(key, json, ttl);
+            Boolean result = redisTemplate.opsForValue().setIfAbsent(key, json, ttl);
+            return Boolean.TRUE.equals(result);
         } catch (Exception e) {
             //TODO: better exception handling
             throw new RuntimeException("Redis Exception!", e);
         }
+    }
+
+    @Override
+    public void delete(String key) {
+        redisTemplate.delete(key);
     }
 }

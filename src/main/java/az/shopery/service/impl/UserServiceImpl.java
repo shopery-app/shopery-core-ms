@@ -207,10 +207,10 @@ public class UserServiceImpl implements UserService {
             throw new InvalidCredentialsException("Invalid verification code!");
         }
 
-        redisService.delete(RedisUtils.emailUpdateKey(userEmailVerificationRequestDto.getEmail()));
-
         userEntity.setEmail(userEmailVerificationRequestDto.getEmail());
         userRepository.save(userEntity);
+
+        redisService.delete(RedisUtils.emailUpdateKey(userEmailVerificationRequestDto.getEmail()));
 
         var userDetails = withUsername(userEntity.getEmail())
                 .password(userEntity.getPassword())

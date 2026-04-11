@@ -153,10 +153,6 @@ public class AuthServiceImpl implements AuthService {
                 .get(RedisUtils.registerKey(email), CachedVerificationData.class)
                 .orElseThrow(() -> new ResourceNotFoundException("No registration process found for this email! Please register first!"));
 
-        if (redisService.exists(RedisUtils.registerCooldownKey(email))) {
-            throw new CooldownNotMetException("Please wait before resending the verification code!");
-        }
-
         String newCode = generateSixDigitVerificationCode();
 
         CachedVerificationData cachedVerificationData = CachedVerificationData.builder()
@@ -176,11 +172,14 @@ public class AuthServiceImpl implements AuthService {
                 Duration.ofMinutes(VERIFICATION_CODE_EXPIRY_MINUTES)
         );
 
-        redisService.setIfAbsent(
+        boolean cooldownSet = redisService.setIfAbsent(
                 RedisUtils.registerCooldownKey(email),
                 "1",
                 Duration.ofSeconds(COOLDOWN_SECONDS)
         );
+        if (!cooldownSet) {
+            throw new CooldownNotMetException("Please wait before resending the verification code!");
+        }
 
         applicationEventPublisher.publishEvent(new NotificationEvent(
                 email,
@@ -201,10 +200,6 @@ public class AuthServiceImpl implements AuthService {
         var userEntity = userRepository.findByEmailAndStatus(email, UserStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
 
-        if (redisService.exists(RedisUtils.resetCooldownKey(email))) {
-            throw new CooldownNotMetException("Please wait before requesting a new password reset link!");
-        }
-
         String token = UUID.randomUUID().toString();
         LocalDateTime expiry = LocalDateTime.now().plusMinutes(RESET_TOKEN_EXPIRY_MINUTES);
 
@@ -221,11 +216,14 @@ public class AuthServiceImpl implements AuthService {
                 Duration.ofMinutes(RESET_TOKEN_EXPIRY_MINUTES)
         );
 
-        redisService.setIfAbsent(
+        boolean cooldownSet = redisService.setIfAbsent(
                 RedisUtils.resetCooldownKey(email),
                 "1",
                 Duration.ofSeconds(COOLDOWN_SECONDS)
         );
+        if (!cooldownSet) {
+            throw new CooldownNotMetException("Please wait before requesting a new password reset link!");
+        }
 
         applicationEventPublisher.publishEvent(new NotificationEvent(
                 email,
