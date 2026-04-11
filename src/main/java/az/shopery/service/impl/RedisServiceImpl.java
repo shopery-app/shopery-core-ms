@@ -1,17 +1,16 @@
 package az.shopery.service.impl;
 
+import az.shopery.handler.exception.ExternalServiceException;
 import az.shopery.service.RedisService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.Optional;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
-@Slf4j
 public class RedisServiceImpl implements RedisService {
 
     private final StringRedisTemplate redisTemplate;
@@ -28,8 +27,7 @@ public class RedisServiceImpl implements RedisService {
             String json = objectMapper.writeValueAsString(value);
             redisTemplate.opsForValue().set(key, json, ttl);
         } catch (Exception e) {
-            //TODO: better exception handling
-            throw new RuntimeException("Failed to write to Redis!", e);
+            throw new ExternalServiceException("Redis SET failed for key: " + key, e);
         }
     }
 
@@ -42,8 +40,7 @@ public class RedisServiceImpl implements RedisService {
             }
             return Optional.of(objectMapper.readValue(json, clazz));
         } catch (Exception e) {
-            //TODO: better exception handling
-            throw new RuntimeException("Failed to read from Redis!", e);
+            throw new ExternalServiceException("Redis GET failed for key: " + key, e);
         }
     }
 
@@ -54,13 +51,16 @@ public class RedisServiceImpl implements RedisService {
             Boolean result = redisTemplate.opsForValue().setIfAbsent(key, json, ttl);
             return Boolean.TRUE.equals(result);
         } catch (Exception e) {
-            //TODO: better exception handling
-            throw new RuntimeException("Redis Exception!", e);
+            throw new ExternalServiceException("Redis SET_IF_ABSENT failed for key: " + key, e);
         }
     }
 
     @Override
     public void delete(String key) {
-        redisTemplate.delete(key);
+        try {
+            redisTemplate.delete(key);
+        } catch (Exception e) {
+            throw new ExternalServiceException("Redis DELETE failed for key: " + key, e);
+        }
     }
 }
