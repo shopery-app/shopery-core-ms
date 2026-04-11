@@ -1,5 +1,6 @@
 package az.shopery.service.impl;
 
+import static az.shopery.utils.common.CommonConstraints.EMAIL_UPDATE_CODE_EXPIRY_MINUTES;
 import static az.shopery.utils.common.NameMapperHelper.first;
 import static az.shopery.utils.common.NameMapperHelper.last;
 import static az.shopery.utils.common.VerificationCodeGenerator.generateSixDigitVerificationCode;
@@ -9,6 +10,7 @@ import az.shopery.handler.exception.EmailAlreadyExistsException;
 import az.shopery.handler.exception.IllegalRequestException;
 import az.shopery.handler.exception.InvalidCredentialsException;
 import az.shopery.handler.exception.ResourceNotFoundException;
+import az.shopery.model.dto.redis.CachedEmailUpdateData;
 import az.shopery.model.dto.request.ShopCreateRequestDto;
 import az.shopery.model.dto.request.UserEmailUpdateRequestDto;
 import az.shopery.model.dto.request.UserEmailVerificationRequestDto;
@@ -19,25 +21,25 @@ import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.dto.response.UserEmailUpdateResponseDto;
 import az.shopery.model.dto.response.UserPasswordUpdateResponseDto;
 import az.shopery.model.dto.response.UserProfileResponseDto;
-import az.shopery.model.entity.EmailUpdateTokenEntity;
 import az.shopery.model.entity.ShopEntity;
 import az.shopery.model.entity.UserEntity;
 import az.shopery.model.entity.task.ShopCreationRequestEntity;
 import az.shopery.model.event.NotificationEvent;
-import az.shopery.repository.EmailUpdateTokenRepository;
 import az.shopery.repository.ShopRepository;
 import az.shopery.repository.TaskRepository;
 import az.shopery.repository.UserRepository;
+import az.shopery.service.RedisService;
 import az.shopery.service.UserService;
 import az.shopery.utils.aws.S3FileUtil;
 import az.shopery.utils.common.AdminAssignmentHelper;
+import az.shopery.utils.common.RedisUtils;
 import az.shopery.utils.enums.NotificationType;
 import az.shopery.utils.enums.ShopStatus;
 import az.shopery.utils.enums.UserStatus;
 import az.shopery.utils.security.JwtService;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,13 +55,13 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final ShopRepository shopRepository;
-    private final EmailUpdateTokenRepository emailUpdateTokenRepository;
     private final TaskRepository taskRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final AdminAssignmentHelper adminAssignmentHelper;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final S3FileUtil s3FileUtil;
+    private final RedisService redisService;
 
     @Override
     @Transactional(readOnly = true)
@@ -165,12 +167,17 @@ public class UserServiceImpl implements UserService {
         }
 
         String code = generateSixDigitVerificationCode();
-        EmailUpdateTokenEntity emailUpdateTokenEntity = emailUpdateTokenRepository.findByEmail(userEmailUpdateRequestDto.getEmail())
-                .orElse(new EmailUpdateTokenEntity());
-        emailUpdateTokenEntity.setEmail(userEmailUpdateRequestDto.getEmail());
-        emailUpdateTokenEntity.setToken(code);
-        emailUpdateTokenEntity.setExpiryDate(LocalDateTime.now().plusMinutes(5));
-        emailUpdateTokenRepository.save(emailUpdateTokenEntity);
+
+        CachedEmailUpdateData cachedEmailUpdateData = CachedEmailUpdateData.builder()
+                .code(code)
+                .requestedByEmail(userEmail)
+                .build();
+
+        redisService.set(
+                RedisUtils.emailUpdateKey(userEmailUpdateRequestDto.getEmail()),
+                cachedEmailUpdateData,
+                Duration.ofMinutes(EMAIL_UPDATE_CODE_EXPIRY_MINUTES)
+        );
 
         applicationEventPublisher.publishEvent(new NotificationEvent(
                 userEmail,
@@ -187,35 +194,36 @@ public class UserServiceImpl implements UserService {
     @Override
     public SuccessResponse<UserEmailUpdateResponseDto> verifyMyEmail(String userEmail, UserEmailVerificationRequestDto userEmailVerificationRequestDto) {
         UserEntity userEntity = getUserByEmail(userEmail);
-        EmailUpdateTokenEntity emailUpdateTokenEntity = emailUpdateTokenRepository.findByEmail(userEmailVerificationRequestDto.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException("No pending verification found. It may have expired or been verified already"));
 
-        if (emailUpdateTokenEntity.getExpiryDate().isBefore(LocalDateTime.now())) {
-            emailUpdateTokenRepository.delete(emailUpdateTokenEntity);
-            throw new InvalidCredentialsException("Verification token expired. Please request a new one.");
-        }
-        if (!emailUpdateTokenEntity.getToken().equals(userEmailVerificationRequestDto.getCode())) {
-            throw new InvalidCredentialsException("Invalid verification code");
+        CachedEmailUpdateData cachedEmailUpdateData = redisService
+                .get(RedisUtils.emailUpdateKey(userEmailVerificationRequestDto.getEmail()), CachedEmailUpdateData.class)
+                .orElseThrow(() -> new ResourceNotFoundException("No pending verification found! It may have expired or been verified already!"));
+
+        if (!cachedEmailUpdateData.getRequestedByEmail().equals(userEmail)) {
+            throw new InvalidCredentialsException("Invalid verification request.");
         }
 
-        emailUpdateTokenRepository.delete(emailUpdateTokenEntity);
+        if (!cachedEmailUpdateData.getCode().equals(userEmailVerificationRequestDto.getCode())) {
+            throw new InvalidCredentialsException("Invalid verification code!");
+        }
+
         userEntity.setEmail(userEmailVerificationRequestDto.getEmail());
         userRepository.save(userEntity);
+
+        redisService.delete(RedisUtils.emailUpdateKey(userEmailVerificationRequestDto.getEmail()));
 
         var userDetails = withUsername(userEntity.getEmail())
                 .password(userEntity.getPassword())
                 .authorities(userEntity.getUserRole().name())
                 .build();
 
-        String accessToken = jwtService.generateToken(userDetails);
-        String refreshToken = jwtService.generateRefreshToken(userDetails);
         var userEmailUpdateResponseDto = UserEmailUpdateResponseDto.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
+                .accessToken(jwtService.generateToken(userDetails))
+                .refreshToken(jwtService.generateRefreshToken(userDetails))
                 .userProfileResponseDto(mapToDto(userEntity))
                 .build();
 
-        return SuccessResponse.of(userEmailUpdateResponseDto,"Email has been updated successfully");
+        return SuccessResponse.of(userEmailUpdateResponseDto,"Email has been updated successfully!");
     }
 
     private UserEntity getUserByEmail(String userEmail) {

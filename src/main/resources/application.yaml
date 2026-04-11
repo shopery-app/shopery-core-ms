@@ -1,24 +1,38 @@
 spring:
   application:
     name: shopery
+
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/shopery_db}
     username: ${DB_USERNAME:shopery_user}
     password: ${DB_PASSWORD:shopery_pass}
     driver-class-name: org.postgresql.Driver
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+      ssl:
+        enabled: ${REDIS_SSL:false}
+
   jpa:
     hibernate:
       ddl-auto: none
     show-sql: true
     open-in-view: false
+
   liquibase:
     enabled: true
     change-log: classpath:db/changelog/master.yaml
+
   servlet:
     multipart:
       enabled: true
       max-file-size: 10MB
       max-request-size: 10MB
+
   mail:
     host: smtp-relay.brevo.com
     port: 587
@@ -32,10 +46,6 @@ spring:
           starttls:
             enable: true
 
-app:
-  mail:
-    from: ${NO_REPLY_SHOPERY_USERNAME}
-
 application:
   security:
     jwt:
@@ -46,14 +56,6 @@ application:
         expiration: ${REFRESH_TOKEN_EXPIRATION}
   frontend:
     base-url: ${FRONTEND_BASE_URL}
-
-server:
-  port: ${PORT:8080}
-
-aws:
-  region: ${AWS_REGION}
-  s3:
-    bucket-name: ${AWS_S3_BUCKET_NAME}
 
 claude:
   api:
@@ -71,9 +73,14 @@ resilience4j:
         limitRefreshPeriod: 120s
         timeoutDuration: 100ms
 
-logging:
-  level:
-    root: INFO
-    az.shopery: DEBUG
-  file:
-    name: logs/shopery.log
+app:
+  mail:
+    from: ${NO_REPLY_SHOPERY_USERNAME}
+
+server:
+  port: ${PORT:8080}
+
+aws:
+  region: ${AWS_REGION}
+  s3:
+    bucket-name: ${AWS_S3_BUCKET_NAME}

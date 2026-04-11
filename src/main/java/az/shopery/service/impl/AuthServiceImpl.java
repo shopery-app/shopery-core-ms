@@ -12,6 +12,8 @@ import az.shopery.handler.exception.CooldownNotMetException;
 import az.shopery.handler.exception.EmailAlreadyExistsException;
 import az.shopery.handler.exception.InvalidCredentialsException;
 import az.shopery.handler.exception.ResourceNotFoundException;
+import az.shopery.model.dto.redis.CachedPasswordResetData;
+import az.shopery.model.dto.redis.CachedVerificationData;
 import az.shopery.model.dto.request.ForgotPasswordRequestDto;
 import az.shopery.model.dto.request.RefreshTokenRequestDto;
 import az.shopery.model.dto.request.ResendCodeRequestDto;
@@ -21,14 +23,12 @@ import az.shopery.model.dto.request.UserRegisterRequestDto;
 import az.shopery.model.dto.request.UserVerificationRequestDto;
 import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.dto.response.UserAuthResponseDto;
-import az.shopery.model.entity.PasswordResetTokenEntity;
 import az.shopery.model.entity.UserEntity;
-import az.shopery.model.entity.VerificationTokenEntity;
 import az.shopery.model.event.NotificationEvent;
-import az.shopery.repository.PasswordResetTokenRepository;
 import az.shopery.repository.UserRepository;
-import az.shopery.repository.VerificationTokenRepository;
 import az.shopery.service.AuthService;
+import az.shopery.service.RedisService;
+import az.shopery.utils.common.RedisUtils;
 import az.shopery.utils.enums.NotificationType;
 import az.shopery.utils.enums.UserRole;
 import az.shopery.utils.enums.UserStatus;
@@ -52,36 +52,41 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
-    private final VerificationTokenRepository verificationTokenRepository;
-    private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final RedisService redisService;
 
     @Override
     @Transactional
     public SuccessResponse<Void> register(UserRegisterRequestDto userRegisterRequestDto) {
-        if (userRepository.findByEmailAndStatus(userRegisterRequestDto.getEmail(), UserStatus.ACTIVE).isPresent()) {
-            throw new EmailAlreadyExistsException("Email '" + userRegisterRequestDto.getEmail() + "' is already in use.");
+        String email = userRegisterRequestDto.getEmail();
+        if (userRepository.findByEmailAndStatus(email, UserStatus.ACTIVE).isPresent()) {
+            throw new EmailAlreadyExistsException("Email '" + email + "' is already in use.");
         }
-
-        VerificationTokenEntity verificationTokenEntity = verificationTokenRepository.findByUserEmail(userRegisterRequestDto.getEmail()).orElse(new VerificationTokenEntity());
 
         String code = generateSixDigitVerificationCode();
 
-        verificationTokenEntity.setToken(passwordEncoder.encode(code));
-        verificationTokenEntity.setExpiryDate(LocalDateTime.now().plusMinutes(VERIFICATION_CODE_EXPIRY_MINUTES));
-        verificationTokenEntity.setUserName(userRegisterRequestDto.getName());
-        verificationTokenEntity.setUserEmail(userRegisterRequestDto.getEmail());
-        verificationTokenEntity.setUserPassword(passwordEncoder.encode(userRegisterRequestDto.getPassword()));
-        verificationTokenEntity.setAttemptCount(0);
-        verificationTokenEntity.setProgress(VerificationProgress.PENDING);
-        verificationTokenEntity.setCodeLastSentAt(LocalDateTime.now());
-        verificationTokenRepository.save(verificationTokenEntity);
+        CachedVerificationData cachedVerificationData = CachedVerificationData.builder()
+                .hashedToken(passwordEncoder.encode(code))
+                .userName(userRegisterRequestDto.getName())
+                .userEmail(email)
+                .hashedPassword(passwordEncoder.encode(userRegisterRequestDto.getPassword()))
+                .attemptCount(0)
+                .progress(VerificationProgress.PENDING)
+                .expiryDate(LocalDateTime.now().plusMinutes(VERIFICATION_CODE_EXPIRY_MINUTES))
+                .codeLastSentAt(LocalDateTime.now())
+                .build();
+
+        redisService.set(
+                RedisUtils.registerKey(email),
+                cachedVerificationData,
+                Duration.ofMinutes(VERIFICATION_CODE_EXPIRY_MINUTES)
+        );
 
         applicationEventPublisher.publishEvent(new NotificationEvent(
-                userRegisterRequestDto.getEmail(),
+                email,
                 NotificationType.VERIFICATION_CODE,
                 Map.of(
                         "userName", userRegisterRequestDto.getName(),
@@ -96,32 +101,42 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional(noRollbackFor = InvalidCredentialsException.class)
     public SuccessResponse<UserAuthResponseDto> verifyAccount(UserVerificationRequestDto verificationRequestDto) {
-        VerificationTokenEntity verificationTokenEntity = verificationTokenRepository.findByUserEmailAndProgress(verificationRequestDto.getEmail(), VerificationProgress.PENDING)
+        String email = verificationRequestDto.getEmail();
+        CachedVerificationData cachedVerificationData = redisService
+                .get(RedisUtils.registerKey(email), CachedVerificationData.class)
+                .filter(data -> data.getProgress().equals(VerificationProgress.PENDING))
                 .orElseThrow(() -> new ResourceNotFoundException("No pending verification found. It may have expired or been verified already."));
 
-        if (verificationTokenEntity.getExpiryDate().isBefore(LocalDateTime.now())) {
-            verificationTokenEntity.setProgress(VerificationProgress.REJECTED);
-            throw new InvalidCredentialsException("Verification token expired. Please request a new one.");
+        if (cachedVerificationData.getExpiryDate().isBefore(LocalDateTime.now())) {
+            redisService.delete(RedisUtils.registerKey(email));
+            throw new InvalidCredentialsException("Verification token expired. Please request a new one!");
         }
 
-        if (!passwordEncoder.matches(verificationRequestDto.getCode(), verificationTokenEntity.getToken())) {
-            verificationTokenEntity.setAttemptCount(verificationTokenEntity.getAttemptCount() + 1);
-            if (verificationTokenEntity.getAttemptCount() >= MAX_FAILED_ATTEMPTS) {
-                verificationTokenEntity.setProgress(VerificationProgress.REJECTED);
+        if (!passwordEncoder.matches(verificationRequestDto.getCode(), cachedVerificationData.getHashedToken())) {
+            cachedVerificationData.setAttemptCount(cachedVerificationData.getAttemptCount() + 1);
+            if (cachedVerificationData.getAttemptCount() >= MAX_FAILED_ATTEMPTS) {
+                redisService.delete(RedisUtils.registerKey(email));
                 throw new InvalidCredentialsException("Invalid verification code. You have exceeded the maximum number of attempts.");
             }
-            throw new InvalidCredentialsException("Invalid verification code.");
+
+            long remaining = Duration.between(LocalDateTime.now(), cachedVerificationData.getExpiryDate()).toMinutes();
+            redisService.set(
+                    RedisUtils.registerKey(email),
+                    cachedVerificationData,
+                    Duration.ofMinutes(Math.max(remaining, 1))
+            );
+
+            throw new InvalidCredentialsException("Invalid verification code!");
         }
 
         var user = UserEntity.builder()
-                .name(verificationTokenEntity.getUserName())
-                .email(verificationTokenEntity.getUserEmail())
-                .password(verificationTokenEntity.getUserPassword())
+                .name(cachedVerificationData.getUserName())
+                .email(cachedVerificationData.getUserEmail())
+                .password(cachedVerificationData.getHashedPassword())
                 .build();
         userRepository.save(user);
 
-        verificationTokenEntity.setProgress(VerificationProgress.VERIFIED);
-        verificationTokenRepository.save(verificationTokenEntity);
+        redisService.delete(RedisUtils.registerKey(email));
 
         return SuccessResponse.of(generateAuthResponse(user), "Account verified successfully. Welcome to Shopery!");
     }
@@ -129,36 +144,48 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public SuccessResponse<Void> resendVerificationCode(ResendCodeRequestDto resendCodeRequestDto) {
-        VerificationTokenEntity verificationTokenEntity = verificationTokenRepository.findByUserEmail(resendCodeRequestDto.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException("No registration process found for this email. Please register first."));
-
-        if (userRepository.findByEmailAndStatus(resendCodeRequestDto.getEmail(), UserStatus.ACTIVE).isPresent()) {
+        String email = resendCodeRequestDto.getEmail();
+        if (userRepository.findByEmailAndStatus(email, UserStatus.ACTIVE).isPresent()) {
             throw new EmailAlreadyExistsException("This account has already been verified.");
         }
 
-        LocalDateTime lastSent = verificationTokenEntity.getCodeLastSentAt();
-        if (Objects.nonNull(lastSent)) {
-            LocalDateTime cooldownEndTime = lastSent.plusSeconds(COOLDOWN_SECONDS);
-            if (LocalDateTime.now().isBefore(cooldownEndTime)) {
-                long secondsRemaining = Duration.between(LocalDateTime.now(), cooldownEndTime).getSeconds();
-                throw new CooldownNotMetException("Please wait " + secondsRemaining + " seconds before resending the code.");
-            }
-        }
+        CachedVerificationData existing = redisService
+                .get(RedisUtils.registerKey(email), CachedVerificationData.class)
+                .orElseThrow(() -> new ResourceNotFoundException("No registration process found for this email! Please register first!"));
 
         String newCode = generateSixDigitVerificationCode();
 
-        verificationTokenEntity.setToken(passwordEncoder.encode(newCode));
-        verificationTokenEntity.setExpiryDate(LocalDateTime.now().plusMinutes(VERIFICATION_CODE_EXPIRY_MINUTES));
-        verificationTokenEntity.setProgress(VerificationProgress.PENDING);
-        verificationTokenEntity.setAttemptCount(0);
-        verificationTokenEntity.setCodeLastSentAt(LocalDateTime.now());
-        verificationTokenRepository.save(verificationTokenEntity);
+        boolean cooldownSet = redisService.setIfAbsent(
+                RedisUtils.registerCooldownKey(email),
+                "1",
+                Duration.ofSeconds(COOLDOWN_SECONDS)
+        );
+        if (!cooldownSet) {
+            throw new CooldownNotMetException("Please wait before resending the verification code!");
+        }
+
+        CachedVerificationData cachedVerificationData = CachedVerificationData.builder()
+                .hashedToken(passwordEncoder.encode(newCode))
+                .userName(existing.getUserName())
+                .userEmail(email)
+                .hashedPassword(existing.getHashedPassword())
+                .attemptCount(0)
+                .progress(VerificationProgress.PENDING)
+                .expiryDate(LocalDateTime.now().plusMinutes(VERIFICATION_CODE_EXPIRY_MINUTES))
+                .codeLastSentAt(LocalDateTime.now())
+                .build();
+
+        redisService.set(
+                RedisUtils.registerKey(email),
+                cachedVerificationData,
+                Duration.ofMinutes(VERIFICATION_CODE_EXPIRY_MINUTES)
+        );
 
         applicationEventPublisher.publishEvent(new NotificationEvent(
-                verificationTokenEntity.getUserEmail(),
+                email,
                 NotificationType.VERIFICATION_CODE,
                 Map.of(
-                        "userName", verificationTokenEntity.getUserName(),
+                        "userName", existing.getUserName(),
                         "isRegistration", Boolean.TRUE,
                         "verificationCode", newCode
                 )
@@ -169,30 +196,37 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public SuccessResponse<Void> forgotPassword(ForgotPasswordRequestDto forgotPasswordRequestDto) {
-        var userEntity = userRepository.findByEmailAndStatus(forgotPasswordRequestDto.getEmail(), UserStatus.ACTIVE)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + forgotPasswordRequestDto.getEmail()));
+        String email = forgotPasswordRequestDto.getEmail();
+        var userEntity = userRepository.findByEmailAndStatus(email, UserStatus.ACTIVE)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
 
-        PasswordResetTokenEntity passwordResetTokenEntity = passwordResetTokenRepository.findByUserEmail(userEntity.getEmail()).orElse(new PasswordResetTokenEntity());
-
-        LocalDateTime lastSent = passwordResetTokenEntity.getLinkLastSentAt();
-        if (Objects.nonNull(lastSent)) {
-            LocalDateTime cooldownEndTime = lastSent.plusSeconds(COOLDOWN_SECONDS);
-            if (LocalDateTime.now().isBefore(cooldownEndTime)) {
-                long secondsRemaining = Duration.between(LocalDateTime.now(), cooldownEndTime).getSeconds();
-                throw new CooldownNotMetException("Please wait " + secondsRemaining + " seconds before requesting a new password reset link.");
-            }
+        boolean cooldownSet = redisService.setIfAbsent(
+                RedisUtils.resetCooldownKey(email),
+                "1",
+                Duration.ofSeconds(COOLDOWN_SECONDS)
+        );
+        if (!cooldownSet) {
+            throw new CooldownNotMetException("Please wait before requesting a new password reset link!");
         }
 
         String token = UUID.randomUUID().toString();
-        passwordResetTokenEntity.setToken(token);
-        passwordResetTokenEntity.setExpiryDate(LocalDateTime.now().plusMinutes(RESET_TOKEN_EXPIRY_MINUTES));
-        passwordResetTokenEntity.setUserEmail(userEntity.getEmail());
-        passwordResetTokenEntity.setLinkLastSentAt(LocalDateTime.now());
-        passwordResetTokenRepository.save(passwordResetTokenEntity);
+        LocalDateTime expiry = LocalDateTime.now().plusMinutes(RESET_TOKEN_EXPIRY_MINUTES);
 
+        CachedPasswordResetData cachedPasswordResetData = CachedPasswordResetData.builder()
+                .token(token)
+                .userEmail(email)
+                .expiryDate(expiry)
+                .linkLastSentAt(LocalDateTime.now())
+                .build();
+
+        redisService.set(
+                RedisUtils.resetTokenKey(token),
+                cachedPasswordResetData,
+                Duration.ofMinutes(RESET_TOKEN_EXPIRY_MINUTES)
+        );
 
         applicationEventPublisher.publishEvent(new NotificationEvent(
-                userEntity.getEmail(),
+                email,
                 NotificationType.PASSWORD_RESET_LINK,
                 Map.of(
                         "userName", userEntity.getName(),
@@ -205,22 +239,29 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public SuccessResponse<Void> resetPassword(ResetPasswordRequestDto resetPasswordRequestDto) {
-        var resetToken = passwordResetTokenRepository.findByToken(resetPasswordRequestDto.getToken())
-                .orElseThrow(() -> new ResourceNotFoundException("Invalid or expired password reset token."));
-        if (resetToken.getExpiryDate().isBefore(LocalDateTime.now())) {
-            passwordResetTokenRepository.delete(resetToken);
-            throw new InvalidCredentialsException("Password reset token expired. Please request a new one.");
+        String token = resetPasswordRequestDto.getToken();
+        CachedPasswordResetData cachedPasswordResetData = redisService
+                .get(RedisUtils.resetTokenKey(token), CachedPasswordResetData.class)
+                .orElseThrow(() -> new ResourceNotFoundException("Invalid or expired password reset token!"));
+
+        if (cachedPasswordResetData.getExpiryDate().isBefore(LocalDateTime.now())) {
+            redisService.delete(RedisUtils.resetTokenKey(token));
+            throw new InvalidCredentialsException("Password reset token expired! Please request a new one!");
         }
 
-        var user = userRepository.findByEmailAndStatus(resetToken.getUserEmail(), UserStatus.ACTIVE)
+        String email = cachedPasswordResetData.getUserEmail();
+
+        var user = userRepository.findByEmailAndStatus(email, UserStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found for the given token."));
 
         user.setPassword(passwordEncoder.encode(resetPasswordRequestDto.getPassword()));
         userRepository.save(user);
-        passwordResetTokenRepository.delete(resetToken);
+
+        redisService.delete(RedisUtils.resetTokenKey(token));
+        redisService.delete(RedisUtils.resetCooldownKey(email));
 
         applicationEventPublisher.publishEvent(new NotificationEvent(
-                user.getEmail(),
+                email,
                 NotificationType.PASSWORD_CHANGED,
                 Map.of(
                         "userName", user.getName()
@@ -234,7 +275,7 @@ public class AuthServiceImpl implements AuthService {
     public SuccessResponse<UserAuthResponseDto> login(UserLoginRequestDto userLoginRequestDto) {
         UserEntity user = getActiveUser(userLoginRequestDto.getEmail());
 
-        if (user.getUserRole() == UserRole.ADMIN) {
+        if (user.getUserRole().equals(UserRole.ADMIN)) {
             throw new InvalidCredentialsException("Invalid email or password.");
         }
 
