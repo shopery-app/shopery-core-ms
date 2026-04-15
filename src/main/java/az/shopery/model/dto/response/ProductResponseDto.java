@@ -21,5 +21,6 @@ public class ProductResponseDto {
     String description;
     String imageUrl;
     BigDecimal currentPrice;
+    Integer stockQuantity;
     DiscountDto discountDto;
 }

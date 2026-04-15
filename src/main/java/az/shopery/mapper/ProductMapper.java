@@ -28,6 +28,7 @@ public class ProductMapper {
                 .description(productEntity.getDescription())
                 .imageUrl(s3FileUtil.generatePresignedUrl(productEntity.getImageUrl()))
                 .currentPrice(productEntity.getCurrentPrice())
+                .stockQuantity(productEntity.getStockQuantity())
                 .discountDto(calculateDiscountFromOriginalPrice(productEntity.getCurrentPrice(), productEntity.getOriginalPrice()))
                 .build();
     }
