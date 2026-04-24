@@ -6,8 +6,8 @@ import az.shopery.model.entity.task.ShopCreationRequestEntity;
 import az.shopery.model.entity.task.SupportTicketEntity;
 import az.shopery.model.event.TaskEvent;
 import az.shopery.repository.TaskRepository;
+import az.shopery.repository.UserRepository;
 import az.shopery.service.TaskService;
-import az.shopery.utils.common.AdminAssignmentHelper;
 import az.shopery.utils.enums.SubscriptionTier;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -21,12 +21,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class TaskServiceImpl implements TaskService {
 
     private final TaskRepository taskRepository;
-    private final AdminAssignmentHelper adminAssignmentHelper;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
     public void createTask(TaskEvent event) {
-        UserEntity assignedAdmin = adminAssignmentHelper.assignRandomAdmin();
+        UserEntity assignedAdmin = userRepository.findRandomActiveAdmin()
+                .orElseThrow(() -> new ApplicationException("No admin available!"));
 
         switch (event.category()) {
             case SUPPORT_TICKET -> createSupportTicket(event, assignedAdmin);

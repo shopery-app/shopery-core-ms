@@ -12,7 +12,6 @@ import az.shopery.model.event.TaskEvent;
 import az.shopery.repository.TaskRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.SupportTicketService;
-import az.shopery.utils.annotation.TrackExecutionTime;
 import az.shopery.utils.enums.TaskCategory;
 import az.shopery.utils.enums.UserStatus;
 import java.util.Map;
@@ -35,7 +34,6 @@ public class SupportTicketServiceImpl implements SupportTicketService {
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
-    @TrackExecutionTime
     public SuccessResponse<Void> createMySupportTicket(SupportTicketRequestDto dto, String userEmail) {
         UserEntity userEntity = userRepository.findByEmailAndStatus(userEmail, UserStatus.ACTIVE)
                         .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
