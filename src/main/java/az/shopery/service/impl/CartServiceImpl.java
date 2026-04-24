@@ -50,7 +50,7 @@ public class CartServiceImpl implements CartService {
     public SuccessResponse<CartResponseDto> getMyCart(String userEmail) {
         UserEntity userEntity = findUser(userEmail);
 
-        Optional<CartEntity> cartOpt = cartRepository.findByUserWithItems(userEntity);
+        Optional<CartEntity> cartOpt = cartRepository.findByUserIdWithItems(userEntity.getId());
         if (cartOpt.isEmpty()) {
             CartResponseDto emptyCart = CartResponseDto.builder()
                     .items(Collections.emptyList())
@@ -165,7 +165,7 @@ public class CartServiceImpl implements CartService {
         UserEntity userEntity = findUser(userEmail);
         ProductEntity productEntity = findProduct(parse(productId));
 
-        WishlistEntity wishlistEntity = wishlistRepository.findByUserWithProducts(userEntity)
+        WishlistEntity wishlistEntity = wishlistRepository.findByUserIdWithProducts(userEntity.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Wishlist not found for user."));
 
         if (!wishlistEntity.getProducts().remove(productEntity)) {
@@ -209,7 +209,7 @@ public class CartServiceImpl implements CartService {
     }
 
     private CartEntity findOrCreateCart(UserEntity userEntity) {
-        return cartRepository.findByUserWithItems(userEntity)
+        return cartRepository.findByUserIdWithItems(userEntity.getId())
                 .orElseGet(() -> {
                     CartEntity newCart = CartEntity.builder()
                             .user(userEntity)

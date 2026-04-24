@@ -27,7 +27,3 @@ springdoc:
   api-docs:
     path: /v3/api-docs
     enabled: true
-
-logging:
-  level:
-    org.hibernate.SQL: debug

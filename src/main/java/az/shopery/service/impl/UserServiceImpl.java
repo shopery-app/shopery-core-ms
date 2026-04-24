@@ -23,23 +23,24 @@ import az.shopery.model.dto.response.UserPasswordUpdateResponseDto;
 import az.shopery.model.dto.response.UserProfileResponseDto;
 import az.shopery.model.entity.ShopEntity;
 import az.shopery.model.entity.UserEntity;
-import az.shopery.model.entity.task.ShopCreationRequestEntity;
 import az.shopery.model.event.NotificationEvent;
+import az.shopery.model.event.TaskEvent;
 import az.shopery.repository.ShopRepository;
-import az.shopery.repository.TaskRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.RedisService;
 import az.shopery.service.UserService;
+import az.shopery.utils.annotation.TrackExecutionTime;
 import az.shopery.utils.aws.S3FileUtil;
-import az.shopery.utils.common.AdminAssignmentHelper;
 import az.shopery.utils.common.RedisUtils;
 import az.shopery.utils.enums.NotificationType;
 import az.shopery.utils.enums.ShopStatus;
+import az.shopery.utils.enums.TaskCategory;
 import az.shopery.utils.enums.UserStatus;
 import az.shopery.utils.security.JwtService;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,17 +49,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
 @Slf4j
+@Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final ShopRepository shopRepository;
-    private final TaskRepository taskRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
-    private final AdminAssignmentHelper adminAssignmentHelper;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final S3FileUtil s3FileUtil;
     private final RedisService redisService;
@@ -80,57 +79,54 @@ public class UserServiceImpl implements UserService {
 
         UserEntity updatedUserEntity = userRepository.save(userEntity);
         log.info("User profile updated successfully for user {}", userEmail);
-        return SuccessResponse.of(mapToDto(updatedUserEntity), "User profile updated successfully.");
+        return SuccessResponse.of(mapToDto(updatedUserEntity), "User profile updated successfully!");
     }
 
     @Override
+    @TrackExecutionTime
     @Transactional
     public SuccessResponse<Void> createMyShop(String userEmail, ShopCreateRequestDto shopCreateRequestDto) {
         UserEntity userEntity = getUserByEmail(userEmail);
-        UserEntity assignedAdmin = adminAssignmentHelper.assignRandomAdmin();
 
-        if (shopRepository.existsByUserAndStatus(userEntity, ShopStatus.ACTIVE)) {
-            throw new ApplicationException("User already has an active shop.");
-        }
-
-        if (shopRepository.existsByUserAndStatus(userEntity, ShopStatus.PENDING)) {
-            throw new ApplicationException("User already has a pending shop.");
+        if (shopRepository.existsByUserAndStatusIn(userEntity, List.of(ShopStatus.ACTIVE, ShopStatus.PENDING))) {
+            throw new ApplicationException("User already has an active or pending shop!");
         }
 
         if (shopRepository.existsByShopName(shopCreateRequestDto.getShopName())) {
-            throw new ApplicationException("Shop with name '" + shopCreateRequestDto.getShopName() + "' already exists.");
+            throw new ApplicationException("Shop with name '" + shopCreateRequestDto.getShopName() + "' already exists!");
         }
 
-        ShopCreationRequestEntity shopCreationRequestEntity = ShopCreationRequestEntity.builder()
-                .createdBy(userEntity)
-                .assignedAdmin(assignedAdmin)
+        ShopEntity shop = ShopEntity.builder()
+                .user(userEntity)
                 .shopName(shopCreateRequestDto.getShopName())
                 .description(shopCreateRequestDto.getDescription())
-                .subscriptionTier(shopCreateRequestDto.getSubscriptionTier())
-                .build();
-        taskRepository.save(shopCreationRequestEntity);
-
-        ShopEntity shop = ShopEntity.builder()
-                .user(shopCreationRequestEntity.getCreatedBy())
-                .shopName(shopCreationRequestEntity.getShopName())
-                .description(shopCreationRequestEntity.getDescription())
                 .totalIncome(BigDecimal.ZERO)
                 .rating(0.0)
                 .status(ShopStatus.PENDING)
                 .build();
         shopRepository.save(shop);
 
-        return SuccessResponse.of("Your request has been submitted and assigned to an admin for review.");
+        applicationEventPublisher.publishEvent(new TaskEvent(
+                userEntity,
+                TaskCategory.SHOP_CREATION_REQUEST,
+                Map.of(
+                        "shopName", shopCreateRequestDto.getShopName(),
+                        "description", shopCreateRequestDto.getDescription(),
+                        "subscriptionTier", shopCreateRequestDto.getSubscriptionTier()
+                )
+        ));
+
+        return SuccessResponse.of("Your request has been submitted and assigned to an admin for review!");
     }
 
     @Override
     public SuccessResponse<UserPasswordUpdateResponseDto> updateMyPassword(String userEmail, UserPasswordUpdateRequestDto userPasswordUpdateRequestDto) {
         UserEntity userEntity = getUserByEmail(userEmail);
         if (!passwordEncoder.matches(userPasswordUpdateRequestDto.getOldPassword(), userEntity.getPassword())) {
-            throw new InvalidCredentialsException("Invalid credentials.");
+            throw new InvalidCredentialsException("Invalid credentials!");
         }
         if (userPasswordUpdateRequestDto.getNewPassword().equals(userPasswordUpdateRequestDto.getOldPassword())) {
-            throw new ApplicationException("New password must be different from the old password.");
+            throw new ApplicationException("New password must be different from the old password!");
         }
         userEntity.setPassword(passwordEncoder.encode(userPasswordUpdateRequestDto.getNewPassword()));
         userEntity.setPasswordChangedAt(Instant.now());
@@ -156,14 +152,14 @@ public class UserServiceImpl implements UserService {
                         "userName",userEntity.getName()
                 )
         ));
-        return SuccessResponse.of(userPasswordUpdateResponseDto, "Password has been updated successfully.");
+        return SuccessResponse.of(userPasswordUpdateResponseDto, "Password has been updated successfully!");
     }
 
     @Override
     public SuccessResponse<Void> changeMyEmail(String userEmail, UserEmailUpdateRequestDto userEmailUpdateRequestDto) {
         UserEntity userEntity = getUserByEmail(userEmail);
         if (userRepository.existsByEmail(userEmailUpdateRequestDto.getEmail())) {
-            throw new EmailAlreadyExistsException("Email already exists");
+            throw new EmailAlreadyExistsException("Email already exists!");
         }
 
         String code = generateSixDigitVerificationCode();
@@ -188,7 +184,7 @@ public class UserServiceImpl implements UserService {
                         "verificationCode", code
                 )
         ));
-        return SuccessResponse.of("Verification code has been sent to your email address");
+        return SuccessResponse.of("Verification code has been sent to your email address!");
     }
 
     @Override
@@ -200,7 +196,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("No pending verification found! It may have expired or been verified already!"));
 
         if (!cachedEmailUpdateData.getRequestedByEmail().equals(userEmail)) {
-            throw new InvalidCredentialsException("Invalid verification request.");
+            throw new InvalidCredentialsException("Invalid verification request!");
         }
 
         if (!cachedEmailUpdateData.getCode().equals(userEmailVerificationRequestDto.getCode())) {

@@ -1,6 +1,5 @@
 package az.shopery.repository;
 
-import az.shopery.model.entity.UserEntity;
 import az.shopery.model.entity.WishlistEntity;
 import java.util.Optional;
 import java.util.UUID;
@@ -11,6 +10,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface WishlistRepository extends JpaRepository<WishlistEntity, UUID> {
-    @Query("SELECT w FROM WishlistEntity w LEFT JOIN FETCH w.products WHERE w.user = :user")
-    Optional<WishlistEntity> findByUserWithProducts(@Param("user") UserEntity userEntity);
+    @Query("SELECT w FROM WishlistEntity w LEFT JOIN FETCH w.products WHERE w.user.id = :userId")
+    Optional<WishlistEntity> findByUserIdWithProducts(@Param("userId") UUID userId);
 }

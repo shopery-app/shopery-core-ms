@@ -13,7 +13,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -85,10 +84,6 @@ public class UserEntity {
     @Builder.Default
     @Column(name = "status", nullable = false)
     UserStatus status =  UserStatus.ACTIVE;
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    WishlistEntity wishlist;
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    CartEntity cart;
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     List<ShopEntity> shops;
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
