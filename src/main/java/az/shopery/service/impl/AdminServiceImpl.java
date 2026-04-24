@@ -4,7 +4,7 @@ import static az.shopery.utils.common.NameMapperHelper.first;
 import static az.shopery.utils.common.NameMapperHelper.last;
 import static az.shopery.utils.common.UuidUtils.parse;
 
-import az.shopery.handler.exception.IllegalRequestException;
+import az.shopery.handler.exception.ApplicationException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.mapper.TaskMapper;
 import az.shopery.model.dto.projection.AdminShopProjection;
@@ -99,10 +99,10 @@ public class AdminServiceImpl implements AdminService {
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found!"));
 
         if (!(taskEntity instanceof SupportTicketEntity supportTicketEntity)) {
-            throw new IllegalRequestException("Task is not a support ticket!");
+            throw new ApplicationException("Task is not a support ticket!");
         }
         if (supportTicketEntity.getTicketStatus().equals(TicketStatus.CLOSED)) {
-            throw new  IllegalRequestException("Ticket already closed!");
+            throw new  ApplicationException("Ticket already closed!");
         }
 
         supportTicketEntity.setTicketStatus(TicketStatus.CLOSED);
@@ -114,7 +114,7 @@ public class AdminServiceImpl implements AdminService {
     public SuccessResponse<Void> approve(String id, String userEmail) {
         ShopCreationRequestEntity shopCreationRequestEntity = getShopCreationRequestEntity(id, userEmail);
         if (!shopCreationRequestEntity.getRequestStatus().equals(RequestStatus.PENDING)) {
-            throw new IllegalRequestException("Shop creation request is not pending!");
+            throw new ApplicationException("Shop creation request is not pending!");
         }
         shopCreationRequestEntity.setRequestStatus(RequestStatus.APPROVED);
 
@@ -175,7 +175,7 @@ public class AdminServiceImpl implements AdminService {
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found!"));
 
         if (!(taskEntity instanceof ShopCreationRequestEntity shopCreationRequestEntity)) {
-            throw new IllegalRequestException("Task is not a shop creation request!");
+            throw new ApplicationException("Task is not a shop creation request!");
         }
 
         return shopCreationRequestEntity;

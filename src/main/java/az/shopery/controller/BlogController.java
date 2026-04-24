@@ -50,7 +50,7 @@ public class BlogController {
         return ResponseEntity.ok(blogService.updateBlogImage(principal.getName(), blogId, imageFile));
     }
 
-    @DeleteMapping("/{blogId}/image" )
+    @DeleteMapping("/{blogId}/image")
     public ResponseEntity<SuccessResponse<String>> deleteBlogImage(Principal principal, @PathVariable String blogId) {
         return ResponseEntity.ok(blogService.deleteBlogImage(principal.getName(), blogId));
     }

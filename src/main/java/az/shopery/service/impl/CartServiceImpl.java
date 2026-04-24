@@ -2,7 +2,7 @@ package az.shopery.service.impl;
 
 import static az.shopery.utils.common.UuidUtils.parse;
 
-import az.shopery.handler.exception.IllegalRequestException;
+import az.shopery.handler.exception.ApplicationException;
 import az.shopery.handler.exception.OwnProductInteractionException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.mapper.ProductMapper;
@@ -66,7 +66,7 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public SuccessResponse<CartResponseDto> addProductToCart(String userEmail, String productId, int quantity) {
         if (quantity <= 0) {
-            throw new IllegalRequestException("Quantity must be greater than zero.");
+            throw new ApplicationException("Quantity must be greater than zero.");
         }
 
         UserEntity userEntity = findUser(userEmail);
@@ -85,12 +85,12 @@ public class CartServiceImpl implements CartService {
             CartItemEntity existingItem = existingItemOpt.get();
             int newTotalQuantity = existingItem.getQuantity() + quantity;
             if (productEntity.getStockQuantity() < newTotalQuantity) {
-                throw new IllegalRequestException("Stock quantity is not enough to add the product.");
+                throw new ApplicationException("Stock quantity is not enough to add the product.");
             }
             existingItem.setQuantity(newTotalQuantity);
         } else {
             if (productEntity.getStockQuantity() < quantity) {
-                throw new IllegalRequestException("Stock quantity is not enough to add the product.");
+                throw new ApplicationException("Stock quantity is not enough to add the product.");
             }
             CartItemEntity newItem = CartItemEntity.builder()
                     .cart(cartEntity)
@@ -116,7 +116,7 @@ public class CartServiceImpl implements CartService {
 
         ProductEntity productEntity = findProduct(parse(productId));
         if (productEntity.getStockQuantity() < quantity) {
-            throw new IllegalRequestException("Stock quantity is not enough to update the product.");
+            throw new ApplicationException("Stock quantity is not enough to update the product.");
         }
 
         CartItemEntity itemToUpdate = cartEntity.getItems().stream()

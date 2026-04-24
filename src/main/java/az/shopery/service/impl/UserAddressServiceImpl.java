@@ -3,7 +3,7 @@ package az.shopery.service.impl;
 import static az.shopery.utils.common.CommonConstraints.MAX_ADDRESSES_PER_USER;
 import static az.shopery.utils.common.UuidUtils.parse;
 
-import az.shopery.handler.exception.AddressLimitExceededException;
+import az.shopery.handler.exception.ApplicationException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.model.dto.request.AddressRequestDto;
 import az.shopery.model.dto.response.AddressResponseDto;
@@ -37,7 +37,7 @@ public class UserAddressServiceImpl implements UserAddressService {
 
         List<UserAddressEntity> existing = userAddressRepository.findAllByUserId(userEntity.getId());
         if (existing.size() >= MAX_ADDRESSES_PER_USER) {
-            throw new AddressLimitExceededException("You can not add more than " + MAX_ADDRESSES_PER_USER + " addresses.");
+            throw new ApplicationException("You can not add more than " + MAX_ADDRESSES_PER_USER + " addresses.");
         }
 
         boolean isDefault = existing.isEmpty();

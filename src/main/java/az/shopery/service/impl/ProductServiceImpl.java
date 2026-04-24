@@ -3,7 +3,7 @@ package az.shopery.service.impl;
 import static az.shopery.utils.common.CommonConstraints.MAX_PRODUCTS_PER_MONTH_BY_TIER;
 import static az.shopery.utils.common.UuidUtils.parse;
 
-import az.shopery.handler.exception.IllegalRequestException;
+import az.shopery.handler.exception.ApplicationException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.mapper.ProductMapper;
 import az.shopery.model.dto.request.ProductCreateRequestDto;
@@ -212,7 +212,7 @@ public class ProductServiceImpl implements ProductService {
 
         long createdThisMonth = productRepository.countProductsCreatedInMonth(shopEntity.getId(), startOfMonth, startOfNextMonth);
         if (createdThisMonth >= maxProductsPerMonth) {
-            throw new IllegalRequestException("Monthly product limit exceeded for " + subscriptionTier + " tier. Allowed: " + maxProductsPerMonth + " products per month.");
+            throw new ApplicationException("Monthly product limit exceeded for " + subscriptionTier + " tier. Allowed: " + maxProductsPerMonth + " products per month.");
         }
     }
 }

@@ -1,6 +1,6 @@
 package az.shopery.mapper;
 
-import az.shopery.handler.exception.IllegalRequestException;
+import az.shopery.handler.exception.ApplicationException;
 import az.shopery.model.dto.response.task.ShopCreationRequestResponseDto;
 import az.shopery.model.dto.response.task.SupportTicketResponseDto;
 import az.shopery.model.dto.response.task.TaskResponseDto;
@@ -51,6 +51,6 @@ public class TaskMapper {
                     .build();
         }
 
-        throw new IllegalRequestException("Unsupported task type: " + taskEntity.getClass().getSimpleName());
+        throw new ApplicationException("Unsupported task type: " + taskEntity.getClass().getSimpleName());
     }
 }
