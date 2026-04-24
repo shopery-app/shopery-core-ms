@@ -43,7 +43,7 @@ public class WishlistServiceImpl implements WishlistService {
     public SuccessResponse<WishlistResponseDto> getMyWishlist(String userEmail) {
         UserEntity userEntity = findUser(userEmail);
 
-        Optional<WishlistEntity> wishlistOpt = wishlistRepository.findByUserWithProducts(userEntity);
+        Optional<WishlistEntity> wishlistOpt = wishlistRepository.findByUserIdWithProducts(userEntity.getId());
         if (wishlistOpt.isEmpty()) {
             return SuccessResponse.of(WishlistResponseDto.builder()
                     .products(Collections.emptySet())
@@ -76,7 +76,7 @@ public class WishlistServiceImpl implements WishlistService {
     @Transactional
     public SuccessResponse<WishlistResponseDto> removeProductFromWishlist(String userEmail, String productId) {
         UserEntity userEntity = findUser(userEmail);
-        WishlistEntity wishlistEntity = wishlistRepository.findByUserWithProducts(userEntity)
+        WishlistEntity wishlistEntity = wishlistRepository.findByUserIdWithProducts(userEntity.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Cannot remove from a non-existent wishlist."));
         ProductEntity productEntity = findProduct(parse(productId));
 
@@ -92,7 +92,7 @@ public class WishlistServiceImpl implements WishlistService {
     @Transactional
     public SuccessResponse<WishlistResponseDto> removeAllProductsFromWishlist(String userEmail) {
         UserEntity userEntity = findUser(userEmail);
-        WishlistEntity wishlistEntity = wishlistRepository.findByUserWithProducts(userEntity)
+        WishlistEntity wishlistEntity = wishlistRepository.findByUserIdWithProducts(userEntity.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Cannot remove from a non-existent wishlist."));
 
         wishlistEntity.getProducts().clear();
@@ -113,7 +113,7 @@ public class WishlistServiceImpl implements WishlistService {
     }
 
     private WishlistEntity findOrCreateWishlist(UserEntity userEntity) {
-        return wishlistRepository.findByUserWithProducts(userEntity).orElseGet(() -> {
+        return wishlistRepository.findByUserIdWithProducts(userEntity.getId()).orElseGet(() -> {
             log.info("No wishlist found for user '{}', creating a new one.", userEntity.getEmail());
             WishlistEntity newWishlist = WishlistEntity.builder()
                     .user(userEntity)

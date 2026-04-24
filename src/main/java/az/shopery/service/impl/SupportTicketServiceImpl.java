@@ -8,13 +8,17 @@ import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.dto.response.UserSupportTicketResponseDto;
 import az.shopery.model.entity.task.SupportTicketEntity;
 import az.shopery.model.entity.UserEntity;
+import az.shopery.model.event.TaskEvent;
 import az.shopery.repository.TaskRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.SupportTicketService;
-import az.shopery.utils.common.AdminAssignmentHelper;
+import az.shopery.utils.annotation.TrackExecutionTime;
+import az.shopery.utils.enums.TaskCategory;
 import az.shopery.utils.enums.UserStatus;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -28,22 +32,23 @@ public class SupportTicketServiceImpl implements SupportTicketService {
 
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
-    private final AdminAssignmentHelper adminAssignmentHelper;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
-    @Transactional
+    @TrackExecutionTime
     public SuccessResponse<Void> createMySupportTicket(SupportTicketRequestDto dto, String userEmail) {
-        UserEntity user = getUser(userEmail);
-        UserEntity assignedAdmin = adminAssignmentHelper.assignRandomAdmin();
+        UserEntity userEntity = userRepository.findByEmailAndStatus(userEmail, UserStatus.ACTIVE)
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
 
-        SupportTicketEntity ticket = SupportTicketEntity.builder()
-                .subject(dto.getSubject())
-                .description(dto.getDescription())
-                .createdBy(user)
-                .assignedAdmin(assignedAdmin)
-                .build();
+        applicationEventPublisher.publishEvent(new TaskEvent(
+                userEntity,
+                TaskCategory.SUPPORT_TICKET,
+                Map.of(
+                        "subject", dto.getSubject(),
+                        "description", dto.getDescription()
+                )
+        ));
 
-        taskRepository.save(ticket);
         return SuccessResponse.of("The support ticket created successfully!");
     }
 

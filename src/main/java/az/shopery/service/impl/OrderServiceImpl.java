@@ -64,7 +64,7 @@ public class OrderServiceImpl implements OrderService {
                 .findFirst()
                 .orElseThrow(() -> new ApplicationException("Please create and set a default address before checkout."));
 
-        CartEntity cart = cartRepository.findByUserWithItems(user)
+        CartEntity cart = cartRepository.findByUserIdWithItems(user.getId())
                 .orElseThrow(() -> new ApplicationException("Cart is empty."));
 
         if (Objects.isNull(cart.getItems()) || cart.getItems().isEmpty()) {

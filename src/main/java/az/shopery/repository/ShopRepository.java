@@ -4,6 +4,7 @@ import az.shopery.model.dto.projection.AdminShopProjection;
 import az.shopery.model.entity.ShopEntity;
 import az.shopery.model.entity.UserEntity;
 import az.shopery.utils.enums.ShopStatus;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -15,7 +16,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ShopRepository extends JpaRepository<ShopEntity, UUID> {
-    Boolean existsByUserAndStatus(UserEntity userEntity, ShopStatus shopStatus);
+    Boolean existsByUserAndStatusIn(UserEntity userEntity, Collection<ShopStatus> shopStatuses);
     Boolean existsByShopName(String shopName);
     Optional<ShopEntity> findByUserEmailAndStatus(String userEmail, ShopStatus shopStatus);
     Optional<ShopEntity> findByUserAndStatus(UserEntity userEntity, ShopStatus shopStatus);

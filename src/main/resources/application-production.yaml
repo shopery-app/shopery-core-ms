@@ -26,8 +26,3 @@ springdoc:
     enabled: false
   api-docs:
     enabled: false
-
-logging:
-  level:
-    org.hibernate.SQL: off
-    org.hibernate.orm.jdbc.bind: off
