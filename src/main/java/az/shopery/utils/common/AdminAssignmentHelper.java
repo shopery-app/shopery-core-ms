@@ -1,6 +1,6 @@
 package az.shopery.utils.common;
 
-import az.shopery.handler.exception.IllegalRequestException;
+import az.shopery.handler.exception.ApplicationException;
 import az.shopery.model.entity.UserEntity;
 import az.shopery.repository.UserRepository;
 import az.shopery.utils.enums.UserRole;
@@ -20,7 +20,7 @@ public class AdminAssignmentHelper {
         List<UserEntity> admins = userRepository.findAllByUserRoleAndStatus(UserRole.ADMIN, UserStatus.ACTIVE);
 
         if (admins.isEmpty()) {
-            throw new IllegalRequestException("No admins available!");
+            throw new ApplicationException("No admins available!");
         }
 
         return admins.get(ThreadLocalRandom.current().nextInt(admins.size()));

@@ -1,6 +1,6 @@
 package az.shopery.utils.common;
 
-import az.shopery.handler.exception.InvalidUuidFormatException;
+import az.shopery.handler.exception.ApplicationException;
 import lombok.experimental.UtilityClass;
 import java.util.UUID;
 
@@ -11,7 +11,7 @@ public class UuidUtils {
         try {
             return UUID.fromString(uuidString.trim());
         } catch (IllegalArgumentException exception) {
-            throw new InvalidUuidFormatException("It is not a valid UUID format!");
+            throw new ApplicationException("It is not a valid UUID format!");
         }
     }
 }

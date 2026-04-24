@@ -1,6 +1,6 @@
 package az.shopery.service.impl;
 
-import az.shopery.handler.exception.IllegalRequestException;
+import az.shopery.handler.exception.ApplicationException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.model.dto.response.OrderItemResponseDto;
 import az.shopery.model.dto.response.OrderResponseDto;
@@ -62,20 +62,20 @@ public class OrderServiceImpl implements OrderService {
         UserAddressEntity defaultAddress = addresses.stream()
                 .filter(UserAddressEntity::isDefault)
                 .findFirst()
-                .orElseThrow(() -> new IllegalRequestException("Please create and set a default address before checkout."));
+                .orElseThrow(() -> new ApplicationException("Please create and set a default address before checkout."));
 
         CartEntity cart = cartRepository.findByUserWithItems(user)
-                .orElseThrow(() -> new IllegalRequestException("Cart is empty."));
+                .orElseThrow(() -> new ApplicationException("Cart is empty."));
 
         if (Objects.isNull(cart.getItems()) || cart.getItems().isEmpty()) {
-            throw new IllegalRequestException("Cart is empty.");
+            throw new ApplicationException("Cart is empty.");
         }
 
         Map<ShopEntity, List<CartItemEntity>> itemsByShop = new HashMap<>();
         for (CartItemEntity item : cart.getItems()) {
             ProductEntity product = item.getProduct();
             if (product.getStockQuantity() < item.getQuantity()) {
-                throw new IllegalRequestException("Not enough stock for product: " + product.getProductName());
+                throw new ApplicationException("Not enough stock for product: " + product.getProductName());
             }
             itemsByShop.computeIfAbsent(product.getShop(), s -> new ArrayList<>()).add(item);
         }
@@ -107,7 +107,7 @@ public class OrderServiceImpl implements OrderService {
                 ProductEntity product = ci.getProduct();
                 int quantity = ci.getQuantity();
                 if (product.getStockQuantity() < quantity) {
-                    throw new IllegalRequestException("Not enough stock for product: " + product.getProductName());
+                    throw new ApplicationException("Not enough stock for product: " + product.getProductName());
                 }
 
                 BigDecimal unitPrice = product.getCurrentPrice();

@@ -7,7 +7,7 @@ import static az.shopery.utils.common.VerificationCodeGenerator.generateSixDigit
 import static org.springframework.security.core.userdetails.User.withUsername;
 
 import az.shopery.handler.exception.EmailAlreadyExistsException;
-import az.shopery.handler.exception.IllegalRequestException;
+import az.shopery.handler.exception.ApplicationException;
 import az.shopery.handler.exception.InvalidCredentialsException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.model.dto.redis.CachedEmailUpdateData;
@@ -90,15 +90,15 @@ public class UserServiceImpl implements UserService {
         UserEntity assignedAdmin = adminAssignmentHelper.assignRandomAdmin();
 
         if (shopRepository.existsByUserAndStatus(userEntity, ShopStatus.ACTIVE)) {
-            throw new IllegalRequestException("User already has an active shop.");
+            throw new ApplicationException("User already has an active shop.");
         }
 
         if (shopRepository.existsByUserAndStatus(userEntity, ShopStatus.PENDING)) {
-            throw new IllegalRequestException("User already has a pending shop.");
+            throw new ApplicationException("User already has a pending shop.");
         }
 
         if (shopRepository.existsByShopName(shopCreateRequestDto.getShopName())) {
-            throw new IllegalRequestException("Shop with name '" + shopCreateRequestDto.getShopName() + "' already exists.");
+            throw new ApplicationException("Shop with name '" + shopCreateRequestDto.getShopName() + "' already exists.");
         }
 
         ShopCreationRequestEntity shopCreationRequestEntity = ShopCreationRequestEntity.builder()
@@ -130,7 +130,7 @@ public class UserServiceImpl implements UserService {
             throw new InvalidCredentialsException("Invalid credentials.");
         }
         if (userPasswordUpdateRequestDto.getNewPassword().equals(userPasswordUpdateRequestDto.getOldPassword())) {
-            throw new IllegalRequestException("New password must be different from the old password.");
+            throw new ApplicationException("New password must be different from the old password.");
         }
         userEntity.setPassword(passwordEncoder.encode(userPasswordUpdateRequestDto.getNewPassword()));
         userEntity.setPasswordChangedAt(Instant.now());

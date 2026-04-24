@@ -1,14 +1,11 @@
 package az.shopery.handler;
 
-import az.shopery.handler.exception.AddressLimitExceededException;
+import az.shopery.handler.exception.ApplicationException;
 import az.shopery.handler.exception.CooldownNotMetException;
 import az.shopery.handler.exception.EmailAlreadyExistsException;
 import az.shopery.handler.exception.ExternalServiceException;
 import az.shopery.handler.exception.FileStorageException;
-import az.shopery.handler.exception.IllegalRequestException;
 import az.shopery.handler.exception.InvalidCredentialsException;
-import az.shopery.handler.exception.InvalidSearchException;
-import az.shopery.handler.exception.InvalidUuidFormatException;
 import az.shopery.handler.exception.JwtAuthenticationException;
 import az.shopery.handler.exception.OwnProductInteractionException;
 import az.shopery.handler.exception.ResourceNotFoundException;
@@ -31,8 +28,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.util.HtmlUtils;
 
-@RestControllerAdvice
 @Slf4j
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -41,7 +38,7 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(ex, HttpStatus.NOT_FOUND, request);
     }
 
-    @ExceptionHandler({IllegalRequestException.class, InvalidUuidFormatException.class, AddressLimitExceededException.class, InvalidSearchException.class})
+    @ExceptionHandler(ApplicationException.class)
     public ResponseEntity<ErrorResponse> handleBadRequest(Exception ex, HttpServletRequest request) {
         log.debug("Bad request: {}", ex.getMessage());
         return buildErrorResponse(ex, HttpStatus.BAD_REQUEST, request);
