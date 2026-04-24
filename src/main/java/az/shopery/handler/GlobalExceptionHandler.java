@@ -7,7 +7,6 @@ import az.shopery.handler.exception.ExternalServiceException;
 import az.shopery.handler.exception.FileStorageException;
 import az.shopery.handler.exception.InvalidCredentialsException;
 import az.shopery.handler.exception.JwtAuthenticationException;
-import az.shopery.handler.exception.OwnProductInteractionException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.model.dto.shared.ErrorResponse;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
@@ -56,7 +55,7 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(ex, HttpStatus.FORBIDDEN, request);
     }
 
-    @ExceptionHandler({EmailAlreadyExistsException.class, OwnProductInteractionException.class})
+    @ExceptionHandler(EmailAlreadyExistsException.class)
     public ResponseEntity<ErrorResponse> handleConflict(Exception ex, HttpServletRequest request) {
         log.debug("Conflict: {}", ex.getMessage());
         return buildErrorResponse(ex, HttpStatus.CONFLICT, request);
@@ -66,7 +65,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleTooManyRequests(Exception ex, HttpServletRequest request) {
         log.debug("Rate limit exceeded: {}", ex.getMessage());
         String message = ex instanceof RequestNotPermitted
-                ? "Rate limit exceeded, please try again later."
+                ? "Rate limit exceeded, please try again later!"
                 : ex.getMessage();
         return buildErrorResponse(new RuntimeException(message, ex), HttpStatus.TOO_MANY_REQUESTS, request);
     }
@@ -77,7 +76,7 @@ public class GlobalExceptionHandler {
 
         if (isInvalidEnumValue(ex)) {
             return buildErrorResponse(
-                    new IllegalArgumentException("Invalid enum value provided"),
+                    new IllegalArgumentException("Invalid enum value provided!"),
                     HttpStatus.BAD_REQUEST,
                     request
             );
@@ -94,7 +93,7 @@ public class GlobalExceptionHandler {
                         FieldError::getField,
                         error -> HtmlUtils.htmlEscape(Objects.nonNull(error.getDefaultMessage())
                                 ? error.getDefaultMessage()
-                                : "Invalid value"),
+                                : "Invalid value!"),
                         (existing, replacement) -> existing
                 ));
 
