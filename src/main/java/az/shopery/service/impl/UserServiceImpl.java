@@ -29,7 +29,6 @@ import az.shopery.repository.ShopRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.RedisService;
 import az.shopery.service.UserService;
-import az.shopery.utils.annotation.TrackExecutionTime;
 import az.shopery.utils.aws.S3FileUtil;
 import az.shopery.utils.common.RedisUtils;
 import az.shopery.utils.enums.NotificationType;
@@ -83,7 +82,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @TrackExecutionTime
     @Transactional
     public SuccessResponse<Void> createMyShop(String userEmail, ShopCreateRequestDto shopCreateRequestDto) {
         UserEntity userEntity = getUserByEmail(userEmail);

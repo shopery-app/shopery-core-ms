@@ -5,7 +5,6 @@ import az.shopery.utils.enums.SubscriptionTier;
 import az.shopery.utils.enums.UserRole;
 import az.shopery.utils.enums.UserStatus;
 import jakarta.persistence.LockModeType;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -24,6 +23,8 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     Boolean existsByEmail(String email);
     Optional<UserEntity> findByEmailAndUserRoleAndStatus(String email, UserRole userRole, UserStatus status);
     Page<UserEntity> findAllByUserRoleAndStatus(UserRole userRole, UserStatus status, Pageable pageable);
-    List<UserEntity> findAllByUserRoleAndStatus(UserRole userRole, UserStatus status);
     Optional<UserEntity> findByEmailAndUserRoleAndStatusAndSubscriptionTier(String email, UserRole userRole, UserStatus status, SubscriptionTier subscriptionTier);
+
+    @Query(value = "SELECT * FROM users WHERE user_role = 'ADMIN' AND status = 'ACTIVE' ORDER BY RANDOM() LIMIT 1", nativeQuery = true)
+    Optional<UserEntity> findRandomActiveAdmin();
 }
