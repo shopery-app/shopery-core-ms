@@ -3,7 +3,6 @@ package az.shopery.service.impl;
 import static az.shopery.utils.common.UuidUtils.parse;
 
 import az.shopery.handler.exception.ApplicationException;
-import az.shopery.handler.exception.OwnProductInteractionException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.mapper.ProductMapper;
 import az.shopery.model.dto.response.CartItemResponseDto;
@@ -71,10 +70,6 @@ public class CartServiceImpl implements CartService {
 
         UserEntity userEntity = findUser(userEmail);
         ProductEntity productEntity = findProduct(parse(productId));
-
-        if (productEntity.getShop().getUser().getId().equals(userEntity.getId())) {
-            throw new OwnProductInteractionException("You cannot add your own product to the cart.");
-        }
 
         CartEntity cartEntity = findOrCreateCart(userEntity);
         Optional<CartItemEntity> existingItemOpt = cartEntity.getItems().stream()

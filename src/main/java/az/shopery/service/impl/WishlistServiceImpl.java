@@ -2,7 +2,6 @@ package az.shopery.service.impl;
 
 import static az.shopery.utils.common.UuidUtils.parse;
 
-import az.shopery.handler.exception.OwnProductInteractionException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.mapper.ProductMapper;
 import az.shopery.model.dto.response.ProductResponseDto;
@@ -57,10 +56,6 @@ public class WishlistServiceImpl implements WishlistService {
     public SuccessResponse<WishlistResponseDto> addProductToWishlist(String userEmail, String productId) {
         UserEntity userEntity = findUser(userEmail);
         ProductEntity productEntity = findProduct(parse(productId));
-
-        if (productRepository.existsByIdAndShopUser(parse(productId), userEntity)) {
-            throw new OwnProductInteractionException("You cannot add a product to your own wishlist.");
-        }
 
         WishlistEntity wishlistEntity = findOrCreateWishlist(userEntity);
         if (wishlistEntity.getProducts().add(productEntity)) {
