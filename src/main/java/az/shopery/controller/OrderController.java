@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/users/me/orders")
 @RequiredArgsConstructor
+@RequestMapping("/api/v1/users/me/orders")
 public class OrderController {
 
     private final OrderService orderService;
@@ -24,7 +24,7 @@ public class OrderController {
         return ResponseEntity.ok(orderService.checkoutFromCart(principal.getName()));
     }
 
-    @GetMapping("/me")
+    @GetMapping
     public ResponseEntity<SuccessResponse<List<OrderResponseDto>>> getMyOrders(Principal principal) {
         return ResponseEntity.ok(orderService.getMyOrders(principal.getName()));
     }
