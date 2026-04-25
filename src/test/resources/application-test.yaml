@@ -47,3 +47,9 @@ AWS_REGION: us-east-1
 AWS_S3_BUCKET_NAME: test-bucket
 NO_REPLY_SHOPERY_USERNAME: noreply@shopery-test.com
 NO_REPLY_SHOPERY_PASSWORD: test-password
+
+stripe:
+  secret-key: sk_test_dummy
+  webhook-secret: whsec_dummy
+  success-url: http://localhost:3000/payment/success?session_id={CHECKOUT_SESSION_ID}
+  cancel-url: http://localhost:3000/cart
