@@ -150,17 +150,12 @@ public class OrderServiceImpl implements OrderService {
                 .map(this::map)
                 .toList();
 
-        List<String> orderIds = createdOrders.stream()
-                        .map(OrderEntity::getId)
-                        .map(String::valueOf)
-                        .toList();
-
         applicationEventPublisher.publishEvent(new NotificationEvent(
                 userEmail,
                 NotificationType.ORDER_CONFIRMED,
                 Map.of(
                         "userName", user.getName(),
-                        "orders", orderIds
+                        "orders", dtos
                 )
         ));
 
