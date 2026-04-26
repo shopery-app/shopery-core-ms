@@ -123,7 +123,6 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    @Transactional
     public SuccessResponse<Void> handleStripeWebhook(String payload, String sigHeader) {
         Event event;
 
@@ -134,31 +133,37 @@ public class PaymentServiceImpl implements PaymentService {
             throw new ApplicationException("Invalid Stripe webhook signature!");
         }
 
-        log.info("Received Stripe webhook event: {}", event.getType());
+        log.info("Received Stripe webhook event: type={}", event.getType());
 
         if ("checkout.session.completed".equals(event.getType())) {
             Session session = (Session) event.getDataObjectDeserializer()
                     .getObject()
                     .orElseThrow(() -> new ApplicationException("Invalid Stripe session payload!"));
 
-            if (!"paid".equals(session.getPaymentStatus())) {
-                log.info("Skipping session {} — payment_status is: {}", session.getId(), session.getPaymentStatus());
-                return SuccessResponse.of("Awaiting payment confirmation.");
+            String sessionId = session.getId();
+            String paymentStatus = session.getPaymentStatus();
+
+            log.info("checkout.session.completed — sessionId={}, paymentStatus={}", sessionId, paymentStatus);
+
+            if ("unpaid".equals(paymentStatus)) {
+                log.info("Deferring order creation for session {} — payment not yet settled.", sessionId);
+                return SuccessResponse.of("Awaiting async payment confirmation.");
             }
 
             String userEmail = session.getMetadata().get("userEmail");
 
             if (userEmail == null || userEmail.isBlank()) {
-                log.error("No userEmail in Stripe session metadata for session: {}", session.getId());
-                throw new ApplicationException("Missing userEmail in Stripe session metadata!");
+                log.error("No userEmail in Stripe session metadata. sessionId={}", sessionId);
+                return SuccessResponse.of("Missing metadata.");
             }
+
+            log.info("Creating order for userEmail={}, sessionId={}", userEmail, sessionId);
 
             try {
                 orderService.checkoutFromCart(userEmail);
-                log.info("Order(s) created via Stripe webhook. Session: {}, user: {}", session.getId(), userEmail);
-            } catch (Exception e) {
-                log.warn("Webhook handler caught exception for session {} / user {}: {}",
-                        session.getId(), userEmail, e.getMessage());
+                log.info("Order(s) created successfully. sessionId={}, user={}", sessionId, userEmail);
+            } catch (ApplicationException e) {
+                log.warn("Order creation skipped for sessionId={}, user={}: {}", sessionId, userEmail, e.getMessage());
             }
         }
 
