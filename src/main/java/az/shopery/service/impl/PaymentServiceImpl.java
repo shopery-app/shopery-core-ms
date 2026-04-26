@@ -98,7 +98,7 @@ public class PaymentServiceImpl implements PaymentService {
 
             SessionCreateParams params = SessionCreateParams.builder()
                     .setMode(SessionCreateParams.Mode.PAYMENT)
-                    .setSuccessUrl(successUrl)
+                    .setSuccessUrl(successUrl + "?session_id={CHECKOUT_SESSION_ID}")
                     .setCancelUrl(cancelUrl)
                     .setClientReferenceId(user.getId().toString())
                     .putMetadata("userEmail", userEmail)
@@ -107,8 +107,17 @@ public class PaymentServiceImpl implements PaymentService {
 
             Session session = Session.create(params);
 
-            return SuccessResponse.of(StripeCheckoutResponseDto.builder().sessionId(session.getId()).checkoutUrl(session.getUrl()).build(), "Stripe checkout session created successfully.");
+            log.info("Stripe checkout session created. Session: {}, user: {}", session.getId(), userEmail);
+
+            return SuccessResponse.of(
+                    StripeCheckoutResponseDto.builder()
+                            .sessionId(session.getId())
+                            .checkoutUrl(session.getUrl())
+                            .build(),
+                    "Stripe checkout session created successfully."
+            );
         } catch (StripeException e) {
+            log.error("Failed to create Stripe checkout session for user: {}", userEmail, e);
             throw new ApplicationException("Failed to create Stripe checkout session!");
         }
     }
@@ -121,20 +130,38 @@ public class PaymentServiceImpl implements PaymentService {
         try {
             event = Webhook.constructEvent(payload, sigHeader, webhookSecret);
         } catch (SignatureVerificationException e) {
+            log.warn("Invalid Stripe webhook signature received.");
             throw new ApplicationException("Invalid Stripe webhook signature!");
         }
+
+        log.info("Received Stripe webhook event: {}", event.getType());
 
         if ("checkout.session.completed".equals(event.getType())) {
             Session session = (Session) event.getDataObjectDeserializer()
                     .getObject()
                     .orElseThrow(() -> new ApplicationException("Invalid Stripe session payload!"));
 
+            if (!"paid".equals(session.getPaymentStatus())) {
+                log.info("Skipping session {} — payment_status is: {}", session.getId(), session.getPaymentStatus());
+                return SuccessResponse.of("Awaiting payment confirmation.");
+            }
+
             String userEmail = session.getMetadata().get("userEmail");
 
-            orderService.checkoutFromCart(userEmail);
+            if (userEmail == null || userEmail.isBlank()) {
+                log.error("No userEmail in Stripe session metadata for session: {}", session.getId());
+                throw new ApplicationException("Missing userEmail in Stripe session metadata!");
+            }
 
-            log.info("Stripe payment completed. Session: {}, user: {}", session.getId(), userEmail);
+            try {
+                orderService.checkoutFromCart(userEmail);
+                log.info("Order(s) created via Stripe webhook. Session: {}, user: {}", session.getId(), userEmail);
+            } catch (Exception e) {
+                log.warn("Webhook handler caught exception for session {} / user {}: {}",
+                        session.getId(), userEmail, e.getMessage());
+            }
         }
-        return SuccessResponse.of("Stripe payment completed!");
+
+        return SuccessResponse.of("Webhook processed.");
     }
 }
