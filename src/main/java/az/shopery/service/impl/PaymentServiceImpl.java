@@ -14,8 +14,11 @@ import az.shopery.repository.UserRepository;
 import az.shopery.service.OrderService;
 import az.shopery.service.PaymentService;
 import az.shopery.utils.enums.UserStatus;
+import com.stripe.exception.EventDataObjectDeserializationException;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.exception.StripeException;
+import com.stripe.model.EventDataObjectDeserializer;
+import com.stripe.model.StripeObject;
 import com.stripe.model.checkout.Session;
 import com.stripe.model.Event;
 import com.stripe.net.Webhook;
@@ -136,9 +139,27 @@ public class PaymentServiceImpl implements PaymentService {
         log.info("Received Stripe webhook event: type={}", event.getType());
 
         if ("checkout.session.completed".equals(event.getType())) {
-            Session session = (Session) event.getDataObjectDeserializer()
-                    .getObject()
-                    .orElseThrow(() -> new ApplicationException("Invalid Stripe session payload!"));
+            EventDataObjectDeserializer deserializer = event.getDataObjectDeserializer();
+
+            Session session;
+            if (deserializer.getObject().isPresent()) {
+                session = (Session) deserializer.getObject().get();
+            } else {
+                log.warn("Stripe SDK version mismatch for event {}. Falling back to deserializeUnsafe().", event.getId());
+
+                StripeObject stripeObject;
+                try {
+                    stripeObject = deserializer.deserializeUnsafe();
+                } catch (EventDataObjectDeserializationException e) {
+                    throw new RuntimeException(e);
+                }
+
+                if (!(stripeObject instanceof Session)) {
+                    log.error("Deserialized object is not a Session for event: {}", event.getId());
+                    return SuccessResponse.of("Unexpected object type.");
+                }
+                session = (Session) stripeObject;
+            }
 
             String sessionId = session.getId();
             String paymentStatus = session.getPaymentStatus();
