@@ -12,6 +12,7 @@ import az.shopery.handler.exception.CooldownNotMetException;
 import az.shopery.handler.exception.EmailAlreadyExistsException;
 import az.shopery.handler.exception.InvalidCredentialsException;
 import az.shopery.handler.exception.ResourceNotFoundException;
+import az.shopery.kafka.producer.NotificationProducer;
 import az.shopery.model.dto.redis.CachedPasswordResetData;
 import az.shopery.model.dto.redis.CachedVerificationData;
 import az.shopery.model.dto.request.ForgotPasswordRequestDto;
@@ -39,7 +40,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -54,7 +54,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
-    private final ApplicationEventPublisher applicationEventPublisher;
+    private final NotificationProducer notificationProducer;
     private final RedisService redisService;
 
     @Override
@@ -83,15 +83,17 @@ public class AuthServiceImpl implements AuthService {
                 Duration.ofMinutes(VERIFICATION_CODE_EXPIRY_MINUTES)
         );
 
-        applicationEventPublisher.publishEvent(new NotificationEvent(
-                email,
-                NotificationType.VERIFICATION_CODE,
-                Map.of(
-                        "userName", userRegisterRequestDto.getName(),
-                        "isRegistration", Boolean.TRUE,
-                        "verificationCode", code
+        notificationProducer.send(
+                new NotificationEvent(
+                        email,
+                        NotificationType.VERIFICATION_CODE,
+                        Map.of(
+                                "userName", userRegisterRequestDto.getName(),
+                                "isRegistration", Boolean.TRUE,
+                                "verificationCode", code
+                        )
                 )
-        ));
+        );
         return SuccessResponse.of("Verification code sent to your email. Please verify to complete registration.");
     }
 
@@ -177,15 +179,17 @@ public class AuthServiceImpl implements AuthService {
                 Duration.ofMinutes(VERIFICATION_CODE_EXPIRY_MINUTES)
         );
 
-        applicationEventPublisher.publishEvent(new NotificationEvent(
-                email,
-                NotificationType.VERIFICATION_CODE,
-                Map.of(
-                        "userName", existing.getUserName(),
-                        "isRegistration", Boolean.TRUE,
-                        "verificationCode", newCode
+        notificationProducer.send(
+                new NotificationEvent(
+                        email,
+                        NotificationType.VERIFICATION_CODE,
+                        Map.of(
+                                "userName", existing.getUserName(),
+                                "isRegistration", Boolean.TRUE,
+                                "verificationCode", newCode
+                        )
                 )
-        ));
+        );
         return SuccessResponse.of("A new verification code has been sent to your email.");
     }
 
@@ -221,14 +225,16 @@ public class AuthServiceImpl implements AuthService {
                 Duration.ofMinutes(RESET_TOKEN_EXPIRY_MINUTES)
         );
 
-        applicationEventPublisher.publishEvent(new NotificationEvent(
-                email,
-                NotificationType.PASSWORD_RESET_LINK,
-                Map.of(
-                        "userName", userEntity.getName(),
-                        "token", token
+        notificationProducer.send(
+                new NotificationEvent(
+                        email,
+                        NotificationType.PASSWORD_RESET_LINK,
+                        Map.of(
+                                "userName", userEntity.getName(),
+                                "token", token
+                        )
                 )
-        ));
+        );
         return SuccessResponse.of("A new password reset link has been sent to your email.");
     }
 
@@ -256,13 +262,15 @@ public class AuthServiceImpl implements AuthService {
         redisService.delete(RedisUtils.resetTokenKey(token));
         redisService.delete(RedisUtils.resetCooldownKey(email));
 
-        applicationEventPublisher.publishEvent(new NotificationEvent(
-                email,
-                NotificationType.PASSWORD_CHANGED,
-                Map.of(
-                        "userName", user.getName()
+        notificationProducer.send(
+                new NotificationEvent(
+                        email,
+                        NotificationType.PASSWORD_CHANGED,
+                        Map.of(
+                                "userName", user.getName()
+                        )
                 )
-        ));
+        );
         return SuccessResponse.of("Password reset successful.");
     }
 

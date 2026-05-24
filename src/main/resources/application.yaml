@@ -23,22 +23,17 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
 
-  mail:
-    host: smtp-relay.brevo.com
-    port: 587
-    username: ${NO_REPLY_BREVO_USERNAME}
-    password: ${NO_REPLY_BREVO_PASSWORD}
-    protocol: smtp
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-
   data:
     redis:
       timeout: 2000ms
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
 
 application:
   security:
@@ -67,10 +62,6 @@ resilience4j:
         limitRefreshPeriod: 120s
         timeoutDuration: 100ms
 
-app:
-  mail:
-    from: ${NO_REPLY_SHOPERY_USERNAME}
-
 aws:
   region: ${AWS_REGION}
   s3:
@@ -81,3 +72,6 @@ stripe:
   webhook-secret: ${STRIPE_WEBHOOK_SECRET}
   success-url: ${FRONTEND_BASE_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}
   cancel-url: ${FRONTEND_BASE_URL}/cart
+
+topic:
+  notification: notification-topic

@@ -10,6 +10,7 @@ import az.shopery.handler.exception.EmailAlreadyExistsException;
 import az.shopery.handler.exception.ApplicationException;
 import az.shopery.handler.exception.InvalidCredentialsException;
 import az.shopery.handler.exception.ResourceNotFoundException;
+import az.shopery.kafka.producer.NotificationProducer;
 import az.shopery.model.dto.redis.CachedEmailUpdateData;
 import az.shopery.model.dto.request.ShopCreateRequestDto;
 import az.shopery.model.dto.request.UserEmailUpdateRequestDto;
@@ -57,6 +58,7 @@ public class UserServiceImpl implements UserService {
     private final ShopRepository shopRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
+    private final NotificationProducer notificationProducer;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final S3FileUtil s3FileUtil;
     private final RedisService redisService;
@@ -143,13 +145,15 @@ public class UserServiceImpl implements UserService {
                 .userProfileResponseDto(mapToDto(userEntity))
                 .build();
 
-        applicationEventPublisher.publishEvent(new NotificationEvent(
-                userEmail,
-                NotificationType.PASSWORD_CHANGED,
-                Map.of(
-                        "userName",userEntity.getName()
+        notificationProducer.send(
+                new NotificationEvent(
+                        userEmail,
+                        NotificationType.PASSWORD_CHANGED,
+                        Map.of(
+                                "userName",userEntity.getName()
+                        )
                 )
-        ));
+        );
         return SuccessResponse.of(userPasswordUpdateResponseDto, "Password has been updated successfully!");
     }
 
@@ -173,15 +177,17 @@ public class UserServiceImpl implements UserService {
                 Duration.ofMinutes(EMAIL_UPDATE_CODE_EXPIRY_MINUTES)
         );
 
-        applicationEventPublisher.publishEvent(new NotificationEvent(
-                userEmail,
-                NotificationType.VERIFICATION_CODE,
-                Map.of(
-                        "userName", userEntity.getName(),
-                        "isRegistration", Boolean.FALSE,
-                        "verificationCode", code
+        notificationProducer.send(
+                new NotificationEvent(
+                        userEmail,
+                        NotificationType.VERIFICATION_CODE,
+                        Map.of(
+                                "userName", userEntity.getName(),
+                                "isRegistration", Boolean.FALSE,
+                                "verificationCode", code
+                        )
                 )
-        ));
+        );
         return SuccessResponse.of("Verification code has been sent to your email address!");
     }
 
