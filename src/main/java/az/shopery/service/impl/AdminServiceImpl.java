@@ -6,6 +6,7 @@ import static az.shopery.utils.common.UuidUtils.parse;
 
 import az.shopery.handler.exception.ApplicationException;
 import az.shopery.handler.exception.ResourceNotFoundException;
+import az.shopery.kafka.producer.NotificationProducer;
 import az.shopery.mapper.TaskMapper;
 import az.shopery.model.dto.projection.AdminShopProjection;
 import az.shopery.model.dto.request.ShopCreationRequestRejectDto;
@@ -34,15 +35,14 @@ import az.shopery.utils.enums.TaskCategory;
 import az.shopery.utils.enums.TicketStatus;
 import az.shopery.utils.enums.UserRole;
 import az.shopery.utils.enums.UserStatus;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -52,9 +52,9 @@ public class AdminServiceImpl implements AdminService {
     private final OrderRepository orderRepository;
     private final ShopRepository shopRepository;
     private final TaskRepository taskRepository;
-    private final ApplicationEventPublisher applicationEventPublisher;
     private final TaskMapper taskMapper;
     private final S3FileUtil s3FileUtil;
+    private final NotificationProducer notificationProducer;
 
     @Override
     public SuccessResponse<Page<UserProfileResponseDto>> getUsers(Pageable pageable) {
@@ -124,14 +124,17 @@ public class AdminServiceImpl implements AdminService {
         ShopEntity shopEntity = shopRepository.findByShopName(shopCreationRequestEntity.getShopName())
                 .orElseThrow(() -> new ResourceNotFoundException("Shop not found!"));
         shopEntity.setStatus(ShopStatus.ACTIVE);
-        applicationEventPublisher.publishEvent(new NotificationEvent(
-                userEmail,
-                NotificationType.SHOP_APPROVED,
-                Map.of(
-                        "userName",shopCreationRequestEntity.getCreatedBy().getName(),
-                        "shopName",shopCreationRequestEntity.getShopName()
+
+        notificationProducer.send(
+                new NotificationEvent(
+                        userEmail,
+                        NotificationType.SHOP_APPROVED,
+                        Map.of(
+                                "userName",shopCreationRequestEntity.getCreatedBy().getName(),
+                                "shopName",shopCreationRequestEntity.getShopName()
+                        )
                 )
-        ));
+        );
         return SuccessResponse.of("Shop creation request has been approved successfully!");
     }
 
@@ -147,14 +150,16 @@ public class AdminServiceImpl implements AdminService {
                         .orElseThrow(() -> new ResourceNotFoundException("Shop not found!"));
         shopEntity.setStatus(ShopStatus.CLOSED);
 
-        applicationEventPublisher.publishEvent(new NotificationEvent(
-                userEmail,
-                NotificationType.SHOP_REJECTED,
-                Map.of(
-                        "userName",shopCreationRequestEntity.getCreatedBy().getName(),
-                        "shopName",shopCreationRequestEntity.getShopName()
+        notificationProducer.send(
+                new NotificationEvent(
+                        userEmail,
+                        NotificationType.SHOP_REJECTED,
+                        Map.of(
+                                "userName",shopCreationRequestEntity.getCreatedBy().getName(),
+                                "shopName",shopCreationRequestEntity.getShopName()
+                        )
                 )
-        ));
+        );
         return SuccessResponse.of("Shop creation request has been rejected successfully!");
     }
 

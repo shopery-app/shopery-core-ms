@@ -20,8 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 
 @RestController
-@RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
+@RequestMapping("/api/v1/auth")
 public class AuthController {
 
     private final AuthService authService;

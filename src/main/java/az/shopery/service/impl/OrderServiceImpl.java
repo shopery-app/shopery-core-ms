@@ -2,6 +2,7 @@ package az.shopery.service.impl;
 
 import az.shopery.handler.exception.ApplicationException;
 import az.shopery.handler.exception.ResourceNotFoundException;
+import az.shopery.kafka.producer.NotificationProducer;
 import az.shopery.model.dto.response.OrderItemResponseDto;
 import az.shopery.model.dto.response.OrderResponseDto;
 import az.shopery.model.dto.shared.SuccessResponse;
@@ -35,12 +36,11 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
 @Slf4j
+@Service
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
 
@@ -50,7 +50,7 @@ public class OrderServiceImpl implements OrderService {
     private final ShopRepository shopRepository;
     private final UserAddressRepository userAddressRepository;
     private final OrderRepository orderRepository;
-    private final ApplicationEventPublisher applicationEventPublisher;
+    private final NotificationProducer notificationProducer;
 
     @Override
     @Transactional
@@ -150,14 +150,16 @@ public class OrderServiceImpl implements OrderService {
                 .map(this::map)
                 .toList();
 
-        applicationEventPublisher.publishEvent(new NotificationEvent(
-                userEmail,
-                NotificationType.ORDER_CONFIRMED,
-                Map.of(
-                        "userName", user.getName(),
-                        "orders", dtos
+        notificationProducer.send(
+                new NotificationEvent(
+                        userEmail,
+                        NotificationType.ORDER_CONFIRMED,
+                        Map.of(
+                                "userName", user.getName(),
+                                "orders", dtos
+                        )
                 )
-        ));
+        );
 
         log.info("Created {} order(s) for user {} from cart.", dtos.size(), userEmail);
         return SuccessResponse.of(dtos, "Order(s) placed successfully.");
