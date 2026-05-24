@@ -43,8 +43,6 @@ application:
         expiration: ${ACCESS_TOKEN_EXPIRATION}
       refresh-token:
         expiration: ${REFRESH_TOKEN_EXPIRATION}
-  frontend:
-    base-url: ${FRONTEND_BASE_URL}
 
 claude:
   api:

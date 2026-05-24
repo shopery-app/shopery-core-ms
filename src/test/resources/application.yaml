@@ -13,17 +13,19 @@ spring:
   liquibase:
     enabled: false
 
-  mail:
-    host: smtp.test.com
-    port: 587
-    username: test@test.com
-    password: test-password
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000ms
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
 
 application:
   security:
@@ -33,10 +35,6 @@ application:
         expiration: 10000
       refresh-token:
         expiration: 100000
-  frontend:
-    base-url: http://localhost:4200/
-  mail:
-    from: noreply@shopery-test.com
 
 aws:
   region: us-east-1
@@ -45,11 +43,20 @@ aws:
 
 AWS_REGION: us-east-1
 AWS_S3_BUCKET_NAME: test-bucket
-NO_REPLY_SHOPERY_USERNAME: noreply@shopery-test.com
-NO_REPLY_SHOPERY_PASSWORD: test-password
 
 stripe:
   secret-key: sk_test_dummy
   webhook-secret: whsec_dummy
   success-url: http://localhost:3000/payment/success?session_id={CHECKOUT_SESSION_ID}
   cancel-url: http://localhost:3000/cart
+
+claude:
+  api:
+    key: test-claude-key
+    url: https://api.anthropic.com/v1/messages
+    model: claude-sonnet-4-20250514
+    max-tokens: 1024
+    version: 2023-06-01
+
+topic:
+  notification: notification-topic
