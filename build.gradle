@@ -1,6 +1,10 @@
+buildscript {
+	apply from: 'versions.gradle'
+}
+
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '4.0.5'
+	id 'org.springframework.boot' version '4.0.6'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -9,7 +13,7 @@ version = '0.0.1-SNAPSHOT'
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
+		languageVersion = JavaLanguageVersion.of(26)
 	}
 }
 
@@ -24,47 +28,49 @@ repositories {
 }
 
 ext {
-	set('springCloudVersion', "2025.1.1")
+	set('springCloudVersion', v.springCloud)
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-kafka'
-	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.security:spring-security-messaging'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	implementation 'org.springframework.security:spring-security-messaging'
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 	implementation 'org.springframework.boot:spring-boot-starter-liquibase'
-	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-	implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2'
-	implementation 'com.googlecode.libphonenumber:libphonenumber:9.0.11'
-	implementation 'software.amazon.awssdk:s3:2.32.19'
-	implementation 'commons-io:commons-io:2.20.0'
-	implementation 'net.bytebuddy:byte-buddy:1.15.11'
-	implementation 'software.amazon.awssdk:apache-client:2.32.19'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	implementation 'org.springframework.boot:spring-boot-starter-kafka'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'io.projectreactor:reactor-core'
-	implementation 'org.mapstruct:mapstruct:1.6.3'
-	implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0'
-	implementation 'com.stripe:stripe-java:32.2.0-beta.2'
 
-	implementation platform('software.amazon.awssdk:bom:2.32.19')
+	implementation "io.github.resilience4j:resilience4j-spring-boot3:${v.resilience4j}"
+	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${v.springdoc}"
+	implementation "com.googlecode.libphonenumber:libphonenumber:${v.libphonenumber}"
+	implementation "software.amazon.awssdk:apache-client:${v.awssdk}"
+	implementation "net.bytebuddy:byte-buddy:${v.byteBuddy}"
+	implementation "org.mapstruct:mapstruct:${v.mapstruct}"
+	implementation "software.amazon.awssdk:s3:${v.awssdk}"
+	implementation "commons-io:commons-io:${v.commonsIo}"
+	implementation "com.stripe:stripe-java:${v.stripe}"
+	implementation "io.jsonwebtoken:jjwt-api:${v.jjwt}"
+
+	implementation platform("software.amazon.awssdk:bom:${v.awssdk}")
 
 	compileOnly 'org.projectlombok:lombok'
 
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
 	runtimeOnly 'org.postgresql:postgresql'
-	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
-	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
+
+	runtimeOnly "io.jsonwebtoken:jjwt-jackson:${v.jjwt}"
+	runtimeOnly "io.jsonwebtoken:jjwt-impl:${v.jjwt}"
 
 	annotationProcessor 'org.projectlombok:lombok'
 
+	testImplementation 'org.springframework.boot:spring-boot-starter-kafka-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-kafka-test'
 
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
