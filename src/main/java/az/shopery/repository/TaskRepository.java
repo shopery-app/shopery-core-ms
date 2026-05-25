@@ -4,8 +4,6 @@ import az.shopery.model.entity.UserEntity;
 import az.shopery.model.entity.task.SupportTicketEntity;
 import az.shopery.model.entity.task.TaskEntity;
 import az.shopery.utils.enums.TaskCategory;
-import az.shopery.utils.enums.TicketStatus;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -26,6 +24,4 @@ public interface TaskRepository extends JpaRepository<TaskEntity, UUID> {
     Page<SupportTicketEntity> getAllSupportTicketsByCreatedBy(UserEntity user, Pageable pageable);
     @Query("SELECT t FROM SupportTicketEntity t WHERE t.id = :id AND t.createdBy = :user")
     Optional<SupportTicketEntity> findSupportTicketByIdAndCreatedBy(UUID id, UserEntity user);
-    @Query("SELECT t FROM SupportTicketEntity t JOIN FETCH t.createdBy WHERE t.ticketStatus = :status AND t.isUserNotified = false")
-    List<SupportTicketEntity> findAllByTicketStatusAndIsUserNotifiedFalse(TicketStatus status);
 }

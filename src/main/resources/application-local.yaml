@@ -33,3 +33,5 @@ feign:
     config:
       blog-ms:
         url: ${BLOG_MS:http://localhost:8083}
+      aws-ms:
+        url: ${AWS_MS:http://localhost:8084}

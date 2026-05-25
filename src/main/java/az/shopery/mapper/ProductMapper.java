@@ -2,12 +2,12 @@ package az.shopery.mapper;
 
 import static az.shopery.utils.common.DiscountCalculator.calculateDiscountFromOriginalPrice;
 
+import az.shopery.client.AwsClient;
 import az.shopery.model.dto.response.ProductDetailResponseDto;
 import az.shopery.model.dto.response.ProductResponseDto;
 import az.shopery.model.dto.shared.PriceHistoryDto;
 import az.shopery.model.entity.PriceHistoryEntity;
 import az.shopery.model.entity.ProductEntity;
-import az.shopery.utils.aws.S3FileUtil;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -19,14 +19,16 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ProductMapper {
 
-    private final S3FileUtil s3FileUtil;
+    private final AwsClient awsClient;
 
     public ProductResponseDto toBriefDto(ProductEntity productEntity) {
+        String presignedUrl = awsClient.getPresignedUrl(productEntity.getImageUrl()).getBody();
+
         return ProductResponseDto.builder()
                 .id(productEntity.getId())
                 .productName(productEntity.getProductName())
                 .description(productEntity.getDescription())
-                .imageUrl(s3FileUtil.generatePresignedUrl(productEntity.getImageUrl()))
+                .imageUrl(presignedUrl)
                 .currentPrice(productEntity.getCurrentPrice())
                 .stockQuantity(productEntity.getStockQuantity())
                 .discountDto(calculateDiscountFromOriginalPrice(productEntity.getCurrentPrice(), productEntity.getOriginalPrice()))
@@ -45,11 +47,13 @@ public class ProductMapper {
                         .toList()
                         : Collections.emptyList();
 
+        String presignedUrl = awsClient.getPresignedUrl(product.getImageUrl()).getBody();
+
         return ProductDetailResponseDto.builder()
                 .id(product.getId())
                 .productName(product.getProductName())
                 .description(product.getDescription())
-                .imageUrl(s3FileUtil.generatePresignedUrl(product.getImageUrl()))
+                .imageUrl(presignedUrl)
                 .currentPrice(product.getCurrentPrice())
                 .discountDto(calculateDiscountFromOriginalPrice(product.getCurrentPrice(), product.getOriginalPrice()))
                 .stockQuantity(product.getStockQuantity())

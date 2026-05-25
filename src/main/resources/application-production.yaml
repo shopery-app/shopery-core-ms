@@ -32,3 +32,5 @@ feign:
     config:
       blog-ms:
         url: ${BLOG_MS}
+      aws-ms:
+        url: ${AWS_MS}
