@@ -26,3 +26,9 @@ springdoc:
     enabled: false
   api-docs:
     enabled: false
+
+feign:
+  client:
+    config:
+      blog-ms:
+        url: ${BLOG_MS}
