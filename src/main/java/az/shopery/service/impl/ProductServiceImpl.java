@@ -3,6 +3,7 @@ package az.shopery.service.impl;
 import static az.shopery.utils.common.CommonConstraints.MAX_PRODUCTS_PER_MONTH_BY_TIER;
 import static az.shopery.utils.common.UuidUtils.parse;
 
+import az.shopery.client.AwsClient;
 import az.shopery.handler.exception.ApplicationException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.mapper.ProductMapper;
@@ -18,7 +19,6 @@ import az.shopery.repository.ProductRepository;
 import az.shopery.repository.ShopRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.ProductService;
-import az.shopery.utils.aws.S3FileUtil;
 import java.time.Instant;
 import java.time.YearMonth;
 import java.time.ZoneOffset;
@@ -44,11 +44,11 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
 
+    private final AwsClient awsClient;
+    private final ProductMapper productMapper;
     private final UserRepository userRepository;
     private final ShopRepository shopRepository;
     private final ProductRepository productRepository;
-    private final S3FileUtil s3FileUtil;
-    private final ProductMapper productMapper;
 
     @Override
     @Transactional
@@ -107,7 +107,7 @@ public class ProductServiceImpl implements ProductService {
     public SuccessResponse<String> updateProductImage(String userEmail, String productId, MultipartFile imageFile) {
         ProductEntity productEntity = getProductForUser(userEmail, productId);
 
-        String newImageUrlKey = s3FileUtil.uploadNewFile(productEntity.getImageUrl(), imageFile);
+        String newImageUrlKey = awsClient.updateFile(productEntity.getImageUrl(), imageFile).getBody();
         productEntity.setImageUrl(newImageUrlKey);
         productRepository.save(productEntity);
 
@@ -124,7 +124,7 @@ public class ProductServiceImpl implements ProductService {
             throw new ResourceNotFoundException("No product image found for product: " + productId);
         }
 
-        s3FileUtil.deleteFileIfExists(imageKey);
+        awsClient.deleteFile(imageKey);
         productEntity.setImageUrl(null);
         productRepository.save(productEntity);
 
@@ -138,7 +138,7 @@ public class ProductServiceImpl implements ProductService {
 
         String imageKey = productEntity.getImageUrl();
         productRepository.delete(productEntity);
-        s3FileUtil.deleteFileIfExists(imageKey);
+        awsClient.deleteFile(imageKey);
 
         return SuccessResponse.of("Product deleted successfully.");
     }
@@ -195,7 +195,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private String generateImageUrl(String key) {
-        return Objects.isNull(key) ? null : s3FileUtil.generatePresignedUrl(key);
+        return Objects.isNull(key) ? null : awsClient.getPresignedUrl(key).getBody();
     }
 
     private void validateMonthlyProductLimit(ShopEntity shopEntity) {

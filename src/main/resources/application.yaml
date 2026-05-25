@@ -60,11 +60,6 @@ resilience4j:
         limitRefreshPeriod: 120s
         timeoutDuration: 100ms
 
-aws:
-  region: ${AWS_REGION}
-  s3:
-    bucket-name: ${AWS_S3_BUCKET_NAME}
-
 stripe:
   secret-key: ${STRIPE_SECRET_KEY}
   webhook-secret: ${STRIPE_WEBHOOK_SECRET}

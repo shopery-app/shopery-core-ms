@@ -4,6 +4,7 @@ import static az.shopery.utils.common.NameMapperHelper.first;
 import static az.shopery.utils.common.NameMapperHelper.last;
 import static az.shopery.utils.common.UuidUtils.parse;
 
+import az.shopery.client.AwsClient;
 import az.shopery.handler.exception.ApplicationException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.kafka.producer.NotificationProducer;
@@ -26,7 +27,6 @@ import az.shopery.repository.ShopRepository;
 import az.shopery.repository.TaskRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.AdminService;
-import az.shopery.utils.aws.S3FileUtil;
 import az.shopery.utils.enums.NotificationType;
 import az.shopery.utils.enums.OrderStatus;
 import az.shopery.utils.enums.RequestStatus;
@@ -48,12 +48,12 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AdminServiceImpl implements AdminService {
 
+    private final AwsClient awsClient;
+    private final TaskMapper taskMapper;
     private final UserRepository userRepository;
-    private final OrderRepository orderRepository;
     private final ShopRepository shopRepository;
     private final TaskRepository taskRepository;
-    private final TaskMapper taskMapper;
-    private final S3FileUtil s3FileUtil;
+    private final OrderRepository orderRepository;
     private final NotificationProducer notificationProducer;
 
     @Override
@@ -187,6 +187,8 @@ public class AdminServiceImpl implements AdminService {
     }
 
     private UserProfileResponseDto mapToDto(UserEntity userEntity) {
+        String presignedUrl = awsClient.getPresignedUrl(userEntity.getProfilePhotoUrl()).getBody();
+
         return UserProfileResponseDto.builder()
                 .id(userEntity.getId())
                 .firstName(first(userEntity.getName()))
@@ -194,7 +196,7 @@ public class AdminServiceImpl implements AdminService {
                 .email(userEntity.getEmail())
                 .phone(userEntity.getPhone())
                 .dateOfBirth(userEntity.getDateOfBirth())
-                .profilePhotoUrl(s3FileUtil.generatePresignedUrl(userEntity.getProfilePhotoUrl()))
+                .profilePhotoUrl(presignedUrl)
                 .createdAt(userEntity.getCreatedAt())
                 .build();
     }

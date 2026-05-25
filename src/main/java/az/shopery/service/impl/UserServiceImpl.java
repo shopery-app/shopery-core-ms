@@ -6,6 +6,7 @@ import static az.shopery.utils.common.NameMapperHelper.last;
 import static az.shopery.utils.common.VerificationCodeGenerator.generateSixDigitVerificationCode;
 import static org.springframework.security.core.userdetails.User.withUsername;
 
+import az.shopery.client.AwsClient;
 import az.shopery.handler.exception.EmailAlreadyExistsException;
 import az.shopery.handler.exception.ApplicationException;
 import az.shopery.handler.exception.InvalidCredentialsException;
@@ -30,7 +31,6 @@ import az.shopery.repository.ShopRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.RedisService;
 import az.shopery.service.UserService;
-import az.shopery.utils.aws.S3FileUtil;
 import az.shopery.utils.common.RedisUtils;
 import az.shopery.utils.enums.NotificationType;
 import az.shopery.utils.enums.ShopStatus;
@@ -54,14 +54,14 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
+    private final AwsClient awsClient;
+    private final JwtService jwtService;
+    private final RedisService redisService;
     private final UserRepository userRepository;
     private final ShopRepository shopRepository;
-    private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final NotificationProducer notificationProducer;
     private final ApplicationEventPublisher applicationEventPublisher;
-    private final S3FileUtil s3FileUtil;
-    private final RedisService redisService;
 
     @Override
     @Transactional(readOnly = true)
@@ -232,6 +232,8 @@ public class UserServiceImpl implements UserService {
     }
 
     private UserProfileResponseDto mapToDto(UserEntity userEntity) {
+        String presignedUrl = awsClient.getPresignedUrl(userEntity.getProfilePhotoUrl()).getBody();
+
         return UserProfileResponseDto.builder()
                 .id(userEntity.getId())
                 .firstName(first(userEntity.getName()))
@@ -239,7 +241,7 @@ public class UserServiceImpl implements UserService {
                 .email(userEntity.getEmail())
                 .phone(userEntity.getPhone())
                 .dateOfBirth(userEntity.getDateOfBirth())
-                .profilePhotoUrl(s3FileUtil.generatePresignedUrl(userEntity.getProfilePhotoUrl()))
+                .profilePhotoUrl(presignedUrl)
                 .createdAt(userEntity.getCreatedAt())
                 .shop(mapShop(userEntity))
                 .build();
