@@ -34,3 +34,5 @@ feign:
         url: ${BLOG_MS}
       aws-ms:
         url: ${AWS_MS}
+      ai-ms:
+        url: ${AI_MS}

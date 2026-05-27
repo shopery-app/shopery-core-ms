@@ -35,3 +35,5 @@ feign:
         url: ${BLOG_MS:http://localhost:8083}
       aws-ms:
         url: ${AWS_MS:http://localhost:8084}
+      ai-ms:
+        url: ${AI_MS:http://localhost:8085}

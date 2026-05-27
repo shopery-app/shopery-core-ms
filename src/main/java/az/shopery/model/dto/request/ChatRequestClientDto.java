@@ -13,7 +13,9 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ChatRequestDto {
+public class ChatRequestClientDto {
     @NotBlank(message = "Message cannot be blank")
     String message;
+
+    long remainingTokens;
 }
