@@ -38,3 +38,5 @@ feign:
         url: ${AI_MS}
       payment-ms:
         url: ${PAYMENT_MS}
+      order-ms:
+        url: ${ORDER_MS}
