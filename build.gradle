@@ -49,7 +49,6 @@ dependencies {
 	implementation "net.bytebuddy:byte-buddy:${v.byteBuddy}"
 	implementation "org.mapstruct:mapstruct:${v.mapstruct}"
 	implementation "commons-io:commons-io:${v.commonsIo}"
-	implementation "com.stripe:stripe-java:${v.stripe}"
 	implementation "io.jsonwebtoken:jjwt-api:${v.jjwt}"
 
 	compileOnly 'org.projectlombok:lombok'
