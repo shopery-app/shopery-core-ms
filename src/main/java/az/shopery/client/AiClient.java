@@ -1,6 +1,6 @@
 package az.shopery.client;
 
-import az.shopery.model.dto.request.ChatRequestClientDto;
+import az.shopery.model.dto.client.ChatRequestClientDto;
 import az.shopery.model.dto.response.ChatResponseDto;
 import az.shopery.model.dto.shared.SuccessResponse;
 import org.springframework.cloud.openfeign.FeignClient;

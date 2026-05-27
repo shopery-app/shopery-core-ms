@@ -1,4 +1,4 @@
-package az.shopery.model.dto.request;
+package az.shopery.model.dto.client;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
@@ -17,5 +17,5 @@ public class ChatRequestClientDto {
     @NotBlank(message = "Message cannot be blank")
     String message;
 
-    long remainingTokens;
+    Integer remainingTokens;
 }
