@@ -1,7 +1,6 @@
 package az.shopery.repository;
 
 import az.shopery.model.entity.ProductEntity;
-import az.shopery.model.entity.UserEntity;
 import az.shopery.utils.enums.ProductCategory;
 import az.shopery.utils.enums.ProductCondition;
 import java.time.Instant;
@@ -23,7 +22,6 @@ public interface ProductRepository extends JpaRepository<ProductEntity, UUID> {
     Page<ProductEntity> findTopDiscountedProducts(Pageable pageable);
     @Query("SELECT p FROM ProductEntity p JOIN FETCH p.shop WHERE p.id = :id")
     Optional<ProductEntity> findByIdWithShop(@Param("id") UUID id);
-    boolean existsByIdAndShopUser(UUID productId, UserEntity user);
 
     @Query("""
         SELECT p FROM ProductEntity p
