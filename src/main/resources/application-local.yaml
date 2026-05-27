@@ -37,3 +37,5 @@ feign:
         url: ${AWS_MS:http://localhost:8084}
       ai-ms:
         url: ${AI_MS:http://localhost:8085}
+      payment-ms:
+        url: ${PAYMENT_MS:http://localhost:8086}

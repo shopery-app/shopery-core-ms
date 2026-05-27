@@ -1,8 +1,8 @@
 package az.shopery.controller;
 
+import az.shopery.client.PaymentClient;
 import az.shopery.model.dto.response.StripeCheckoutResponseDto;
 import az.shopery.model.dto.shared.SuccessResponse;
-import az.shopery.service.PaymentService;
 import java.security.Principal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,15 +17,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/payments")
 public class PaymentController {
 
-    private final PaymentService paymentService;
+    private final PaymentClient paymentClient;
 
     @PostMapping("/stripe/checkout")
     public ResponseEntity<SuccessResponse<StripeCheckoutResponseDto>> createCheckoutSession(Principal principal) {
-        return ResponseEntity.ok(paymentService.createCheckoutSession(principal.getName()));
+        return paymentClient.createCheckoutSession(principal.getName());
     }
 
     @PostMapping("/stripe/webhook")
     public ResponseEntity<SuccessResponse<Void>> stripeWebhook(@RequestBody String payload, @RequestHeader("Stripe-Signature") String signatureHeader) {
-        return ResponseEntity.ok(paymentService.handleStripeWebhook(payload, signatureHeader));
+        return paymentClient.stripeWebhook(payload, signatureHeader);
     }
 }

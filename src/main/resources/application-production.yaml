@@ -36,3 +36,5 @@ feign:
         url: ${AWS_MS}
       ai-ms:
         url: ${AI_MS}
+      payment-ms:
+        url: ${PAYMENT_MS}
