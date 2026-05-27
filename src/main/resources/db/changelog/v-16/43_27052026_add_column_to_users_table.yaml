@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 43_27052026_add_column_to_users_table
+      author: Jahangir Alisoy
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: monthly_ai_tokens_used
+                  type: BIGINT
+                  defaultValueNumeric: "0"
+                  constraints:
+                    nullable: false

@@ -84,6 +84,9 @@ public class UserEntity {
     @Builder.Default
     @Column(name = "status", nullable = false)
     UserStatus status =  UserStatus.ACTIVE;
+    @Builder.Default
+    @Column(name = "monthly_ai_tokens_used", nullable = false)
+    Long monthlyAiTokensUsed = 0L;
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     List<ShopEntity> shops;
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
