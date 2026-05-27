@@ -6,7 +6,7 @@ import az.shopery.client.AiClient;
 import az.shopery.handler.exception.ApplicationException;
 import az.shopery.handler.exception.ExternalServiceException;
 import az.shopery.handler.exception.ResourceNotFoundException;
-import az.shopery.model.dto.request.ChatRequestClientDto;
+import az.shopery.model.dto.client.ChatRequestClientDto;
 import az.shopery.model.dto.request.ChatRequestDto;
 import az.shopery.model.dto.response.ChatResponseDto;
 import az.shopery.model.dto.shared.SuccessResponse;
@@ -43,9 +43,10 @@ public class AiServiceImpl implements AiService {
             throw new ApplicationException("Monthly AI token limit exceeded!");
         }
 
+        long remainingTokens = PREMIUM_MAX_TOKENS - currentUsage;
         var response = aiClient.chat(ChatRequestClientDto.builder()
                 .message(request.getMessage())
-                .remainingTokens(PREMIUM_MAX_TOKENS - currentUsage)
+                .remainingTokens((int) remainingTokens)
                 .build());
         var responseBody = response.getBody();
 
