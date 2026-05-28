@@ -42,6 +42,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -232,7 +233,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private UserProfileResponseDto mapToDto(UserEntity userEntity) {
-        String presignedUrl = awsClient.getPresignedUrl(userEntity.getProfilePhotoUrl()).getBody();
+        String profilePhotoKey = userEntity.getProfilePhotoUrl();
 
         return UserProfileResponseDto.builder()
                 .id(userEntity.getId())
@@ -241,7 +242,7 @@ public class UserServiceImpl implements UserService {
                 .email(userEntity.getEmail())
                 .phone(userEntity.getPhone())
                 .dateOfBirth(userEntity.getDateOfBirth())
-                .profilePhotoUrl(presignedUrl)
+                .profilePhotoUrl(Objects.isNull(profilePhotoKey) ? null : awsClient.getPresignedUrl(profilePhotoKey).getBody())
                 .createdAt(userEntity.getCreatedAt())
                 .shop(mapShop(userEntity))
                 .build();
