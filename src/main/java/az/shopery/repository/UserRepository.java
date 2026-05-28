@@ -7,8 +7,6 @@ import az.shopery.utils.enums.UserStatus;
 import jakarta.persistence.LockModeType;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -22,9 +20,7 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     Optional<UserEntity> findAndLockByEmail(String email);
     Boolean existsByEmail(String email);
     Optional<UserEntity> findByEmailAndUserRoleAndStatus(String email, UserRole userRole, UserStatus status);
-    Page<UserEntity> findAllByUserRoleAndStatus(UserRole userRole, UserStatus status, Pageable pageable);
     Optional<UserEntity> findByEmailAndUserRoleAndStatusAndSubscriptionTier(String email, UserRole userRole, UserStatus status, SubscriptionTier subscriptionTier);
-
     @Query(value = "SELECT * FROM users WHERE user_role = 'ADMIN' AND status = 'ACTIVE' ORDER BY RANDOM() LIMIT 1", nativeQuery = true)
     Optional<UserEntity> findRandomActiveAdmin();
 }

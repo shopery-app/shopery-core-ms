@@ -4,7 +4,6 @@ import az.shopery.handler.exception.ApplicationException;
 import az.shopery.handler.exception.CooldownNotMetException;
 import az.shopery.handler.exception.EmailAlreadyExistsException;
 import az.shopery.handler.exception.ExternalServiceException;
-import az.shopery.handler.exception.FileStorageException;
 import az.shopery.handler.exception.InvalidCredentialsException;
 import az.shopery.handler.exception.JwtAuthenticationException;
 import az.shopery.handler.exception.ResourceNotFoundException;
@@ -94,7 +93,7 @@ public class GlobalExceptionHandler {
                         error -> HtmlUtils.htmlEscape(Objects.nonNull(error.getDefaultMessage())
                                 ? error.getDefaultMessage()
                                 : "Invalid value!"),
-                        (existing, replacement) -> existing
+                        (existing, _) -> existing
                 ));
 
         ErrorResponse errorResponse = ErrorResponse.builder()
@@ -107,16 +106,6 @@ public class GlobalExceptionHandler {
                 .build();
 
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler(FileStorageException.class)
-    public ResponseEntity<ErrorResponse> handleFileStorage(FileStorageException ex, HttpServletRequest request) {
-        if (Objects.nonNull(ex.getMessage()) && ex.getMessage().contains("empty file")) {
-            log.debug("Empty file upload attempt");
-            return buildErrorResponse(ex, HttpStatus.BAD_REQUEST, request);
-        }
-        log.error("File storage error: ", ex);
-        return buildErrorResponse(ex, HttpStatus.INTERNAL_SERVER_ERROR, request);
     }
 
     @ExceptionHandler(ExternalServiceException.class)

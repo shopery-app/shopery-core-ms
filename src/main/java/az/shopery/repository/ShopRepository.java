@@ -1,6 +1,5 @@
 package az.shopery.repository;
 
-import az.shopery.model.dto.projection.AdminShopProjection;
 import az.shopery.model.entity.ShopEntity;
 import az.shopery.model.entity.UserEntity;
 import az.shopery.utils.enums.ShopStatus;
@@ -20,7 +19,6 @@ public interface ShopRepository extends JpaRepository<ShopEntity, UUID> {
     Boolean existsByShopName(String shopName);
     Optional<ShopEntity> findByUserEmailAndStatus(String userEmail, ShopStatus shopStatus);
     Optional<ShopEntity> findByUserAndStatus(UserEntity userEntity, ShopStatus shopStatus);
-    Optional<ShopEntity> findByShopName(String shopName);
 
     @Query("""
         SELECT s
@@ -46,26 +44,4 @@ public interface ShopRepository extends JpaRepository<ShopEntity, UUID> {
           AND s.user.status = 'ACTIVE' AND s.status = 'ACTIVE'
     """)
     Optional<ShopEntity> findActiveShopByShopNameWithProducts(@Param("shopName") String shopName);
-
-    @Query("""
-        SELECT
-            s.id AS id,
-            s.shopName AS shopName,
-            s.description AS description,
-            s.totalIncome AS totalIncome,
-            s.rating AS rating,
-            s.createdAt AS createdAt,
-            COUNT(p.id) AS totalProducts,
-            u.subscriptionTier AS subscriptionTier,
-            s.status AS shopStatus,
-            u.email AS userEmail,
-            u.status AS userStatus
-        FROM ShopEntity s
-        LEFT JOIN s.user u
-        LEFT JOIN s.products p
-        GROUP BY
-            s.id, s.shopName, s.description, s.totalIncome, s.rating, s.createdAt,
-            u.subscriptionTier, s.status, u.email, u.status
-    """)
-    Page<AdminShopProjection> findAllWithProductCount(Pageable pageable);
 }

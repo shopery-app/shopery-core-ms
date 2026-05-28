@@ -31,13 +31,15 @@ springdoc:
 feign:
   client:
     config:
+      backoffice-ms:
+        url: ${BACKOFFICE_MS:http://localhost:8088}
+      payment-ms:
+        url: ${PAYMENT_MS:http://localhost:8086}
+      order-ms:
+        url: ${ORDER_MS:http://localhost:8087}
       blog-ms:
         url: ${BLOG_MS:http://localhost:8083}
       aws-ms:
         url: ${AWS_MS:http://localhost:8084}
       ai-ms:
         url: ${AI_MS:http://localhost:8085}
-      payment-ms:
-        url: ${PAYMENT_MS:http://localhost:8086}
-      order-ms:
-        url: ${ORDER_MS:http://localhost:8087}
