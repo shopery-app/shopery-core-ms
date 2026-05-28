@@ -30,13 +30,15 @@ springdoc:
 feign:
   client:
     config:
+      backoffice-ms:
+        url: ${BACKOFFICE_MS}
+      payment-ms:
+        url: ${PAYMENT_MS}
+      order-ms:
+        url: ${ORDER_MS}
       blog-ms:
         url: ${BLOG_MS}
       aws-ms:
         url: ${AWS_MS}
       ai-ms:
         url: ${AI_MS}
-      payment-ms:
-        url: ${PAYMENT_MS}
-      order-ms:
-        url: ${ORDER_MS}
