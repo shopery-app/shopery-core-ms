@@ -36,16 +36,15 @@ public class ProductMapper {
     }
 
     public ProductDetailResponseDto toDetailDto(ProductEntity product) {
-        List<PriceHistoryDto> historyDtos =
-                Objects.nonNull(product.getPriceHistory())
-                        ? product.getPriceHistory().stream()
-                        .sorted(Comparator.comparing(PriceHistoryEntity::getCreatedAt).reversed())
-                        .map(ph -> PriceHistoryDto.builder()
-                                .price(ph.getPrice())
-                                .setAt(ph.getCreatedAt())
-                                .build())
-                        .toList()
-                        : Collections.emptyList();
+        List<PriceHistoryDto> historyDtos = Objects.nonNull(product.getPriceHistory())
+                ? product.getPriceHistory().stream()
+                .sorted(Comparator.comparing(PriceHistoryEntity::getCreatedAt).reversed())
+                .map(ph -> PriceHistoryDto.builder()
+                        .price(ph.getPrice())
+                        .setAt(ph.getCreatedAt())
+                        .build())
+                .toList()
+                : Collections.emptyList();
 
         String presignedUrl = awsClient.getPresignedUrl(product.getImageUrl()).getBody();
 
