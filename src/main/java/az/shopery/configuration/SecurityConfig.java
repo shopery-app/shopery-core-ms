@@ -33,8 +33,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
     private final JwtService jwtService;
-    private final UserDetailsService userDetailsService;
     private final UserRepository userRepository;
+    private final UserDetailsService userDetailsService;
 
     private static final String[] SWAGGER_WHITELIST = {
             "/swagger-ui/**",
@@ -80,10 +80,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/users/me/**").hasAuthority("USER")
                         .anyRequest().authenticated()
                 )
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(new JwtAuthFilter(jwtService, userDetailsService, userRepository),
-                        UsernamePasswordAuthenticationFilter.class);
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(new JwtAuthFilter(jwtService, userDetailsService, userRepository), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

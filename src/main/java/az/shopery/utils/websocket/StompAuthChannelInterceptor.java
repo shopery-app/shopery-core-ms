@@ -14,9 +14,9 @@ import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
-@Slf4j
 public class StompAuthChannelInterceptor implements ChannelInterceptor {
 
     private final JwtService jwtService;

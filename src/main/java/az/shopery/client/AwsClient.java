@@ -21,8 +21,8 @@ public interface AwsClient {
     ResponseEntity<String> updateFile(@RequestParam String oldKey, @RequestPart("file") MultipartFile newFile);
 
     @DeleteMapping("/api/v1/aws")
-    ResponseEntity<Void> deleteFile(@RequestParam String fileKey);
+    ResponseEntity<Void> deleteFile(@RequestParam(required = false) String fileKey);
 
     @GetMapping("/api/v1/aws/presigned-url")
-    ResponseEntity<String> getPresignedUrl(@RequestParam String fileKey);
+    ResponseEntity<String> getPresignedUrl(@RequestParam(required = false) String fileKey);
 }
