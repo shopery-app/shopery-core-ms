@@ -1,14 +1,15 @@
 ext {
     v = [
-            springCloud    : "2025.1.1",
+            springCloud    : "2025.1.2",
             jjwt           : "0.13.0",
-            springdoc      : "3.0.2",
-            libphonenumber : "9.0.11",
+            springdoc      : "3.0.3",
+            libphonenumber : "9.0.34",
             awssdk         : "2.32.19",
-            commonsIo      : "2.20.0",
-            byteBuddy      : "1.15.11",
+            commonsIo      : "2.22.0",
+            byteBuddy      : "1.18.11",
             mapstruct      : "1.6.3",
-            resilience4j   : "2.2.0",
-            stripe         : "32.2.0-beta.2"
+            resilience4j   : "2.4.0",
+            stripe         : "32.1.0",
+            lombok         : "1.18.46"
     ]
 }

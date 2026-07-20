@@ -36,27 +36,5 @@ application:
       refresh-token:
         expiration: 100000
 
-aws:
-  region: us-east-1
-  s3:
-    bucket-name: test-bucket
-
-AWS_REGION: us-east-1
-AWS_S3_BUCKET_NAME: test-bucket
-
-stripe:
-  secret-key: sk_test_dummy
-  webhook-secret: whsec_dummy
-  success-url: http://localhost:3000/payment/success?session_id={CHECKOUT_SESSION_ID}
-  cancel-url: http://localhost:3000/cart
-
-claude:
-  api:
-    key: test-claude-key
-    url: https://api.anthropic.com/v1/messages
-    model: claude-sonnet-4-20250514
-    max-tokens: 1024
-    version: 2023-06-01
-
 topic:
   notification: notification-topic

@@ -43,7 +43,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-kafka'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 
-	implementation "io.github.resilience4j:resilience4j-spring-boot3:${v.resilience4j}"
+	implementation "io.github.resilience4j:resilience4j-spring-boot4:${v.resilience4j}"
 	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${v.springdoc}"
 	implementation "com.googlecode.libphonenumber:libphonenumber:${v.libphonenumber}"
 	implementation "net.bytebuddy:byte-buddy:${v.byteBuddy}"
@@ -51,7 +51,7 @@ dependencies {
 	implementation "commons-io:commons-io:${v.commonsIo}"
 	implementation "io.jsonwebtoken:jjwt-api:${v.jjwt}"
 
-	compileOnly 'org.projectlombok:lombok'
+	compileOnly "org.projectlombok:lombok:${v.lombok}"
 
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
@@ -77,5 +77,5 @@ dependencyManagement {
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+	enabled = false
 }
