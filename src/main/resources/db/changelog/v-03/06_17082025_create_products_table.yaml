@@ -56,8 +56,8 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-                  name: image_url
-                  type: varchar(255)
+                  name: image_id
+                  type: UUID
               - column:
                   name: created_at
                   type: timestamp with time zone

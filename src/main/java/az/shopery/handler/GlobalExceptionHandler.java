@@ -101,7 +101,7 @@ public class GlobalExceptionHandler {
                 .statusCode(HttpStatus.BAD_REQUEST.value())
                 .timestamp(LocalDateTime.now())
                 .message("Validation failed")
-                .path(sanitizePath(request.getRequestURI()))
+                .path(HtmlUtils.htmlEscape(request.getRequestURI()))
                 .errors(errors)
                 .build();
 
@@ -127,7 +127,7 @@ public class GlobalExceptionHandler {
                 .statusCode(status.value())
                 .timestamp(LocalDateTime.now())
                 .message(HtmlUtils.htmlEscape(ex.getMessage()))
-                .path(sanitizePath(request.getRequestURI()))
+                .path(HtmlUtils.htmlEscape(request.getRequestURI()))
                 .build();
 
         return new ResponseEntity<>(errorResponse, status);
@@ -135,9 +135,5 @@ public class GlobalExceptionHandler {
 
     private boolean isInvalidEnumValue(HttpMessageNotReadableException ex) {
         return ex.getCause() instanceof InvalidFormatException ife && ife.getTargetType().isEnum();
-    }
-
-    private String sanitizePath(String path) {
-        return HtmlUtils.htmlEscape(path);
     }
 }

@@ -23,9 +23,11 @@ spring:
 
 springdoc:
   swagger-ui:
-    enabled: false
+    path: /swagger-ui.html
+    enabled: true
   api-docs:
-    enabled: false
+    path: /v3/api-docs
+    enabled: true
 
 feign:
   client:

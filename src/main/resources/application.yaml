@@ -38,11 +38,11 @@ spring:
 application:
   security:
     jwt:
-      secret-key: ${JWT_SECRET_KEY}
+      secret-key: ${JWT_SECRET_KEY:qYrUvRZbMm1gxAVfVG8KtJPqfLf3A2qkwo0U7cqDC+HqU0ZVOz+N4VkkFqaQoxlc}
       access-token:
-        expiration: ${ACCESS_TOKEN_EXPIRATION}
+        expiration: ${ACCESS_TOKEN_EXPIRATION:3600000}
       refresh-token:
-        expiration: ${REFRESH_TOKEN_EXPIRATION}
+        expiration: ${REFRESH_TOKEN_EXPIRATION:604800000}
 
 resilience4j:
   ratelimiter:

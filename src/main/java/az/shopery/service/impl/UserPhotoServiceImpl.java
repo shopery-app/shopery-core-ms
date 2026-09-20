@@ -1,13 +1,12 @@
 package az.shopery.service.impl;
 
-import az.shopery.client.AwsClient;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.model.dto.shared.SuccessResponse;
 import az.shopery.model.entity.UserEntity;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.UserPhotoService;
+import az.shopery.utils.common.FilenetClientHelper;
 import az.shopery.utils.enums.UserStatus;
-import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,39 +18,32 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class UserPhotoServiceImpl implements UserPhotoService {
 
-    private final AwsClient awsClient;
     private final UserRepository userRepository;
+    private final FilenetClientHelper filenetClientHelper;
 
     @Override
     @Transactional
-    public SuccessResponse<String> uploadProfilePhoto(String userEmail, MultipartFile multipartFile) {
-        String fileKey = awsClient.uploadFile(multipartFile).getBody();
-
+    public SuccessResponse<byte[]> uploadProfilePhoto(String userEmail, MultipartFile multipartFile) {
         UserEntity userEntity = getUserByEmail(userEmail);
-        userEntity.setProfilePhotoUrl(fileKey);
+        userEntity.setProfilePhotoId(filenetClientHelper.saveFile(multipartFile));
         userRepository.save(userEntity);
 
-        String presignedUrl = awsClient.getPresignedUrl(fileKey).getBody();
-
-        log.info("Saved profile photo key for {}: {}", userEmail, fileKey);
-        return SuccessResponse.of(presignedUrl, "Profile photo uploaded successfully. User key to get presigned URL.");
+        log.info("Saved profile photo for: {}", userEmail);
+        byte[] content = filenetClientHelper.getFile(userEntity.getProfilePhotoId());
+        return SuccessResponse.of(content, "Profile photo uploaded successfully!");
     }
 
     @Override
     @Transactional
     public SuccessResponse<Void> deleteProfilePhoto(String userEmail) {
         UserEntity userEntity = getUserByEmail(userEmail);
-        String fileKey = userEntity.getProfilePhotoUrl();
-        if (Objects.isNull(fileKey) || fileKey.isBlank()) {
-            throw new ResourceNotFoundException("No profile photo found for user: " + userEmail);
-        }
 
-        awsClient.deleteFile(fileKey);
-        userEntity.setProfilePhotoUrl(null);
+        filenetClientHelper.deleteFile(userEntity.getProfilePhotoId());
+        userEntity.setProfilePhotoId(null);
         userRepository.save(userEntity);
 
-        log.info("Deleted profile photo key for {}: {}", userEmail, fileKey);
-        return SuccessResponse.of(null, "Profile photo deleted successfully.");
+        log.info("Deleted profile photo for: {}", userEmail);
+        return SuccessResponse.of(null, "Profile photo deleted successfully!");
     }
 
     private UserEntity getUserByEmail(String email) {

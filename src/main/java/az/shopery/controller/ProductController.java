@@ -23,8 +23,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/api/v1/users/me/products")
 @RequiredArgsConstructor
+@RequestMapping("/api/v1/users/me/products")
 public class ProductController {
 
     private final ProductService productService;
@@ -35,7 +35,7 @@ public class ProductController {
     }
 
     @PostMapping(value = "/{productId}/image", consumes = {"multipart/form-data"})
-    public ResponseEntity<SuccessResponse<String>> uploadProductImage(Principal principal, @PathVariable String productId, @RequestParam("image") MultipartFile imageFile) {
+    public ResponseEntity<SuccessResponse<byte[]>> uploadProductImage(Principal principal, @PathVariable String productId, @RequestParam("image") MultipartFile imageFile) {
         return ResponseEntity.ok(productService.updateProductImage(principal.getName(), productId, imageFile));
     }
 
