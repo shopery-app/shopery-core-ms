@@ -1,6 +1,5 @@
 package az.shopery.client;
 
-import az.shopery.model.dto.request.DeleteFilesRequestDto;
 import az.shopery.model.dto.response.GetFileResponseDto;
 import az.shopery.model.dto.response.SaveFileResponseDto;
 import az.shopery.model.dto.shared.SuccessResponse;
@@ -17,11 +16,8 @@ public interface FilenetClient {
     @PostMapping(value = "/api/v1/files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     ResponseEntity<SuccessResponse<SaveFileResponseDto>> saveFile(@RequestPart("file") MultipartFile multipartFile);
 
-    @DeleteMapping(value = "/api/v1/files/{id}")
+    @DeleteMapping("/api/v1/files/{id}")
     ResponseEntity<Void> deleteFile(@PathVariable("id") UUID id);
-
-    @DeleteMapping(value = "/api/v1/files")
-    ResponseEntity<Void> deleteFile(@RequestBody DeleteFilesRequestDto deleteFilesRequestDto);
 
     @GetMapping("/api/v1/files/{id}")
     ResponseEntity<SuccessResponse<GetFileResponseDto>> getFile(@PathVariable("id") UUID id);

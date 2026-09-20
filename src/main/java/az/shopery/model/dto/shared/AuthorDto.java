@@ -14,5 +14,5 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AuthorDto {
     String name;
-    String profilePhotoUrl;
+    byte[] profilePhoto;
 }

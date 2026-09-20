@@ -30,8 +30,8 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-                  name: "image_url"
-                  type: "VARCHAR(512)"
+                  name: image_id
+                  type: UUID
                   constraints:
                     nullable: true
               - column:
