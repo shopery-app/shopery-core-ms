@@ -45,8 +45,8 @@ public class BlogEntity {
     String blogTitle;
     @Column(nullable = false, length = 400)
     String content;
-    @Column(name = "image_url")
-    String imageUrl;
+    @Column(name = "image_id")
+    UUID imageId;
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     Instant createdAt;

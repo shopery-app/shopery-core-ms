@@ -21,7 +21,7 @@ public class BlogResponseDto {
     String content;
     Instant createdAt;
     Instant updatedAt;
-    String imageUrl;
+    byte[] image;
     Integer likeCount;
     AuthorDto author;
 }

@@ -16,7 +16,7 @@ public class FilenetClientHelper {
     public byte[] getFile(UUID fileId) {
         var response = filenetClient.getFile(fileId);
 
-        if (Objects.nonNull(response.getBody()) || Objects.nonNull(response.getBody().getData())) {
+        if (Objects.isNull(response.getBody()) || Objects.isNull(response.getBody().getData())) {
             return null;
         }
 
@@ -26,7 +26,7 @@ public class FilenetClientHelper {
     public UUID saveFile(MultipartFile multipartFile) {
         var response = filenetClient.saveFile(multipartFile);
 
-        if (Objects.nonNull(response.getBody()) || Objects.nonNull(response.getBody().getData())) {
+        if (Objects.isNull(response.getBody()) || Objects.isNull(response.getBody().getData())) {
             return null;
         }
 
