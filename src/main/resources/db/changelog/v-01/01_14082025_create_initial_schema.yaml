@@ -54,8 +54,8 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-                  name: profile_photo_url
-                  type: varchar(255)
+                  name: profile_photo_id
+                  type: UUID
               - column:
                   name: phone
                   type: varchar(255)

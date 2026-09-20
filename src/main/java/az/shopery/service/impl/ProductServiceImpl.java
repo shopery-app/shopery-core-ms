@@ -3,7 +3,6 @@ package az.shopery.service.impl;
 import static az.shopery.utils.common.CommonConstraints.MAX_PRODUCTS_PER_MONTH_BY_TIER;
 import static az.shopery.utils.common.UuidUtils.parse;
 
-import az.shopery.client.AwsClient;
 import az.shopery.handler.exception.ApplicationException;
 import az.shopery.handler.exception.ResourceNotFoundException;
 import az.shopery.mapper.ProductMapper;
@@ -19,20 +18,20 @@ import az.shopery.repository.ProductRepository;
 import az.shopery.repository.ShopRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.ProductService;
+import az.shopery.utils.common.FilenetClientHelper;
+import az.shopery.utils.enums.ProductCategory;
+import az.shopery.utils.enums.ProductCondition;
+import az.shopery.utils.enums.ShopStatus;
+import az.shopery.utils.enums.SubscriptionTier;
+import az.shopery.utils.enums.UserStatus;
 import java.time.Instant;
 import java.time.YearMonth;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.UUID;
-import az.shopery.utils.enums.ProductCategory;
-import az.shopery.utils.enums.ProductCondition;
-import az.shopery.utils.enums.ShopStatus;
-import az.shopery.utils.enums.SubscriptionTier;
-import az.shopery.utils.enums.UserStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -44,11 +43,11 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
 
-    private final AwsClient awsClient;
     private final ProductMapper productMapper;
     private final UserRepository userRepository;
     private final ShopRepository shopRepository;
     private final ProductRepository productRepository;
+    private final FilenetClientHelper filenetClientHelper;
 
     @Override
     @Transactional
@@ -75,7 +74,7 @@ public class ProductServiceImpl implements ProductService {
 
         ProductEntity savedProductEntity = productRepository.save(productEntity);
         log.info("Product '{}' created for shop {}", savedProductEntity.getProductName(), shopEntity.getShopName());
-        return SuccessResponse.of(productMapper.toDetailDto(savedProductEntity), "Product created successfully.");
+        return SuccessResponse.of(productMapper.toDetailDto(savedProductEntity), "Product created successfully!");
     }
 
     @Override
@@ -99,19 +98,18 @@ public class ProductServiceImpl implements ProductService {
         productEntity.setCondition(productCreateRequestDto.getCondition());
 
         ProductEntity updatedProductEntity = productRepository.save(productEntity);
-        return SuccessResponse.of(productMapper.toDetailDto(updatedProductEntity), "Product updated successfully.");
+        return SuccessResponse.of(productMapper.toDetailDto(updatedProductEntity), "Product updated successfully!");
     }
 
     @Override
     @Transactional
-    public SuccessResponse<String> updateProductImage(String userEmail, String productId, MultipartFile imageFile) {
+    public SuccessResponse<byte[]> updateProductImage(String userEmail, String productId, MultipartFile imageFile) {
         ProductEntity productEntity = getProductForUser(userEmail, productId);
 
-        String newImageUrlKey = awsClient.updateFile(productEntity.getImageUrl(), imageFile).getBody();
-        productEntity.setImageUrl(newImageUrlKey);
+        productEntity.setImageId(filenetClientHelper.saveFile(imageFile));
         productRepository.save(productEntity);
 
-        return SuccessResponse.of(generateImageUrl(newImageUrlKey), "Product image updated successfully.");
+        return SuccessResponse.of(filenetClientHelper.getFile(productEntity.getImageId()), "Product image updated successfully!");
     }
 
     @Override
@@ -119,16 +117,12 @@ public class ProductServiceImpl implements ProductService {
     public SuccessResponse<Void> deleteProductImage(String userEmail, String productId) {
         ProductEntity productEntity = getProductForUser(userEmail, productId);
 
-        String imageKey = productEntity.getImageUrl();
-        if (StringUtils.isBlank(imageKey)) {
-            throw new ResourceNotFoundException("No product image found for product: " + productId);
-        }
+        filenetClientHelper.deleteFile(productEntity.getImageId());
 
-        awsClient.deleteFile(imageKey);
-        productEntity.setImageUrl(null);
+        productEntity.setImageId(null);
         productRepository.save(productEntity);
 
-        return SuccessResponse.of("Product image deleted successfully.");
+        return SuccessResponse.of("Product image deleted successfully!");
     }
 
     @Override
@@ -136,11 +130,12 @@ public class ProductServiceImpl implements ProductService {
     public SuccessResponse<Void> deleteProduct(String userEmail, String productId) {
         ProductEntity productEntity = getProductForUser(userEmail, productId);
 
-        String imageKey = productEntity.getImageUrl();
+        if (Objects.nonNull(productEntity.getImageId())) {
+            filenetClientHelper.deleteFile(productEntity.getImageId());
+        }
         productRepository.delete(productEntity);
-        awsClient.deleteFile(imageKey);
 
-        return SuccessResponse.of("Product deleted successfully.");
+        return SuccessResponse.of("Product deleted successfully!");
     }
 
     @Override
@@ -192,10 +187,6 @@ public class ProductServiceImpl implements ProductService {
 
     private ProductEntity getProductForUser(String userEmail, String productId) {
         return getProductForShop(parse(productId), getShopForUser(userEmail).getId());
-    }
-
-    private String generateImageUrl(String key) {
-        return Objects.isNull(key) ? null : awsClient.getPresignedUrl(key).getBody();
     }
 
     private void validateMonthlyProductLimit(ShopEntity shopEntity) {

@@ -6,7 +6,6 @@ import static az.shopery.utils.common.NameMapperHelper.last;
 import static az.shopery.utils.common.VerificationCodeGenerator.generateSixDigitVerificationCode;
 import static org.springframework.security.core.userdetails.User.withUsername;
 
-import az.shopery.client.AwsClient;
 import az.shopery.handler.exception.EmailAlreadyExistsException;
 import az.shopery.handler.exception.ApplicationException;
 import az.shopery.handler.exception.InvalidCredentialsException;
@@ -31,6 +30,7 @@ import az.shopery.repository.ShopRepository;
 import az.shopery.repository.UserRepository;
 import az.shopery.service.RedisService;
 import az.shopery.service.UserService;
+import az.shopery.utils.common.FilenetClientHelper;
 import az.shopery.utils.common.RedisUtils;
 import az.shopery.utils.enums.NotificationType;
 import az.shopery.utils.enums.ShopStatus;
@@ -55,12 +55,12 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    private final AwsClient awsClient;
     private final JwtService jwtService;
     private final RedisService redisService;
     private final UserRepository userRepository;
     private final ShopRepository shopRepository;
     private final PasswordEncoder passwordEncoder;
+    private final FilenetClientHelper filenetClientHelper;
     private final NotificationProducer notificationProducer;
     private final ApplicationEventPublisher applicationEventPublisher;
 
@@ -233,19 +233,22 @@ public class UserServiceImpl implements UserService {
     }
 
     private UserProfileResponseDto mapToDto(UserEntity userEntity) {
-        String profilePhotoKey = userEntity.getProfilePhotoUrl();
-
-        return UserProfileResponseDto.builder()
+        var userProfileResponseDto = UserProfileResponseDto.builder()
                 .id(userEntity.getId())
                 .firstName(first(userEntity.getName()))
                 .lastName(last(userEntity.getName()))
                 .email(userEntity.getEmail())
                 .phone(userEntity.getPhone())
                 .dateOfBirth(userEntity.getDateOfBirth())
-                .profilePhotoUrl(Objects.isNull(profilePhotoKey) ? null : awsClient.getPresignedUrl(profilePhotoKey).getBody())
                 .createdAt(userEntity.getCreatedAt())
                 .shop(mapShop(userEntity))
                 .build();
+
+        if (Objects.nonNull(userEntity.getProfilePhotoId())) {
+            userProfileResponseDto.setProfilePhoto(filenetClientHelper.getFile(userEntity.getProfilePhotoId()));
+        }
+
+        return userProfileResponseDto;
     }
 
     private ShopSummaryDto mapShop(UserEntity userEntity) {

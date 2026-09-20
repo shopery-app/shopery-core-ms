@@ -70,8 +70,8 @@ public class UserEntity {
     @Builder.Default
     @Column(name = "subscription_tier")
     SubscriptionTier subscriptionTier = SubscriptionTier.NONE;
-    @Column(name = "profile_photo_url")
-    String profilePhotoUrl;
+    @Column(name = "profile_photo_id")
+    UUID profilePhotoId;
     @Column(name = "phone")
     String phone;
     @Column(name = "date_of_birth")

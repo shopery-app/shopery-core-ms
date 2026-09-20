@@ -24,6 +24,6 @@ public class UserProfileResponseDto {
     String phone;
     LocalDate dateOfBirth;
     Instant createdAt;
-    String profilePhotoUrl;
+    byte[] profilePhoto;
     ShopSummaryDto shop;
 }

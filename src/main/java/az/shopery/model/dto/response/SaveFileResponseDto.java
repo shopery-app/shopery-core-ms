@@ -1,7 +1,5 @@
 package az.shopery.model.dto.response;
 
-import az.shopery.model.dto.shared.DiscountDto;
-import java.math.BigDecimal;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -12,15 +10,9 @@ import lombok.experimental.FieldDefaults;
 
 @Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ProductResponseDto {
-    UUID id;
-    String productName;
-    String description;
-    byte[] image;
-    BigDecimal currentPrice;
-    Integer stockQuantity;
-    DiscountDto discountDto;
+public class SaveFileResponseDto {
+    UUID fileId;
 }

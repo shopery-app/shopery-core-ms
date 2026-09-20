@@ -57,8 +57,8 @@ public class ProductEntity {
     BigDecimal currentPrice;
     @Column(name = "original_price", precision = 10, scale = 2)
     BigDecimal originalPrice;
-    @Column(name = "image_url")
-    String imageUrl;
+    @Column(name = "image_id")
+    UUID imageId;
     @Column(name = "stock_quantity", nullable = false)
     Integer stockQuantity;
     @Enumerated(EnumType.STRING)

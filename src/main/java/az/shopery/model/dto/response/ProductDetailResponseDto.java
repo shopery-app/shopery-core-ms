@@ -24,7 +24,7 @@ public class ProductDetailResponseDto {
     UUID id;
     String productName;
     String description;
-    String imageUrl;
+    byte[] image;
     BigDecimal currentPrice;
     DiscountDto discountDto;
     Integer stockQuantity;
