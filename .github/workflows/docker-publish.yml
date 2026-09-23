@@ -34,4 +34,7 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script: kubectl -n test rollout restart deployment core-ms
+          script: |
+            export KUBECONFIG=/home/shopery-deploy/.kube/config
+            kubectl -n test rollout restart deployment core-ms
+            kubectl -n test rollout status deployment core-ms --timeout=310s
