@@ -1,0 +1,37 @@
+package az.shopery.core_ms.model.dto.response;
+
+import az.shopery.core_ms.model.dto.shared.DiscountDto;
+import az.shopery.core_ms.model.dto.shared.PriceHistoryDto;
+import az.shopery.core_ms.utils.enums.ProductCategory;
+import az.shopery.core_ms.utils.enums.ProductCondition;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.FieldDefaults;
+
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class ProductDetailResponseDto {
+    UUID id;
+    String productName;
+    String description;
+    byte[] image;
+    BigDecimal currentPrice;
+    DiscountDto discountDto;
+    Integer stockQuantity;
+    ProductCategory category;
+    ProductCondition condition;
+    String shopName;
+    UUID shopId;
+    List<PriceHistoryDto> priceHistory;
+    Instant createdAt;
+}
