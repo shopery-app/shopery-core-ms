@@ -1,0 +1,22 @@
+package az.shopery.core_ms.controller;
+
+import az.shopery.core_ms.model.dto.request.ChatSendRequestDto;
+import az.shopery.core_ms.service.ChatService;
+import jakarta.validation.Valid;
+import java.security.Principal;
+import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.stereotype.Controller;
+
+@Controller
+@RequiredArgsConstructor
+public class ChatWebSocketController {
+
+    private final ChatService chatService;
+
+    @MessageMapping("/chat.send")
+    public void sendMessage(@Payload @Valid ChatSendRequestDto request, Principal principal) {
+        chatService.sendMessage(principal.getName(), request);
+    }
+}
