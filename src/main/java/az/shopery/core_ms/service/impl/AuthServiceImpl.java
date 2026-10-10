@@ -40,29 +40,34 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
-    private final UserRepository userRepository;
     private final JwtService jwtService;
-    private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
-    private final NotificationProducer notificationProducer;
     private final RedisService redisService;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final NotificationProducer notificationProducer;
+    private final AuthenticationManager authenticationManager;
+
+    @Value("${application.frontend.base-url}")
+    private String frontendBaseUrl;
 
     @Override
     @Transactional
     public SuccessResponse<Void> register(UserRegisterRequestDto userRegisterRequestDto) {
         String email = userRegisterRequestDto.getEmail();
         if (userRepository.findByEmailAndStatus(email, UserStatus.ACTIVE).isPresent()) {
-            throw new EmailAlreadyExistsException("Email '" + email + "' is already in use.");
+            throw new EmailAlreadyExistsException("Email '" + email + "' is already in use!");
         }
 
         String code = generateSixDigitVerificationCode();
@@ -94,7 +99,7 @@ public class AuthServiceImpl implements AuthService {
                         )
                 )
         );
-        return SuccessResponse.of("Verification code sent to your email. Please verify to complete registration.");
+        return SuccessResponse.of("Verification code sent to your email. Please verify to complete registration!");
     }
 
 
@@ -104,7 +109,7 @@ public class AuthServiceImpl implements AuthService {
         String email = verificationRequestDto.getEmail();
         CachedVerificationData cachedVerificationData = redisService
                 .get(RedisUtils.registerKey(email), CachedVerificationData.class)
-                .orElseThrow(() -> new ResourceNotFoundException("No pending verification found. It may have expired or been verified already."));
+                .orElseThrow(() -> new ResourceNotFoundException("No pending verification found. It may have expired or been verified already!"));
 
         if (cachedVerificationData.getExpiryDate().isBefore(LocalDateTime.now())) {
             redisService.delete(RedisUtils.registerKey(email));
@@ -115,7 +120,7 @@ public class AuthServiceImpl implements AuthService {
             cachedVerificationData.setAttemptCount(cachedVerificationData.getAttemptCount() + 1);
             if (cachedVerificationData.getAttemptCount() >= MAX_FAILED_ATTEMPTS) {
                 redisService.delete(RedisUtils.registerKey(email));
-                throw new InvalidCredentialsException("Invalid verification code. You have exceeded the maximum number of attempts.");
+                throw new InvalidCredentialsException("Invalid verification code. You have exceeded the maximum number of attempts!");
             }
 
             long remaining = Duration.between(LocalDateTime.now(), cachedVerificationData.getExpiryDate()).toMinutes();
@@ -145,7 +150,7 @@ public class AuthServiceImpl implements AuthService {
     public SuccessResponse<Void> resendVerificationCode(ResendCodeRequestDto resendCodeRequestDto) {
         String email = resendCodeRequestDto.getEmail();
         if (userRepository.findByEmailAndStatus(email, UserStatus.ACTIVE).isPresent()) {
-            throw new EmailAlreadyExistsException("This account has already been verified.");
+            throw new EmailAlreadyExistsException("This account has already been verified!");
         }
 
         CachedVerificationData existing = redisService
@@ -190,7 +195,7 @@ public class AuthServiceImpl implements AuthService {
                         )
                 )
         );
-        return SuccessResponse.of("A new verification code has been sent to your email.");
+        return SuccessResponse.of("A new verification code has been sent to your email!");
     }
 
     @Override
@@ -231,11 +236,14 @@ public class AuthServiceImpl implements AuthService {
                         NotificationType.PASSWORD_RESET_LINK,
                         Map.of(
                                 "userName", userEntity.getName(),
-                                "token", token
+                                "resetUrl", UriComponentsBuilder.fromUriString(frontendBaseUrl)
+                                        .path("/reset-password")
+                                        .queryParam("token", token)
+                                        .toUriString()
                         )
                 )
         );
-        return SuccessResponse.of("A new password reset link has been sent to your email.");
+        return SuccessResponse.of("A new password reset link has been sent to your email!");
     }
 
     @Override
@@ -254,7 +262,7 @@ public class AuthServiceImpl implements AuthService {
         String email = cachedPasswordResetData.getUserEmail();
 
         var user = userRepository.findByEmailAndStatus(email, UserStatus.ACTIVE)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found for the given token."));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found for the given token!"));
 
         user.setPassword(passwordEncoder.encode(resetPasswordRequestDto.getPassword()));
         userRepository.save(user);
@@ -271,7 +279,7 @@ public class AuthServiceImpl implements AuthService {
                         )
                 )
         );
-        return SuccessResponse.of("Password reset successful.");
+        return SuccessResponse.of("Password reset successful!");
     }
 
     @Override
@@ -280,7 +288,7 @@ public class AuthServiceImpl implements AuthService {
         UserEntity user = getActiveUser(userLoginRequestDto.getEmail());
 
         if (user.getUserRole().equals(UserRole.ADMIN)) {
-            throw new InvalidCredentialsException("Invalid email or password.");
+            throw new InvalidCredentialsException("Invalid email or password!");
         }
 
         checkIfAccountLocked(user);
@@ -292,7 +300,7 @@ public class AuthServiceImpl implements AuthService {
             handleFailedLogin(user);
         }
 
-        return SuccessResponse.of(generateAuthResponse(user), "Login successful.");
+        return SuccessResponse.of(generateAuthResponse(user), "Login successful!");
     }
 
     @Override
@@ -309,7 +317,7 @@ public class AuthServiceImpl implements AuthService {
             handleFailedLogin(user);
         }
 
-        return SuccessResponse.of(generateAuthResponse(user), "Login successful.");
+        return SuccessResponse.of(generateAuthResponse(user), "Login successful!");
     }
 
     @Override
@@ -320,15 +328,15 @@ public class AuthServiceImpl implements AuthService {
         try {
             userEmail = jwtService.extractUsername(refreshToken);
         } catch (Exception exception) {
-            throw new InvalidCredentialsException("Invalid or expired refresh token.");
+            throw new InvalidCredentialsException("Invalid or expired refresh token!");
         }
 
         if (Objects.isNull(userEmail)) {
-            throw new InvalidCredentialsException("Invalid or expired refresh token.");
+            throw new InvalidCredentialsException("Invalid or expired refresh token!");
         }
 
         var userEntity = userRepository.findByEmailAndStatus(userEmail, UserStatus.ACTIVE)
-                .orElseThrow(() -> new ResourceNotFoundException("User associated with token not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("User associated with token not found!"));
 
         var userDetails = withUsername(userEntity.getEmail())
                 .password(userEntity.getPassword())
@@ -336,7 +344,7 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         if (!jwtService.isTokenValid(refreshToken, userDetails)) {
-            throw new InvalidCredentialsException("Refresh token validation failed.");
+            throw new InvalidCredentialsException("Refresh token validation failed!");
         }
 
         var newAccessToken = jwtService.generateToken(userDetails);
@@ -346,17 +354,17 @@ public class AuthServiceImpl implements AuthService {
                 .refreshToken(refreshToken)
                 .build();
 
-        return SuccessResponse.of(userAuthResponseDto, "Refresh token refreshed successfully.");
+        return SuccessResponse.of(userAuthResponseDto, "Refresh token refreshed successfully!");
     }
 
     private UserEntity getActiveUser(String email) {
         return userRepository.findByEmailAndStatus(email, UserStatus.ACTIVE)
-                .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password."));
+                .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password!"));
     }
 
     private void checkIfAccountLocked(UserEntity user) {
         if (Objects.nonNull(user.getAccountLockedUntil()) && user.getAccountLockedUntil().isAfter(LocalDateTime.now())) {
-            throw new InvalidCredentialsException("Your account has been locked due to too many failed login attempts. Please try again later.");
+            throw new InvalidCredentialsException("Your account has been locked due to too many failed login attempts. Please try again later!");
         }
     }
 
@@ -384,10 +392,10 @@ public class AuthServiceImpl implements AuthService {
         userRepository.save(user);
 
         if (Objects.nonNull(user.getAccountLockedUntil())) {
-            throw new InvalidCredentialsException("Too many failed login attempts. Your account has been locked for " + LOCK_DURATION_MINUTES + " minutes.");
+            throw new InvalidCredentialsException("Too many failed login attempts. Your account has been locked for " + LOCK_DURATION_MINUTES + " minutes!");
         }
 
-        throw new InvalidCredentialsException("Invalid email or password.");
+        throw new InvalidCredentialsException("Invalid email or password!");
     }
 
     private UserAuthResponseDto generateAuthResponse(UserEntity userEntity) {
