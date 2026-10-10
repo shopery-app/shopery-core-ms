@@ -13,7 +13,7 @@ version = '2.0.0'
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(26)
+		languageVersion = JavaLanguageVersion.of(27)
 	}
 }
 
@@ -25,10 +25,6 @@ configurations {
 
 repositories {
 	mavenCentral()
-}
-
-ext {
-	set('springCloudVersion', v.springCloud)
 }
 
 dependencies {
@@ -60,7 +56,7 @@ dependencies {
 	runtimeOnly "io.jsonwebtoken:jjwt-jackson:${v.jjwt}"
 	runtimeOnly "io.jsonwebtoken:jjwt-impl:${v.jjwt}"
 
-	annotationProcessor 'org.projectlombok:lombok'
+	annotationProcessor "org.projectlombok:lombok:${v.lombok}"
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-kafka-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -72,7 +68,8 @@ dependencies {
 
 dependencyManagement {
 	imports {
-		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${v.springCloud}"
+		mavenBom "com.fasterxml.jackson:jackson-bom:${v.jackson2}"
 	}
 }
 
