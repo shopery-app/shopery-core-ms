@@ -44,6 +44,9 @@ application:
       refresh-token:
         expiration: ${REFRESH_TOKEN_EXPIRATION:604800000}
 
+  frontend:
+    base-url: ${FRONTEND_BASE_URL}
+
 resilience4j:
   ratelimiter:
     instances:
