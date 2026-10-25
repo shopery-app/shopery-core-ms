@@ -1,124 +1,52 @@
 package az.shopery.core_ms.service.impl;
 
 import static az.shopery.core_ms.utils.common.CommonConstraints.EMAIL_UPDATE_CODE_EXPIRY_MINUTES;
-import static az.shopery.core_ms.utils.common.NameMapperHelper.first;
-import static az.shopery.core_ms.utils.common.NameMapperHelper.last;
 import static az.shopery.core_ms.utils.common.VerificationCodeGenerator.generateSixDigitVerificationCode;
 import static org.springframework.security.core.userdetails.User.withUsername;
 
-import az.shopery.core_ms.handler.exception.EmailAlreadyExistsException;
+import az.shopery.core_ms.client.UserClient;
 import az.shopery.core_ms.handler.exception.ApplicationException;
+import az.shopery.core_ms.handler.exception.EmailAlreadyExistsException;
 import az.shopery.core_ms.handler.exception.InvalidCredentialsException;
 import az.shopery.core_ms.handler.exception.ResourceNotFoundException;
 import az.shopery.core_ms.kafka.producer.NotificationProducer;
 import az.shopery.core_ms.model.dto.redis.CachedEmailUpdateData;
-import az.shopery.core_ms.model.dto.request.ShopCreateRequestDto;
 import az.shopery.core_ms.model.dto.request.UserEmailUpdateRequestDto;
 import az.shopery.core_ms.model.dto.request.UserEmailVerificationRequestDto;
 import az.shopery.core_ms.model.dto.request.UserPasswordUpdateRequestDto;
-import az.shopery.core_ms.model.dto.request.UserProfileUpdateRequestDto;
-import az.shopery.core_ms.model.dto.shared.ShopSummaryDto;
 import az.shopery.core_ms.model.dto.shared.SuccessResponse;
 import az.shopery.core_ms.model.dto.response.UserEmailUpdateResponseDto;
 import az.shopery.core_ms.model.dto.response.UserPasswordUpdateResponseDto;
 import az.shopery.core_ms.model.dto.response.UserProfileResponseDto;
-import az.shopery.core_ms.model.entity.ShopEntity;
 import az.shopery.core_ms.model.entity.UserEntity;
 import az.shopery.core_ms.model.event.NotificationEvent;
-import az.shopery.core_ms.model.event.TaskEvent;
-import az.shopery.core_ms.repository.ShopRepository;
 import az.shopery.core_ms.repository.UserRepository;
 import az.shopery.core_ms.service.RedisService;
 import az.shopery.core_ms.service.UserService;
-import az.shopery.core_ms.utils.common.FilenetClientHelper;
 import az.shopery.core_ms.utils.common.RedisUtils;
 import az.shopery.core_ms.utils.enums.NotificationType;
-import az.shopery.core_ms.utils.enums.ShopStatus;
-import az.shopery.core_ms.utils.enums.TaskCategory;
 import az.shopery.core_ms.utils.enums.UserStatus;
 import az.shopery.core_ms.utils.security.JwtService;
-import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
+    private final UserClient userClient;
     private final JwtService jwtService;
     private final RedisService redisService;
     private final UserRepository userRepository;
-    private final ShopRepository shopRepository;
     private final PasswordEncoder passwordEncoder;
-    private final FilenetClientHelper filenetClientHelper;
     private final NotificationProducer notificationProducer;
-    private final ApplicationEventPublisher applicationEventPublisher;
-
-    @Override
-    @Transactional(readOnly = true)
-    public SuccessResponse<UserProfileResponseDto> getMyProfile(String userEmail) {
-        UserEntity userEntity = getUserByEmail(userEmail);
-        return SuccessResponse.of(mapToDto(userEntity), "User profile retrieved successfully.");
-    }
-
-    @Override
-    @Transactional
-    public SuccessResponse<UserProfileResponseDto> updateMyProfile(String userEmail, UserProfileUpdateRequestDto userProfileUpdateRequestDto) {
-        UserEntity userEntity = getUserByEmail(userEmail);
-        userEntity.setName(userProfileUpdateRequestDto.getFirstName().trim() + " " + userProfileUpdateRequestDto.getLastName().trim());
-        userEntity.setPhone(userProfileUpdateRequestDto.getPhone());
-        userEntity.setDateOfBirth(userProfileUpdateRequestDto.getDateOfBirth());
-
-        UserEntity updatedUserEntity = userRepository.save(userEntity);
-        log.info("User profile updated successfully for user {}", userEmail);
-        return SuccessResponse.of(mapToDto(updatedUserEntity), "User profile updated successfully!");
-    }
-
-    @Override
-    @Transactional
-    public SuccessResponse<Void> createMyShop(String userEmail, ShopCreateRequestDto shopCreateRequestDto) {
-        UserEntity userEntity = getUserByEmail(userEmail);
-
-        if (shopRepository.existsByUserAndStatusIn(userEntity, List.of(ShopStatus.ACTIVE, ShopStatus.PENDING))) {
-            throw new ApplicationException("User already has an active or pending shop!");
-        }
-
-        if (shopRepository.existsByShopName(shopCreateRequestDto.getShopName())) {
-            throw new ApplicationException("Shop with name '" + shopCreateRequestDto.getShopName() + "' already exists!");
-        }
-
-        ShopEntity shop = ShopEntity.builder()
-                .user(userEntity)
-                .shopName(shopCreateRequestDto.getShopName())
-                .description(shopCreateRequestDto.getDescription())
-                .totalIncome(BigDecimal.ZERO)
-                .rating(0.0)
-                .status(ShopStatus.PENDING)
-                .build();
-        shopRepository.save(shop);
-
-        applicationEventPublisher.publishEvent(new TaskEvent(
-                userEntity,
-                TaskCategory.SHOP_CREATION_REQUEST,
-                Map.of(
-                        "shopName", shopCreateRequestDto.getShopName(),
-                        "description", shopCreateRequestDto.getDescription(),
-                        "subscriptionTier", shopCreateRequestDto.getSubscriptionTier()
-                )
-        ));
-
-        return SuccessResponse.of("Your request has been submitted and assigned to an admin for review!");
-    }
 
     @Override
     public SuccessResponse<UserPasswordUpdateResponseDto> updateMyPassword(String userEmail, UserPasswordUpdateRequestDto userPasswordUpdateRequestDto) {
@@ -143,7 +71,7 @@ public class UserServiceImpl implements UserService {
         var userPasswordUpdateResponseDto = UserPasswordUpdateResponseDto.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
-                .userProfileResponseDto(mapToDto(userEntity))
+                .userProfileResponseDto(getProfile(userEntity.getEmail()))
                 .build();
 
         notificationProducer.send(
@@ -221,7 +149,7 @@ public class UserServiceImpl implements UserService {
         var userEmailUpdateResponseDto = UserEmailUpdateResponseDto.builder()
                 .accessToken(jwtService.generateToken(userDetails))
                 .refreshToken(jwtService.generateRefreshToken(userDetails))
-                .userProfileResponseDto(mapToDto(userEntity))
+                .userProfileResponseDto(getProfile(userEntity.getEmail()))
                 .build();
 
         return SuccessResponse.of(userEmailUpdateResponseDto,"Email has been updated successfully!");
@@ -232,33 +160,13 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + userEmail));
     }
 
-    private UserProfileResponseDto mapToDto(UserEntity userEntity) {
-        var userProfileResponseDto = UserProfileResponseDto.builder()
-                .id(userEntity.getId())
-                .firstName(first(userEntity.getName()))
-                .lastName(last(userEntity.getName()))
-                .email(userEntity.getEmail())
-                .phone(userEntity.getPhone())
-                .dateOfBirth(userEntity.getDateOfBirth())
-                .createdAt(userEntity.getCreatedAt())
-                .shop(mapShop(userEntity))
-                .build();
+    private UserProfileResponseDto getProfile(String userEmail) {
+        var response = userClient.getMyProfile(userEmail);
 
-        if (Objects.nonNull(userEntity.getProfilePhotoId())) {
-            userProfileResponseDto.setProfilePhoto(filenetClientHelper.getFile(userEntity.getProfilePhotoId()));
+        if (Objects.isNull(response.getBody())) {
+            return null;
         }
 
-        return userProfileResponseDto;
-    }
-
-    private ShopSummaryDto mapShop(UserEntity userEntity) {
-        return shopRepository
-                .findByUserAndStatus(userEntity, ShopStatus.ACTIVE)
-                .map(shop -> ShopSummaryDto.builder()
-                        .id(shop.getId())
-                        .shopName(shop.getShopName())
-                        .status(shop.getStatus())
-                        .build())
-                .orElse(null);
+        return response.getBody().getData();
     }
 }

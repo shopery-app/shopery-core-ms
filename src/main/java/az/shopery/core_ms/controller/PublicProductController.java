@@ -1,9 +1,9 @@
 package az.shopery.core_ms.controller;
 
+import az.shopery.core_ms.client.ProductClient;
 import az.shopery.core_ms.model.dto.response.ProductDetailResponseDto;
 import az.shopery.core_ms.model.dto.response.ProductResponseDto;
 import az.shopery.core_ms.model.dto.shared.SuccessResponse;
-import az.shopery.core_ms.service.ProductService;
 import az.shopery.core_ms.utils.enums.ProductCategory;
 import az.shopery.core_ms.utils.enums.ProductCondition;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class PublicProductController {
 
-    private final ProductService productService;
+    private final ProductClient productClient;
 
     @GetMapping
     public ResponseEntity<SuccessResponse<Page<ProductResponseDto>>> searchProducts(
@@ -31,16 +31,16 @@ public class PublicProductController {
             @RequestParam(required = false) Double maxPrice,
             @RequestParam(required = false) String keyword,
             Pageable pageable) {
-        return ResponseEntity.ok(productService.searchPublicProducts(category, condition, minPrice, maxPrice, keyword, pageable));
+        return productClient.searchProducts(category, condition, minPrice, maxPrice, keyword, pageable);
     }
 
     @GetMapping("/{productId}")
     public ResponseEntity<SuccessResponse<ProductDetailResponseDto>> getProductById(@PathVariable String productId) {
-        return ResponseEntity.ok(productService.getPublicProductById(productId));
+        return productClient.getProductById(productId);
     }
 
     @GetMapping("/top-discounts")
     public ResponseEntity<SuccessResponse<Page<ProductResponseDto>>> getTopDiscountedProducts(Pageable pageable) {
-        return ResponseEntity.ok(productService.getTopDiscountedProducts(pageable));
+        return productClient.getTopDiscountedProducts(pageable);
     }
 }

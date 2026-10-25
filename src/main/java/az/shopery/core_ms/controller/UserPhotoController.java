@@ -1,7 +1,7 @@
 package az.shopery.core_ms.controller;
 
+import az.shopery.core_ms.client.UserClient;
 import az.shopery.core_ms.model.dto.shared.SuccessResponse;
-import az.shopery.core_ms.service.UserPhotoService;
 import java.security.Principal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,15 +17,15 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class UserPhotoController {
 
-    private final UserPhotoService userPhotoService;
+    private final UserClient userClient;
 
     @PostMapping(consumes = {"multipart/form-data"})
     public ResponseEntity<SuccessResponse<byte[]>> uploadMyProfilePhoto(Principal principal, @RequestParam("file") MultipartFile multipartFile) {
-        return ResponseEntity.ok(userPhotoService.uploadProfilePhoto(principal.getName(), multipartFile));
+        return userClient.uploadMyProfilePhoto(principal.getName(), multipartFile);
     }
 
     @DeleteMapping
     public ResponseEntity<SuccessResponse<Void>> deleteMyProfilePhoto(Principal principal) {
-        return ResponseEntity.ok(userPhotoService.deleteProfilePhoto(principal.getName()));
+        return userClient.deleteMyProfilePhoto(principal.getName());
     }
 }

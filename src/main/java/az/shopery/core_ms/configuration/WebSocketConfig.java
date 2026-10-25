@@ -1,42 +1,25 @@
 package az.shopery.core_ms.configuration;
 
+import az.shopery.core_ms.utils.websocket.ChatWebSocketRelayHandler;
 import az.shopery.core_ms.utils.websocket.JwtHandshakeInterceptor;
-import az.shopery.core_ms.utils.websocket.StompAuthChannelInterceptor;
-import az.shopery.core_ms.utils.websocket.WebSocketUserHandshakeHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.messaging.simp.config.ChannelRegistration;
-import org.springframework.messaging.simp.config.MessageBrokerRegistry;
-import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
-import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
-import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.config.annotation.EnableWebSocket;
+import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
+import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
 @Configuration
-@EnableWebSocketMessageBroker
+@EnableWebSocket
 @RequiredArgsConstructor
-public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+public class WebSocketConfig implements WebSocketConfigurer {
 
     private final JwtHandshakeInterceptor jwtHandshakeInterceptor;
-    private final WebSocketUserHandshakeHandler webSocketUserHandshakeHandler;
-    private final StompAuthChannelInterceptor stompAuthChannelInterceptor;
+    private final ChatWebSocketRelayHandler chatWebSocketRelayHandler;
 
     @Override
-    public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.enableSimpleBroker("/queue", "/topic");
-        registry.setApplicationDestinationPrefixes("/app");
-        registry.setUserDestinationPrefix("/user");
-    }
-
-    @Override
-    public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws")
+    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+        registry.addHandler(chatWebSocketRelayHandler, "/ws")
                 .addInterceptors(jwtHandshakeInterceptor)
-                .setHandshakeHandler(webSocketUserHandshakeHandler)
                 .setAllowedOriginPatterns("*");
-    }
-
-    @Override
-    public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(stompAuthChannelInterceptor);
     }
 }

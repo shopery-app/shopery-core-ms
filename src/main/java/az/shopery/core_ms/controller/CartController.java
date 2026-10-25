@@ -1,9 +1,9 @@
 package az.shopery.core_ms.controller;
 
+import az.shopery.core_ms.client.CartClient;
 import az.shopery.core_ms.model.dto.request.CartItemUpdateRequestDto;
 import az.shopery.core_ms.model.dto.response.CartResponseDto;
 import az.shopery.core_ms.model.dto.shared.SuccessResponse;
-import az.shopery.core_ms.service.CartService;
 import jakarta.validation.Valid;
 import java.security.Principal;
 import lombok.RequiredArgsConstructor;
@@ -22,35 +22,35 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class CartController {
 
-    private final CartService cartService;
+    private final CartClient cartClient;
 
     @GetMapping
     public ResponseEntity<SuccessResponse<CartResponseDto>> getMyCart(Principal principal) {
-        return ResponseEntity.ok(cartService.getMyCart(principal.getName()));
+        return cartClient.getMyCart(principal.getName());
     }
 
     @PostMapping("/{productId}")
     public ResponseEntity<SuccessResponse<CartResponseDto>> addProductToCart(Principal principal, @PathVariable String productId, @RequestBody @Valid CartItemUpdateRequestDto cartItemUpdateRequestDto) {
-        return ResponseEntity.ok(cartService.addProductToCart(principal.getName(), productId, cartItemUpdateRequestDto.getQuantity()));
+        return cartClient.addProductToCart(principal.getName(), productId, cartItemUpdateRequestDto);
     }
 
     @PutMapping("/{productId}")
     public ResponseEntity<SuccessResponse<CartResponseDto>> updateProductInCart(Principal principal, @PathVariable String productId, @RequestBody @Valid CartItemUpdateRequestDto cartItemUpdateRequestDto) {
-        return ResponseEntity.ok(cartService.updateProductQuantity(principal.getName(), productId, cartItemUpdateRequestDto.getQuantity()));
+        return cartClient.updateProductInCart(principal.getName(), productId, cartItemUpdateRequestDto);
     }
 
     @DeleteMapping("/{productId}")
     public ResponseEntity<SuccessResponse<CartResponseDto>> removeProductFromCart(Principal principal,  @PathVariable String productId) {
-        return ResponseEntity.ok(cartService.removeProductFromCart(principal.getName(), productId));
+        return cartClient.removeProductFromCart(principal.getName(), productId);
     }
 
     @DeleteMapping
     public ResponseEntity<SuccessResponse<CartResponseDto>> removeAllProductsFromCart(Principal principal) {
-        return ResponseEntity.ok(cartService.removeAllProductsFromCart(principal.getName()));
+        return cartClient.removeAllProductsFromCart(principal.getName());
     }
 
     @PostMapping("/move-from-wishlist/{productId}")
     public ResponseEntity<SuccessResponse<CartResponseDto>> moveFromWishlist(Principal principal, @PathVariable String productId) {
-        return ResponseEntity.ok(cartService.moveProductFromWishlistToCart(principal.getName(), productId));
+        return cartClient.moveFromWishlist(principal.getName(), productId);
     }
 }

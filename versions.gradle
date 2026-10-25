@@ -4,12 +4,8 @@ ext {
             jjwt           : "0.13.0",
             springdoc      : "3.1.1",
             libphonenumber : "9.0.39",
-            awssdk         : "2.32.19",
-            commonsIo      : "2.22.0",
             byteBuddy      : "1.18.13",
-            mapstruct      : "1.6.3",
             resilience4j   : "2.4.0",
-            stripe         : "32.1.0",
             lombok         : "1.18.48",
             jackson2       : "2.22.4",
     ]
