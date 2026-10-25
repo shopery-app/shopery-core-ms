@@ -15,6 +15,6 @@ public interface PaymentClient {
     @PostMapping("/api/v1/payments/stripe/checkout")
     ResponseEntity<SuccessResponse<StripeCheckoutResponseDto>> createCheckoutSession(@RequestParam String email);
 
-    @PostMapping("api/v1/stripe/webhook")
+    @PostMapping("/api/v1/payments/stripe/webhook")
     ResponseEntity<SuccessResponse<Void>> stripeWebhook(@RequestBody String payload, @RequestHeader("Stripe-Signature") String signatureHeader);
 }
