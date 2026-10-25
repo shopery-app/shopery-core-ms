@@ -32,8 +32,6 @@ feign:
     config:
       backoffice-ms:
         url: ${BACKOFFICE_MS}
-      filenet-ms:
-        url: ${FILENET_MS}
       payment-ms:
         url: ${PAYMENT_MS}
       order-ms:
@@ -42,3 +40,13 @@ feign:
         url: ${BLOG_MS}
       ai-ms:
         url: ${AI_MS}
+      product-ms:
+        url: ${PRODUCT_MS}
+      shop-ms:
+        url: ${SHOP_MS}
+      cart-ms:
+        url: ${CART_MS}
+      chat-ms:
+        url: ${CHAT_MS}
+      user-ms:
+        url: ${USER_MS}

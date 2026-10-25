@@ -8,7 +8,7 @@ import az.shopery.core_ms.handler.exception.InvalidCredentialsException;
 import az.shopery.core_ms.handler.exception.JwtAuthenticationException;
 import az.shopery.core_ms.handler.exception.ResourceNotFoundException;
 import az.shopery.core_ms.model.dto.shared.ErrorResponse;
-import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import feign.FeignException;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
@@ -17,6 +17,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.util.HtmlUtils;
+import tools.jackson.databind.exc.InvalidFormatException;
 
 @Slf4j
 @RestControllerAdvice
@@ -112,6 +114,20 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleExternalService(ExternalServiceException ex, HttpServletRequest request) {
         log.error("External service error: {}", ex.getMessage(), ex);
         return buildErrorResponse(ex, HttpStatus.SERVICE_UNAVAILABLE, request);
+    }
+
+    @ExceptionHandler(FeignException.class)
+    public ResponseEntity<?> handleFeign(FeignException ex, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.resolve(ex.status());
+        if (Objects.isNull(status) || ex.contentUTF8().isBlank()) {
+            log.error("Downstream service is unavailable: {}", ex.getMessage(), ex);
+            return buildErrorResponse(new ExternalServiceException("Service is temporarily unavailable!"), HttpStatus.SERVICE_UNAVAILABLE, request);
+        }
+
+        log.debug("Downstream service responded with {}: {}", ex.status(), ex.getMessage());
+        return ResponseEntity.status(status)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(ex.contentUTF8());
     }
 
     @ExceptionHandler(Exception.class)

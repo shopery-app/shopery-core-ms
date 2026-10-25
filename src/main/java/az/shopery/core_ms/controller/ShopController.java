@@ -1,9 +1,8 @@
 package az.shopery.core_ms.controller;
 
+import az.shopery.core_ms.client.ShopClient;
 import az.shopery.core_ms.model.dto.shared.SuccessResponse;
 import az.shopery.core_ms.model.dto.response.UserShopResponseDto;
-import az.shopery.core_ms.service.ShopRatingService;
-import az.shopery.core_ms.service.ShopService;
 import java.security.Principal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,16 +18,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class ShopController {
 
-    private final ShopService shopService;
-    private final ShopRatingService shopRatingService;
+    private final ShopClient shopClient;
 
     @PostMapping("/{shopId}/rating")
     public ResponseEntity<SuccessResponse<Void>> rateShop(Principal principal, @PathVariable String shopId, @RequestParam int rating) {
-        return ResponseEntity.ok(shopRatingService.rateShop(principal.getName(), shopId, rating));
+        return shopClient.rateShop(principal.getName(), shopId, rating);
     }
 
     @GetMapping("/dashboard")
     public ResponseEntity<SuccessResponse<UserShopResponseDto>> getMyShop(Principal principal) {
-        return ResponseEntity.ok(shopService.getMyShop(principal.getName()));
+        return shopClient.getMyShop(principal.getName());
     }
 }

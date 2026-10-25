@@ -1,9 +1,9 @@
 package az.shopery.core_ms.controller;
 
+import az.shopery.core_ms.client.ChatClient;
 import az.shopery.core_ms.model.dto.response.ChatMessageResponseDto;
 import az.shopery.core_ms.model.dto.response.ConversationResponseDto;
 import az.shopery.core_ms.model.dto.shared.SuccessResponse;
-import az.shopery.core_ms.service.ChatService;
 import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
@@ -19,15 +19,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class ChatRestController {
 
-    private final ChatService chatService;
+    private final ChatClient chatClient;
 
     @GetMapping("/conversation/{otherUserId}")
     public ResponseEntity<SuccessResponse<List<ChatMessageResponseDto>>> getConversation(@PathVariable UUID otherUserId, Principal principal) {
-        return ResponseEntity.ok(chatService.getConversation(principal.getName(), otherUserId));
+        return chatClient.getConversation(otherUserId, principal.getName());
     }
 
     @GetMapping("/conversations")
     public ResponseEntity<SuccessResponse<List<ConversationResponseDto>>> getConversations(Principal principal) {
-        return ResponseEntity.ok(chatService.getConversations(principal.getName()));
+        return chatClient.getConversations(principal.getName());
     }
 }

@@ -1,6 +1,7 @@
 package az.shopery.core_ms.model.dto.response;
 
 import az.shopery.core_ms.utils.enums.AddressType;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -21,6 +22,7 @@ public class AddressResponseDto {
     String city;
     String country;
     String postalCode;
+    @JsonProperty("default")
     boolean isDefault;
     AddressType addressType;
 }

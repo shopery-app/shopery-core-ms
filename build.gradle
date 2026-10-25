@@ -31,7 +31,6 @@ dependencies {
 	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-	implementation 'org.springframework.security:spring-security-messaging'
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 	implementation 'org.springframework.boot:spring-boot-starter-liquibase'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -43,8 +42,6 @@ dependencies {
 	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${v.springdoc}"
 	implementation "com.googlecode.libphonenumber:libphonenumber:${v.libphonenumber}"
 	implementation "net.bytebuddy:byte-buddy:${v.byteBuddy}"
-	implementation "org.mapstruct:mapstruct:${v.mapstruct}"
-	implementation "commons-io:commons-io:${v.commonsIo}"
 	implementation "io.jsonwebtoken:jjwt-api:${v.jjwt}"
 
 	compileOnly "org.projectlombok:lombok:${v.lombok}"

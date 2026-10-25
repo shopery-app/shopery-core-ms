@@ -1,5 +1,7 @@
 package az.shopery.core_ms.controller;
 
+import az.shopery.core_ms.client.ShopClient;
+import az.shopery.core_ms.client.UserClient;
 import az.shopery.core_ms.model.dto.request.ShopCreateRequestDto;
 import az.shopery.core_ms.model.dto.request.UserEmailUpdateRequestDto;
 import az.shopery.core_ms.model.dto.request.UserEmailVerificationRequestDto;
@@ -27,21 +29,23 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class UserController {
 
+    private final UserClient userClient;
+    private final ShopClient shopClient;
     private final UserService userService;
 
     @GetMapping("/profile")
     public ResponseEntity<SuccessResponse<UserProfileResponseDto>> getMyProfile(Principal principal) {
-        return ResponseEntity.ok(userService.getMyProfile(principal.getName()));
+        return userClient.getMyProfile(principal.getName());
     }
 
     @PutMapping("/profile")
     public ResponseEntity<SuccessResponse<UserProfileResponseDto>> updateMyProfile(Principal principal, @Valid @RequestBody UserProfileUpdateRequestDto userProfileUpdateRequestDto) {
-        return ResponseEntity.ok(userService.updateMyProfile(principal.getName(), userProfileUpdateRequestDto));
+        return userClient.updateMyProfile(principal.getName(), userProfileUpdateRequestDto);
     }
 
     @PostMapping("/shop")
     public ResponseEntity<SuccessResponse<Void>> createMyShop(Principal principal, @Valid @RequestBody ShopCreateRequestDto shopCreateRequestDto) {
-        return ResponseEntity.ok(userService.createMyShop(principal.getName(), shopCreateRequestDto));
+        return shopClient.createMyShop(principal.getName(), shopCreateRequestDto);
     }
 
     @RateLimiter(name = "auth-rate-limiter")

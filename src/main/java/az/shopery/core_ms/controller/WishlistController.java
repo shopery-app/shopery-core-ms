@@ -1,8 +1,8 @@
 package az.shopery.core_ms.controller;
 
+import az.shopery.core_ms.client.CartClient;
 import az.shopery.core_ms.model.dto.shared.SuccessResponse;
 import az.shopery.core_ms.model.dto.response.WishlistResponseDto;
-import az.shopery.core_ms.service.WishlistService;
 import java.security.Principal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,25 +18,25 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class WishlistController {
 
-    private final WishlistService wishlistService;
+    private final CartClient cartClient;
 
     @GetMapping
     public ResponseEntity<SuccessResponse<WishlistResponseDto>> getMyWishlist(Principal principal) {
-        return ResponseEntity.ok(wishlistService.getMyWishlist(principal.getName()));
+        return cartClient.getMyWishlist(principal.getName());
     }
 
     @PostMapping("/{productId}")
     public ResponseEntity<SuccessResponse<WishlistResponseDto>> addProductToWishlist(Principal principal, @PathVariable String productId) {
-        return ResponseEntity.ok(wishlistService.addProductToWishlist(principal.getName(), productId));
+        return cartClient.addProductToWishlist(principal.getName(), productId);
     }
 
     @DeleteMapping("/{productId}")
     public ResponseEntity<SuccessResponse<WishlistResponseDto>> removeProductFromWishlist(Principal principal, @PathVariable String productId) {
-        return ResponseEntity.ok(wishlistService.removeProductFromWishlist(principal.getName(), productId));
+        return cartClient.removeProductFromWishlist(principal.getName(), productId);
     }
 
     @DeleteMapping
     public ResponseEntity<SuccessResponse<WishlistResponseDto>> removeAllProductsFromWishlist(Principal principal) {
-        return ResponseEntity.ok(wishlistService.removeAllProductsFromWishlist(principal.getName()));
+        return cartClient.removeAllProductsFromWishlist(principal.getName());
     }
 }
