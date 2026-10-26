@@ -47,13 +47,10 @@ application:
   frontend:
     base-url: ${FRONTEND_BASE_URL}
 
-resilience4j:
-  ratelimiter:
-    instances:
-      auth-rate-limiter:
-        limitForPeriod: 5
-        limitRefreshPeriod: 120s
-        timeoutDuration: 100ms
+management:
+  health:
+    redis:
+      enabled: false
 
 topic:
   notification: notification-topic

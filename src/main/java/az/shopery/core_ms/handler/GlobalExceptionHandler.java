@@ -9,7 +9,6 @@ import az.shopery.core_ms.handler.exception.JwtAuthenticationException;
 import az.shopery.core_ms.handler.exception.ResourceNotFoundException;
 import az.shopery.core_ms.model.dto.shared.ErrorResponse;
 import feign.FeignException;
-import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -62,13 +61,10 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(ex, HttpStatus.CONFLICT, request);
     }
 
-    @ExceptionHandler({CooldownNotMetException.class, RequestNotPermitted.class})
-    public ResponseEntity<ErrorResponse> handleTooManyRequests(Exception ex, HttpServletRequest request) {
+    @ExceptionHandler(CooldownNotMetException.class)
+    public ResponseEntity<ErrorResponse> handleTooManyRequests(CooldownNotMetException ex, HttpServletRequest request) {
         log.debug("Rate limit exceeded: {}", ex.getMessage());
-        String message = ex instanceof RequestNotPermitted
-                ? "Rate limit exceeded, please try again later!"
-                : ex.getMessage();
-        return buildErrorResponse(new RuntimeException(message, ex), HttpStatus.TOO_MANY_REQUESTS, request);
+        return buildErrorResponse(ex, HttpStatus.TOO_MANY_REQUESTS, request);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)

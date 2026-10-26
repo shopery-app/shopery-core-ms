@@ -12,7 +12,6 @@ import az.shopery.core_ms.model.dto.response.UserEmailUpdateResponseDto;
 import az.shopery.core_ms.model.dto.response.UserPasswordUpdateResponseDto;
 import az.shopery.core_ms.model.dto.response.UserProfileResponseDto;
 import az.shopery.core_ms.service.UserService;
-import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.validation.Valid;
 import java.security.Principal;
 import lombok.RequiredArgsConstructor;
@@ -48,19 +47,16 @@ public class UserController {
         return shopClient.createMyShop(principal.getName(), shopCreateRequestDto);
     }
 
-    @RateLimiter(name = "auth-rate-limiter")
     @PutMapping("/password")
     public ResponseEntity<SuccessResponse<UserPasswordUpdateResponseDto>> updatePassword(Principal principal, @Valid @RequestBody UserPasswordUpdateRequestDto userPasswordUpdateRequestDto){
         return ResponseEntity.ok(userService.updateMyPassword(principal.getName(), userPasswordUpdateRequestDto));
     }
 
-    @RateLimiter(name = "auth-rate-limiter")
     @PutMapping("/email")
     public ResponseEntity<SuccessResponse<Void>> changeMyEmail(Principal principal, @Valid @RequestBody UserEmailUpdateRequestDto userEmailUpdateRequestDto) {
         return ResponseEntity.ok(userService.changeMyEmail(principal.getName(), userEmailUpdateRequestDto));
     }
 
-    @RateLimiter(name = "auth-rate-limiter")
     @PostMapping("/email/verify")
     public ResponseEntity<SuccessResponse<UserEmailUpdateResponseDto>> verifyMyEmail(Principal principal, @Valid @RequestBody UserEmailVerificationRequestDto userEmailVerificationRequestDto) {
         return ResponseEntity.ok(userService.verifyMyEmail(principal.getName(), userEmailVerificationRequestDto));

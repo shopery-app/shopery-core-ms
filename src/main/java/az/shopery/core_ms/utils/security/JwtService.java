@@ -51,10 +51,6 @@ public class JwtService {
         return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
     }
 
-    public Date extractIssuedAt(String token) {
-        return extractClaim(token, Claims::getIssuedAt);
-    }
-
     private Map<String, Object> buildAuthorityClaims(UserDetails userDetails){
         Map<String, Object> extraClaims = new HashMap<>();
         var authorities = userDetails.getAuthorities()
