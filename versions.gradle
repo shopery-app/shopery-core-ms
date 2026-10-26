@@ -5,7 +5,6 @@ ext {
             springdoc      : "3.1.1",
             libphonenumber : "9.0.39",
             byteBuddy      : "1.18.13",
-            resilience4j   : "2.4.0",
             lombok         : "1.18.48",
             jackson2       : "2.22.4",
     ]
