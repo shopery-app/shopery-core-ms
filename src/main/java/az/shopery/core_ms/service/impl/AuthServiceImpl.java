@@ -35,7 +35,9 @@ import az.shopery.core_ms.utils.enums.UserRole;
 import az.shopery.core_ms.utils.enums.UserStatus;
 import az.shopery.core_ms.utils.security.JwtService;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -265,6 +267,7 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found for the given token!"));
 
         user.setPassword(passwordEncoder.encode(resetPasswordRequestDto.getPassword()));
+        user.setPasswordChangedAt(Instant.now());
         userRepository.save(user);
 
         redisService.delete(RedisUtils.resetTokenKey(token));
@@ -343,7 +346,7 @@ public class AuthServiceImpl implements AuthService {
                 .authorities(userEntity.getUserRole().name())
                 .build();
 
-        if (!jwtService.isTokenValid(refreshToken, userDetails)) {
+        if (!jwtService.isTokenValid(refreshToken, userDetails) || isIssuedBeforePasswordChange(refreshToken, userEntity)) {
             throw new InvalidCredentialsException("Refresh token validation failed!");
         }
 
@@ -355,6 +358,11 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         return SuccessResponse.of(userAuthResponseDto, "Refresh token refreshed successfully!");
+    }
+
+    private boolean isIssuedBeforePasswordChange(String token, UserEntity userEntity) {
+        return Objects.nonNull(userEntity.getPasswordChangedAt())
+                && jwtService.extractIssuedAt(token).toInstant().isBefore(userEntity.getPasswordChangedAt().truncatedTo(ChronoUnit.SECONDS));
     }
 
     private UserEntity getActiveUser(String email) {
